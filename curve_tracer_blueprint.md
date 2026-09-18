@@ -273,11 +273,12 @@ If the numbers agree within a few percent, you have demonstrated the entire chip
 | 15 V / 1 A wall adapter + barrel jack | 1 | $10 |
 | 22 Ω 1% (`R_iso`) | 5 | $1 |
 | BAT54S clamp diodes | 10 | $3 |
+| 1N4148 — B-E clamp; buy extras, they're also useful as DUTs for diode I-V curves | 10 | ~$1 |
 | PTC resettable fuse, 100 mA | 5 | $3 |
-| DUT devices: 2N7000, BS170, 2N3904, 1N4148, LEDs, Zeners | — | $8 |
+| DUT devices: 2N7000, BS170, 2N3904, LEDs, Zeners (1N4148 above) | — | $8 |
 | Small-signal relays (phase 2 auto-ranging) | 3 | $9 |
 | Breadboard, jumpers, headers | — | on hand |
-| **Total** | | **~$96** |
+| **Total** | | **~$98** |
 
 Order **two of every active component.** You will destroy at least one op-amp and one pass transistor.
 
@@ -348,6 +349,8 @@ Simulation files: `sim/01_sweep_source_compensation.asc` (2N2222), `sim/02_sweep
 **4. Capacitive load limit.** Bare (no `R_iso`): stable to ~1 nF, oscillating by 2.2 nF. Sharp threshold, characteristic of a phase-margin cliff. With 22 Ω `R_iso`: clean at both emitter and output nodes across 100 pF – 100 nF, i.e. at least 50× more headroom for one part.
 
 **5. Settling time.** Small-signal settling ~1.3 µs at the emitter. `settle_us` in firmware will be set by DUT physics, not the sweep source.
+
+**Falling edges, `R_B` = 330 Ω and the B-E clamp diode** were simulated later (Sep 18, 2026, `sim/08_sweep_source_rb_sweep.asc`, `sim/09_sweep_source_clamped.asc`); results are in **§3.1**.
 
 **Previously open, now closed:** difference amplifier CMRR simulation — completed Sep 18, 2026, results in **§13**.
 

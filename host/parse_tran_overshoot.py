@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Per-step rise/fall metrics from a stepped LTspice .tran .raw of sims 08/09.
 
-Usage: python3 host/parse_tran_overshoot.py sim/08_sweep_source_rb390.raw
+Usage: python3 host/parse_tran_overshoot.py sim/08_sweep_source_rb_sweep.raw
        python3 host/parse_tran_overshoot.py sim/09_sweep_source_clamped.raw
 
 Reads the binary .raw directly rather than trusting stepped .meas output in

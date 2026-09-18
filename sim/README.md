@@ -1,10 +1,13 @@
 # sim/ — LTspice experiments
 
-One netlist per experiment. `.cir` files are the source of truth and the only
-sim artifacts in git; LTspice's `.log`, `.raw`, `.db`, `.op.raw` and `.net`
+One file per experiment, and that file is the source of truth. Circuits with
+topology worth seeing are LTspice schematics (`.asc`: 00–03, 08, 09); circuits
+that are just a resistor network are plain netlists (`.cir`: 04–07). Vendor
+models live in `models/`. LTspice's `.log`, `.raw`, `.db`, `.op.raw` and `.net`
 outputs are regenerable and gitignored.
 
-Run a netlist headless, then parse its log. This LTspice is the Windows build
+Run a file headless (`-b` takes `.asc` and `.cir` alike), then parse its log or
+`.raw`. This LTspice is the Windows build
 in a CrossOver bottle, so the `/Applications` binary is only a launcher stub —
 `-b` against it returns exit 0 without simulating. Drive the bottled `.exe`
 instead:
@@ -132,3 +135,93 @@ VCVS and confirms the netlist is wired as intended — it is **not** evidence of
 any particular bias-current performance. Read it as: the error term 06 found
 is gone once the bridge stops drawing from the shunt. Sizing the residual
 needs the vendor model.
+
+## 08_sweep_source_rb_sweep.asc — base resistor and falling edge, no clamp
+
+**Sweeps:** `Rb` over 220 and 330 Ω × four load cases, stepped as `lcase` 1–4
+with `Cload` and `RL` set by `table()`: 100 nF / 200 Ω, 100 nF / open (1 GΩ),
+100 pF / 200 Ω, 100 pF / open. `V2 = PULSE(0.3 2.7 ...)` gives a full-scale
+1 V → 9 V step at the emitter. `.tran 0 20m 0 10n` runs long enough for the
+passive falling edge to finish while keeping the 10 ns max timestep (blueprint
+§12, item 3). `.save` limits output to `V(emitter)`, `V(n004)` (the BD139
+base, which has no FLAG) and `I(Rbase)`; even so the `.raw` is ~320 MB and a
+batch run takes ~105 s.
+
+**Question:** which base resistor, and what does the falling edge do when the
+follower can only source current?
+
+**Results — `Rb` vs small-signal overshoot** (100 mV step into 100 nF / 200 Ω):
+
+| Rb | Overshoot | 1% settling |
+|----|-----------|-------------|
+| 100 Ω | 0.28% | 0.23 µs |
+| 220 Ω | 5.28% | 0.36 µs |
+| 330 Ω | 10.34% | 0.50 µs |
+| 390 Ω | 12.73% | 0.56 µs |
+
+**Read this before citing the table:** it came from an earlier configuration of
+this file that was never committed. To reproduce it, set
+`V2 = PULSE(1.5 1.6 1u 100n 100n 100u 200u)`, `.tran 0 200u 0 10n`,
+`.step param Rb list 100 220 330 390`, `Cload = 100n` and `RL = 200`.
+
+All four are well damped; damping does not set `Rb`. It is set by op-amp
+current when the current limiter trips (~13.95 V / `Rb`), which this netlist
+does not model — see blueprint §3.1. That picks **330 Ω**.
+
+At full scale, rising edges are slew-limited at 9.2–9.9 V/µs and settle to 1%
+in 0.87–1.14 µs across all four loads. Overshoot is 2.18% (330 Ω) and 1.25%
+(220 Ω) at 100 nF, and zero at 100 pF. The op-amp sources under 3 mA on the
+rise. Falling edges are tabulated under 09.
+
+**Convergence:** every step needs Gmin stepping to find the initial operating
+point (emitter at 1 V). All succeed, with no timestep failures. The op-amp is
+`UniversalOpAmp2` with default parameters: 10 V/µs slew and a 25 mA output
+clamp, against the OPA2197's ~20 V/µs and ~65 mA typical.
+
+```
+python3 host/parse_tran_overshoot.py sim/08_sweep_source_rb_sweep.raw
+```
+
+## 09_sweep_source_clamped.asc — 08 plus a B-E clamp diode
+
+**Sweeps:** identical to 08. The only change is `D1`, a 1N4148 across the
+BD139 base-emitter junction, anode at the emitter and cathode at the base
+(`D1 emitter N004 1N4148` in the netlist). It uses the stock LTspice
+`standard.dio` model (`Is=2.52n Rs=.568 N=1.752 Cjo=4p M=.4 tt=20n`). Those
+are fitted-looking values, not placeholders. `Cjo` matches the datasheet, but
+`tt` implies ~14 ns reverse recovery against the datasheet's 4 ns, so the sim
+is pessimistic there. Reverse breakdown is not modelled; the clamp never gets
+near it.
+
+**Question:** does the clamp keep V_BE inside the BD139's 5 V `V_EBO`, and what
+does the active pull-down it creates cost the op-amp?
+
+**Results — falling edge, 9 V → 1 V, `Rb` = 330 Ω** (batch run, 2026-09-18):
+
+| Load | 08 τ | 08 settle | 08 min V_BE | 09 τ | 09 settle | 09 min V_BE | 09 op-amp sink |
+|------|------|-----------|-------------|------|-----------|-------------|----------------|
+| 100 nF, 200 Ω | 19.9 µs | 45.1 µs | −7.72 V | 12.9 µs | 33 µs | −0.73 V | 18.6 mA |
+| 100 nF, open | 3.33 ms | 7.06 ms | −8.98 V | 36.6 µs | 103 µs | −0.74 V | 21.9 mA |
+| 100 pF, 200 Ω | driven | 0.88 µs | +0.83 V | driven | 0.88 µs | +0.83 V | 0.2 mA |
+| **100 pF, open** | 3.05 µs | **9.4 µs** | **−6.28 V** | driven | **1.7 µs** | −0.58 V | 1.0 mA |
+
+"Driven" means the op-amp pulls the emitter down at its slew rate: through the
+BJT, which stays on, at 100 pF / 200 Ω; and through the diode, with the BJT
+off, in 09 at 100 pF open. Everywhere else in 08 the BJT cuts off and the load
+discharges passively. At 100 nF, τ matches `C·(RL ‖ 33.3 kΩ)` to 3 significant figures.
+In 09 the diode path runs in parallel, giving `τ ≈ C·[RL ‖ (R_iso + Rb)]`:
+12.7 / 34.9 µs predicted, 12.9 / 36.6 µs fitted.
+
+100 pF open is current range 3's real operating condition. Unclamped, it
+reverse-biases the junction past `V_EBO` on every falling step; the clamp fixes
+that and cuts settling from 9.4 to 1.7 µs. Rising edges are unchanged:
+overshoot, sustained slew and settling are identical to 08.
+
+**Read this before citing the 220 Ω rows** (in the parser output, not the table
+above): the discharge would need ~33 mA at 220 Ω. The op-amp model clamps at
+25 mA and hit exactly 25.00 mA, so those rows show the model's limit, not the
+circuit's.
+
+```
+python3 host/parse_tran_overshoot.py sim/09_sweep_source_clamped.raw
+```
