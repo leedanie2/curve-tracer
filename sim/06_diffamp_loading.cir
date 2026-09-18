@@ -1,0 +1,14 @@
+* Diff amp input loading with no DUT connected
+.param R1n=1k R2n=20k
+.param Rsh=1
+V1  na 0 DC 10
+Rs  na nb {Rsh}
+R1  nb inm {R1n}
+R2  inm out {R2n}
+R3  na inp {R1n}
+R4  inp 0  {R2n}
+E1  out 0 inp inm 1e5
+.step param Rsh list 1 100 10k
+.op
+.meas op vout find V(out)
+.end

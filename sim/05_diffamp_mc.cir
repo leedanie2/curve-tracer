@@ -1,0 +1,19 @@
+* Difference amp CMRR - 500-run Monte Carlo, 0.1% resistors
+.param R1n=1k  R2n=20k
+.param tol=1e-3
+
+VCM ncm 0 DC 0
+R1  ncm inm {R1n*mc(1,tol)}
+R2  inm out {R2n*mc(1,tol)}
+R3  ncm inp {R1n*mc(1,tol)}
+R4  inp 0   {R2n*mc(1,tol)}
+E1  out 0 inp inm 1e7
+
+.options reltol=1e-7 vntol=1e-12 abstol=1e-15
+.dc VCM 0 11 0.1
+.step param run 1 500 1
+.meas dc va find V(out) at 1
+.meas dc vb find V(out) at 11
+.meas dc acm  param (vb-va)/10
+.meas dc cmrr param 20*log10(20/abs(acm))
+.end

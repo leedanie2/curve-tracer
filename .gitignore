@@ -1,5 +1,6 @@
-*.raw
 *.log
-*.op.raw
+*.raw
+*.db
 *.net
+*.op.raw
 .DS_Store

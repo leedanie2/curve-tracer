@@ -1,0 +1,20 @@
+* Difference amp CMRR vs resistor tolerance (worst-case corner)
+.param R1n=1k  R2n=20k
+.param tol=1e-3
+.param s1=1 s2=-1 s3=-1 s4=1
+
+VCM ncm 0 DC 0
+R1  ncm inm {R1n*(1+s1*tol)}
+R2  inm out {R2n*(1+s2*tol)}
+R3  ncm inp {R1n*(1+s3*tol)}
+R4  inp 0   {R2n*(1+s4*tol)}
+E1  out 0 inp inm 1e7
+
+.options reltol=1e-7 vntol=1e-12 abstol=1e-15
+.dc VCM 0 11 0.1
+.step param tol list 1e-6 1e-3 1e-2
+.meas dc va find V(out) at 1
+.meas dc vb find V(out) at 11
+.meas dc acm  param (vb-va)/10
+.meas dc cmrr param 20*log10(20/abs(acm))
+.end
