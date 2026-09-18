@@ -10,7 +10,7 @@
 
 | Parameter | Target | Notes |
 |---|---|---|
-| Sweep voltage (V_DS / V_AK) | 0 – 10 V | 4096 steps (12-bit DAC), ~2.7 mV/step |
+| Sweep voltage (V_DS / V_AK) | 0 – 10 V (low current); **~9.85 V max at 50 mA** | 4096 steps (12-bit DAC), ~2.7 mV/step. Full 10 V is not reachable at full current — see §3.1 |
 | Sweep current | 0 – 50 mA | Covers small-signal MOSFETs, BJTs, diodes, LEDs |
 | Step voltage (V_GS) | 0 – 10 V | Second DAC channel |
 | Current measurement range | 100 nA – 50 mA | 3 switchable ranges, ~5.7 decades |
@@ -62,8 +62,8 @@ DAC output is 0–3.3 V at ~5 mA drive. Needs to become 0–10 V at 50 mA.
 | Op-amp | OPA2197 (or OPA2196) | 36 V supply capable, rail-to-rail, precision |
 | Supply | +15 V single | Headroom above 10 V output |
 | Gain resistors | R_f = 23.3 kΩ, R_g = 10 kΩ, 0.1% | Gain = 3.33 |
-| Pass transistor | BD139 or TIP31C, on heatsink | Worst-case dissipation ~0.75 W |
-| Base resistor | 100 Ω | Damps follower, limits op-amp output current |
+| Pass transistor | BD139 or TIP31C, on heatsink; **tab = collector, tied to +15 V** | Worst-case dissipation **~0.85 W** (65 mA × 12.8 V under hard short) |
+| Base resistor | **330–470 Ω (390 Ω pending sim 08)** | Sized by the op-amp's own short-circuit limit, not just damping — see below |
 | Isolation resistor | `R_iso` = 22 Ω, emitter → load | **Required for stability — see Phase 0 findings** |
 | Compensation cap | ~~10–100 pF across R_f~~ | **REMOVED — destabilizes this topology (Phase 0)** |
 
@@ -77,7 +77,23 @@ A cap across `R_f` is *transimpedance* compensation. It works in a TIA because t
 
 **Trade-off:** `R_iso`'s drop is outside the loop and therefore uncorrected — 1.1 V at 50 mA. Harmless here *only because* `V_DS` is Kelvin-sensed at the DUT (§3.4). The stability fix and the Kelvin-sensing requirement are coupled decisions, not independent ones.
 
-**Current limiting:** series 10 Ω sense resistor in the pass transistor emitter + a second transistor whose base-emitter sees that drop; at ~65 mA it turns on and steals base drive. Simple foldback protection. Non-negotiable — students and mistakes will short the DUT terminals.
+**Base resistor sizing — why 100 Ω is wrong.** When the current limiter trips, the op-amp output rails and drives the limiter transistor's collector through `R_B`. At 100 Ω that demands roughly **110 mA**, which exceeds the OPA2197's own short-circuit current of about **65 mA**. The op-amp's internal protection would engage first, so the limit test would be measuring *the op-amp's* protection rather than the circuit's — a meaningless result. Raising `R_B` to 330–470 Ω keeps the demand inside the op-amp's capability so the external limiter is what actually sets the threshold.
+
+**The tradeoff:** `R_B · C_jc` forms a pole with the BD139's `C_jc` = 36.1 pF. At 100 Ω that pole sits near **44 MHz**, far outside the loop. At 390 Ω it drops to roughly **10 MHz** — still above the ~3 MHz crossover, but no longer comfortably so. That is the margin **sim 08** exists to check; 390 Ω is provisional until it does.
+
+**Output headroom.** DAC full scale × 3.33 = **11 V** at the feedback node. After the `R_iso` drop and the shunt burden, the DUT sees about **9.85 V at 50 mA**. **10 V at 50 mA is not reachable — do not claim it in the specs.** The full 10 V is available only at low current, where the `R_iso` and shunt drops are small.
+
+**The follower sources current only.** An emitter follower can pull its output up but not down. Falling edges discharge *passively* through `R_f + R_g` (33 kΩ), so settling is **asymmetric and bias-dependent**: the small-signal emitter resistance `r_e = V_T / I_E` is about **8 kΩ at 3 µA**, versus a few ohms at 50 mA. The **1.3 µs figure from Phase 0 is one operating point**, not a specification — expect substantially slower falling edges at low current. If that becomes binding, a pulldown resistor or a class-AB output stage is the fix.
+
+**Current limiting (constant-current limit — not foldback):** series 10 Ω sense resistor in the pass transistor emitter + a second transistor whose base-emitter sees that drop; at ~65 mA it turns on and steals base drive. Non-negotiable — students and mistakes will short the DUT terminals.
+
+**This is a constant-current limit, not foldback.** Foldback requires an output-to-base divider that *reduces* the limit threshold as the output collapses. The circuit as drawn has no such divider, so under a hard short it holds at ~65 mA instead of folding back to a lower value — which is exactly why worst-case dissipation is 0.85 W (65 mA × 12.8 V) and not lower. Do not call it foldback in the README or specs.
+
+**Feedback must be tapped after the 10 Ω sense resistor,** not before it. Tapping ahead of the sense resistor puts the sense drop inside the loop, so the op-amp corrects it away and the limiter never sees the voltage it needs to trip on.
+
+**Breadboard risks specific to this block.** Stray capacitance at the inverting input (**~5–10 pF** from breadboard rows and lead dress) works against `R_f ‖ R_g` = 7 kΩ, placing a pole at roughly **2–3 MHz** — right at crossover. This is the one case where a small capacitor across `R_f` is **correct**: `C_f = C_in · R_g / R_f` ≈ **2–4 pF**.
+
+**This does not contradict the Phase 0 `C_comp` finding — the two address different poles.** Phase 0 removed a 10–100 pF cap that was attempting to compensate *the follower's output pole inside the loop*; that raised `β` toward 1 exactly where the follower's phase lag sat and made things monotonically worse (§12). The 2–4 pF `C_f` here does something else entirely: it **flattens the feedback divider** against the stray input capacitance, holding `β` constant with frequency instead of letting it rise. Same component, same location, opposite purpose — and two orders of magnitude different in value. State the distinction explicitly in the README; it is a good illustration of why "add a feedback cap" is not a general-purpose fix.
 
 ### 3.2 Gate / step source
 
@@ -99,10 +115,12 @@ Shunt in the drain path, high-side, measured by a discrete difference amplifier 
 
 **Range switching:** v1 uses a manual 3-pin jumper. Phase 2 uses small signal relays (e.g. TQ2-5V) driven by GPIO for auto-ranging. Do **not** use CD4066 analog switches — their on-resistance (~100 Ω, temperature dependent) sits in series with your shunt and corrupts the measurement.
 
-**Difference amp:** discrete, four resistors around one op-amp.
+**Difference amp: 3-op-amp instrumentation topology. Input buffers are required — this is not optional.** Simulated in Phase 0; see §13.
 
 - `R1 = R3 = 1 kΩ`, `R2 = R4 = 20 kΩ`, all **0.1%** → gain 20.
-- **CMRR is set by resistor matching, not the op-amp.** `CMRR ≈ (1 + R2/R1) / (4t)`. At `t = 0.1%`: ~74 dB. At `t = 1%`: ~54 dB. Measure both and put the comparison in the README — it's a clean, quantitative result.
+- **CMRR is set by resistor matching, not the op-amp.** `CMRR ≈ (1 + R2/R1) / (4t)` is the four-resistor worst case: ~**74.4 dB** at `t = 0.1%` (sim: 74.42 dB) and ~**54.4 dB** at `t = 1%` (sim: 54.57 dB).
+- **Report the distribution, not a single number.** A 500-run Monte Carlo at 0.1% gives median **88.26 dB**, p5 **79.43 dB**, min **76.20 dB**. The worst-case corner (74.4 dB) is the floor you design to; the median is what a typical build achieves. Quoting either one alone misrepresents the part. Do not quote the Monte Carlo maximum.
+- **Buffers make range 3 functional, not merely more accurate.** Unbuffered, the bare four-resistor bridge loads the shunt: with **no DUT connected at all**, the 10 kΩ range sits at **8.66 V** output — near the rail on a 15 V supply, leaving almost no usable span. The buffers are what make that range work, not a refinement on top of a working range.
 - Optional phase 2: swap in an INA828 instrumentation amp and compare measured CMRR against your discrete build.
 
 ### 3.4 Voltage sense (Kelvin)
@@ -121,9 +139,11 @@ This is a genuine four-wire measurement, and explaining why it's necessary is a 
 
 **Oversampling:** average 64 samples per point → ~3 extra effective bits (~15-bit) at the cost of ~1 ms per point. Standard `√N` noise averaging; state the measured improvement in the README rather than assuming it.
 
+**Reading LTspice results — precision matters when quoting numbers.** Values in a `.raw` file are stored as **float32** (~7 significant digits); `.meas` results in the `.log` are **double**. When quoting a simulated figure in the README, **quote the `.meas` value**, not one read back out of the `.raw`. See `sim/README.md` for the raw layout (float64 first variable, float32 for the rest) and for why stepped `.op` runs need the raw at all.
+
 ### 3.6 Protection (required, not optional)
 
-- Foldback current limit on the sweep source (§3.1)
+- Constant-current limit on the sweep source (§3.1)
 - Series PTC resettable fuse (100 mA hold) in the drain path
 - Clamp diodes on both ADC inputs
 - Gate series resistor (1 kΩ) + Zener clamp to protect against ESD-sensitive parts
@@ -228,7 +248,7 @@ If the numbers agree within a few percent, you have demonstrated the entire chip
 | Item | Qty | Est. |
 |---|---|---|
 | Nucleo-F303RE (or G474RE) | 1 | $18 |
-| OPA2197 (dual, 36 V, precision) | 3 | $18 |
+| OPA2197 (dual, 36 V, precision) | 4 | $24 |
 | BD139 / TIP31C + TO-220 heatsink | 2 | $4 |
 | 0.1% resistor assortment (1 k, 10 k, 20 k, 23.3 k, 30 k, 100 Ω, 10 k shunt) | — | $15 |
 | 1 Ω 1% 1 W shunt | 2 | $2 |
@@ -239,7 +259,7 @@ If the numbers agree within a few percent, you have demonstrated the entire chip
 | DUT devices: 2N7000, BS170, 2N3904, 1N4148, LEDs, Zeners | — | $8 |
 | Small-signal relays (phase 2 auto-ranging) | 3 | $9 |
 | Breadboard, jumpers, headers | — | on hand |
-| **Total** | | **~$90** |
+| **Total** | | **~$96** |
 
 Order **two of every active component.** You will destroy at least one op-amp and one pass transistor.
 
@@ -249,8 +269,8 @@ Order **two of every active component.** You will destroy at least one op-amp an
 
 | Phase | Deliverable | Gate to proceed |
 |---|---|---|
-| **0** | ~~LTspice model of sweep source~~ **DONE** — see §12; diff amp CMRR sim still open | Sweep source settles cleanly into ≥100 nF with `R_iso` |
-| **1** | Sweep source on breadboard, current limit working | 0–10 V linear, foldback trips at ~65 mA |
+| **0** | ~~LTspice model of sweep source~~ **DONE** — sweep source (§12) *and* difference amp CMRR + input loading (§13) | Sweep source settles cleanly into ≥100 nF with `R_iso`; diff amp buffering decided |
+| **1** | Sweep source on breadboard, current limit working | 0–10 V linear at low current, current limit trips at ~65 mA |
 | **2** | Current sense, range 1 only | Reads a known resistor within 1% |
 | **3** | Ranges 2 & 3 + Kelvin sense | 5-decade span verified against precision resistors |
 | **4** | Firmware sweep + serial CSV | First complete diode I-V curve |
@@ -311,6 +331,26 @@ Simulation files: `sim/01_sweep_source_compensation.asc` (2N2222), `sim/02_sweep
 
 **5. Settling time.** Small-signal settling ~1.3 µs at the emitter. `settle_us` in firmware will be set by DUT physics, not the sweep source.
 
-**Still open in Phase 0:** difference amplifier CMRR simulation (ideal vs 1% vs 0.1% resistor mismatch). Note that `(1+R2/R1)/(4t)` is the four-resistor worst case (~74 dB at 0.1%); perturbing a single resistor gives ~86 dB. Report both and label which is which.
+**Previously open, now closed:** difference amplifier CMRR simulation — completed Sep 18, 2026, results in **§13**.
 
-**Bench items carried forward to Phase 1:** confirm `R_iso` behavior with the real BD139 and real breadboard parasitics; measure actual settling; verify foldback trips at ~65 mA.
+**Bench items carried forward to Phase 1:** confirm `R_iso` behavior with the real BD139 and real breadboard parasitics; measure actual settling; verify the current limit trips at ~65 mA.
+
+---
+
+## 13. Phase 0 results — difference amplifier (completed Sep 18, 2026)
+
+Simulation files: `sim/04_diffamp_cmrr.cir` (worst-case tolerance corner), `sim/05_diffamp_mc.cir` (500-run Monte Carlo), `sim/06_diffamp_loading.cir` (input loading, unbuffered), `sim/07_diffamp_buffered.cir` (input loading, buffered). Per-file detail in `sim/README.md`.
+
+**1. CMRR at the worst-case corner is set by resistor tolerance.** Skewing all four resistors to the worst sign pattern gives **134.40 dB** at `t` = 1e-6, **74.42 dB** at 0.1%, and **54.57 dB** at 1%. The 1e-6 row is a **solver-floor control, not a result** — it confirms numerical noise sits far below the rows that matter. Closed form for this corner: `A_cm = 80t/[(1-t²)(1+b)]` with `b = 20(1+t)/(1-t)`; the familiar `(1+G)/(4t)` shortcut agrees within 0.02 dB at 0.1%.
+
+**2. Report the distribution, not a single number.** 500 runs at 0.1% (n = 500): min **76.20**, p5 **79.43**, median **88.26**, p95 **110.51**, max **144.73** dB. The worst-case 74.4 dB is the floor to design against; 88 dB is what a typical build gets. Note that LTspice's `mc()` draws **uniform and independent** values, whereas real reel-matched resistors are both tighter and correlated — so this spread is **conservative**. **Do not cite the max**; it is one lucky draw, not a spec. Histogram: `media/cmrr_mc.png`.
+
+**3. The unbuffered difference amp loads the shunt — this is the finding that changes the BOM.** With **no DUT connected at all**, the bare four-resistor bridge draws current through the shunt: `V(out)` = **9.512 mV** at `Rsh` = 1 Ω, i.e. **475.6 µA** of phantom current. In general `I_err = 0.476/(1000 + Rsh)` A. Against full scale that is **0.95% / 43% / 433%** on ranges 1 / 2 / 3. Range 3 is not merely inaccurate, it is unusable — the unbuffered output sits at **8.66 V** at `Rsh` = 10 kΩ, near the rail on a 15 V supply.
+
+**4. Conclusion: unity-gain input buffers are required.** Move to the **3-op-amp instrumentation topology**. BOM goes from 3 to 4 × OPA2197 (§8). This is a functional requirement for range 3, not an accuracy refinement.
+
+**5. What sim 07 does and does not show.** The buffered netlist returns `V(out)` = **0 at all three `Rsh` values**. That zero comes from **ideal `E`-source buffers, which draw no input current by construction** — it confirms the topology is wired as intended and that the bridge no longer loads the shunt, and **nothing more**. It is **not** evidence of any particular bias-current performance. The real residual is the **OPA2197 input bias current, ~5 pA typical — a datasheet figure, not a simulated one**. Sizing it properly requires swapping the `E` sources for the vendor OPA2197 model.
+
+**Method note.** This LTspice is the Windows build in a CrossOver bottle; `-b` against the `/Applications` binary exits 0 without simulating. The working headless invocation is recorded in `sim/README.md`. `.meas` on a stepped `.op` logs only the first step, so per-step values come from the `.raw` file — and `.raw` is float32 while `.meas` is double (§3.5).
+
+**Bench items carried forward to Phase 1:** verify the buffered difference amp's actual CMRR against the 74.4 dB floor with real 0.1% parts; confirm range 3 is usable with buffers on a real breadboard; measure input bias current contribution directly rather than trusting the datasheet typ.
