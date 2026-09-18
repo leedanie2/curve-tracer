@@ -4,11 +4,21 @@ One netlist per experiment. `.cir` files are the source of truth and the only
 sim artifacts in git; LTspice's `.log`, `.raw`, `.db`, `.op.raw` and `.net`
 outputs are regenerable and gitignored.
 
-Run a netlist, then parse its log:
+Run a netlist headless, then parse its log. This LTspice is the Windows build
+in a CrossOver bottle, so the `/Applications` binary is only a launcher stub —
+`-b` against it returns exit 0 without simulating. Drive the bottled `.exe`
+instead:
 
 ```
+CX=/Applications/LTspice.app/Contents/SharedSupport/ltspice/bin
+"$CX/cxstart" --bottle ltspice --workdir "$PWD/sim" -- \
+  "C:\\Program Files\\ADI\\LTspice\\LTspice.exe" -b "$PWD/sim/06_diffamp_loading.cir"
+
 python3 host/parse_cmrr_log.py sim/05_diffamp_mc.log   # -> media/cmrr_mc.png
 ```
+
+Note that `.meas` on a stepped `.op` logs only the first step; the remaining
+steps are in the `.raw` file (f64 first variable, f32 for the rest).
 
 ---
 
@@ -64,6 +74,10 @@ number. Note that `mc()` draws uniform and independent values, whereas real
 reel-matched resistors are both tighter and correlated — so this spread is
 conservative. **Do not cite the max**; it is one lucky draw, not a spec.
 
+Reproduced from a batch run on 2026-09-18: `parse_cmrr_log.py` returns these
+figures to the digit, since LTspice seeds `mc()` deterministically. Histogram:
+`media/cmrr_mc.png`.
+
 ## 06_diffamp_loading.cir — input loading with no DUT connected
 
 **Sweeps:** `Rsh` stepped over 1 Ω, 100 Ω, 10 kΩ at a fixed 10 V source, `.op`
@@ -83,3 +97,38 @@ Against full scale that is **0.95% / 43% / 433%** on ranges 1 / 2 / 3.
 
 **Conclusion:** unity-gain input buffers are required — move to the 3-op-amp
 instrumentation topology. BOM goes from 3 to 4 × OPA2197.
+
+## 07_diffamp_buffered.cir — same loading test, with input buffers
+
+**Sweeps:** identical to 06 — `Rsh` over 1 Ω, 100 Ω, 10 kΩ, fixed 10 V source,
+`.op` only. Node names are kept the same as 06 so the two files diff cleanly;
+the only change is `Eba`/`Ebb`, unity-gain buffers inserted between the source
+nodes (`na`, `nb`) and the bridge resistors, which now feed from `bufa`/`bufb`.
+
+**Question:** does the 3-op-amp instrumentation topology remove the phantom
+current that 06 measured?
+
+**Read this before citing a number from it:** the buffers here are ideal
+`E` sources, so they draw **zero input current by construction**. The sim
+returns zero because that is what an ideal VCVS does, not because it measured
+anything. It demonstrates the topology change — the bridge no longer loads the
+shunt — and nothing more.
+
+The real-world figure is the **OPA2197 input bias current, ~5 pA typical**,
+which comes from the datasheet, not from this netlist. **This sim does not
+prove pA-level performance.** To simulate that, swap the `E` sources for the
+vendor OPA2197 model.
+
+**Measured (batch run, 2026-09-18):**
+
+| Rsh | 06 unbuffered V(out) | 07 buffered V(out) |
+|-----|----------------------|--------------------|
+| 1 Ω | 9.5123 mV | 0 |
+| 100 Ω | 0.86563 V | 0 |
+| 10 kΩ | 8.6578 V | 0 |
+
+07 returns exact zero at every step, which is the expected output of an ideal
+VCVS and confirms the netlist is wired as intended — it is **not** evidence of
+any particular bias-current performance. Read it as: the error term 06 found
+is gone once the bridge stops drawing from the shunt. Sizing the residual
+needs the vendor model.
