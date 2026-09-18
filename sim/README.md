@@ -138,19 +138,27 @@ needs the vendor model.
 
 ## 08_sweep_source_rb_sweep.asc — base resistor and falling edge, no clamp
 
-**Sweeps:** `Rb` over 220 and 330 Ω × four load cases, stepped as `lcase` 1–4
-with `Cload` and `RL` set by `table()`: 100 nF / 200 Ω, 100 nF / open (1 GΩ),
-100 pF / 200 Ω, 100 pF / open. `V2 = PULSE(0.3 2.7 ...)` gives a full-scale
-1 V → 9 V step at the emitter. `.tran 0 20m 0 10n` runs long enough for the
-passive falling edge to finish while keeping the 10 ns max timestep (blueprint
-§12, item 3). `.save` limits output to `V(emitter)`, `V(n004)` (the BD139
-base, which has no FLAG) and `I(Rbase)`; even so the `.raw` is ~320 MB and a
-batch run takes ~105 s.
+**Sweeps:** three nested steps, 32 runs in all:
+- `Rb` over 100, 220, 330 and 390 Ω.
+- Four load cases, stepped as `lcase` 1–4 with `Cload` and `RL` set by
+  `table()`: 100 nF / 200 Ω, 100 nF / open (1 GΩ), 100 pF / 200 Ω, 100 pF / open.
+- Two drive cases, stepped as `tcase` with the `V2` pulse levels set by
+  `table()`: `tcase` = 1 is a 100 mV small-signal step, `PULSE(1.5 1.6 ...)`,
+  5.0 V → 5.33 V at the emitter; `tcase` = 2 is full scale, `PULSE(0.3 2.7 ...)`,
+  1 V → 9 V.
+
+LTspice sets `.tran` once per run, not per step, so both drive cases share
+`.tran 0 20m 0 10n`. That is long enough for the full-scale passive fall to
+finish while keeping the 10 ns max timestep (blueprint §12, item 3); the
+small-signal measurements only use 0–90 µs. `.save` limits output to
+`V(emitter)`, `V(n004)` (the BD139 base, which has no FLAG) and `I(Rbase)`.
+Even so the `.raw` is ~1.3 GB and a batch run takes ~7 min.
 
 **Question:** which base resistor, and what does the falling edge do when the
 follower can only source current?
 
-**Results — `Rb` vs small-signal overshoot** (100 mV step into 100 nF / 200 Ω):
+**Results — `Rb` vs small-signal overshoot** (`tcase` = 1, 100 nF / 200 Ω;
+batch run, 2026-09-18):
 
 | Rb | Overshoot | 1% settling |
 |----|-----------|-------------|
@@ -159,22 +167,23 @@ follower can only source current?
 | 330 Ω | 10.34% | 0.50 µs |
 | 390 Ω | 12.73% | 0.56 µs |
 
-**Read this before citing the table:** it came from an earlier configuration of
-this file that was never committed. To reproduce it, set
-`V2 = PULSE(1.5 1.6 1u 100n 100n 100u 200u)`, `.tran 0 200u 0 10n`,
-`.step param Rb list 100 220 330 390`, `Cload = 100n` and `RL = 200`.
-
 All four are well damped; damping does not set `Rb`. It is set by op-amp
 current when the current limiter trips (~13.95 V / `Rb`), which this netlist
 does not model — see blueprint §3.1. That picks **330 Ω**.
 
-At full scale, rising edges are slew-limited at 9.2–9.9 V/µs and settle to 1%
-in 0.87–1.14 µs across all four loads. Overshoot is 2.18% (330 Ω) and 1.25%
-(220 Ω) at 100 nF, and zero at 100 pF. The op-amp sources under 3 mA on the
-rise. Falling edges are tabulated under 09.
+At full scale (`tcase` = 2), rising edges are slew-limited at 9.1–9.95 V/µs
+and settle to 1% in 0.87–1.18 µs across all four loads and all four `Rb`.
+Overshoot at 100 nF is 0.22 / 1.25 / 2.18 / 2.65% at 100 / 220 / 330 / 390 Ω,
+and zero at 100 pF. The op-amp sources under 3 mA on the rise. Falling edges
+do not depend on `Rb` without the clamp; they are tabulated under 09.
 
-**Convergence:** every step needs Gmin stepping to find the initial operating
-point (emitter at 1 V). All succeed, with no timestep failures. The op-amp is
+Even the 100 mV small-signal fall reverse-biases the base-emitter junction to
+−5.3 V at 100 nF open load, because the op-amp output still slams to its low
+rail while the load holds the emitter up. The swing size does not protect the
+junction; the clamp in 09 does.
+
+**Convergence:** 24 of the 32 steps need Gmin stepping to find the initial
+operating point. All succeed, with no timestep failures. The op-amp is
 `UniversalOpAmp2` with default parameters: 10 V/µs slew and a 25 mA output
 clamp, against the OPA2197's ~20 V/µs and ~65 mA typical.
 
@@ -184,7 +193,8 @@ python3 host/parse_tran_overshoot.py sim/08_sweep_source_rb_sweep.raw
 
 ## 09_sweep_source_clamped.asc — 08 plus a B-E clamp diode
 
-**Sweeps:** identical to 08. The only change is `D1`, a 1N4148 across the
+**Sweeps:** 08's full-scale case only: `Rb` over 220 and 330 Ω, the same four
+loads, `PULSE(0.3 2.7 ...)`, same `.tran`. The only circuit change is `D1`, a 1N4148 across the
 BD139 base-emitter junction, anode at the emitter and cathode at the base
 (`D1 emitter N004 1N4148` in the netlist). It uses the stock LTspice
 `standard.dio` model (`Is=2.52n Rs=.568 N=1.752 Cjo=4p M=.4 tt=20n`). Those
@@ -215,7 +225,7 @@ In 09 the diode path runs in parallel, giving `τ ≈ C·[RL ‖ (R_iso + Rb)]`:
 100 pF open is current range 3's real operating condition. Unclamped, it
 reverse-biases the junction past `V_EBO` on every falling step; the clamp fixes
 that and cuts settling from 9.4 to 1.7 µs. Rising edges are unchanged:
-overshoot, sustained slew and settling are identical to 08.
+overshoot, sustained slew and settling are identical to 08's `tcase` = 2 rows.
 
 **Read this before citing the 220 Ω rows** (in the parser output, not the table
 above): the discharge would need ~33 mA at 220 Ω. The op-amp model clamps at

@@ -298,24 +298,27 @@ def main():
         p = params[i] if i < len(params) else {}
         r["label"] = (f"{i + 1:>2}  Rb={p.get('rb', '?'):>4}  "
                       f"C={eng(m('cl', i), 'F'):>5}  RL={eng(m('rl', i), ''):>4}")
+        if "tcase" in p:  # 08: 1 = 100 mV small-signal step, 2 = full-scale
+            r["label"] += f"  tcase={p['tcase']}"
         r["taupred"] = m("taupred", i)
         r["taudiode"] = m("taudiode", i)
         r["conv"] = notes[i] if i < len(notes) else "?"
         rows.append(r)
 
+    w = max(len(r["label"]) for r in rows)
     print("RISING EDGE (1 us)")
-    print(f"{'':32}  {'vbase':>6}  {'vhigh':>6}  {'OS %':>5}  {'slew V/us':>9}  "
+    print(f"{'':{w}}  {'vbase':>6}  {'vhigh':>6}  {'OS %':>5}  {'slew V/us':>9}  "
           f"{'sust V/us':>9}  {'flat':>5}  {'shape':>5}  {'ts1% us':>7}  {'I_op mA':>7}  conv")
     for r in rows:
         shape = "slew" if r["flat"] >= SLEW_FLAT_FRAC else "exp"
-        print(f"{r['label']:32}  {r['vbase']:6.3f}  {r['vhigh']:6.3f}  {r['os']:5.2f}  "
+        print(f"{r['label']:{w}}  {r['vbase']:6.3f}  {r['vhigh']:6.3f}  {r['os']:5.2f}  "
               f"{r['slew'] * 1e-6:9.2f}  {r['sust'] * 1e-6:9.2f}  "
               f"{r['flat'] * 100:4.0f}%  {shape:>5}  "
               f"{r['ts_rise'] * 1e6:7.3f}  {r['iop'] * 1e3:7.2f}  {r['conv']}")
 
     print()
     print("FALLING EDGE (101.1 us)")
-    print(f"{'':32}  {'vlow':>6}  {'tau fit':>8}  {'Vinf':>6}  {'R^2':>7}  "
+    print(f"{'':{w}}  {'vlow':>6}  {'tau fit':>8}  {'Vinf':>6}  {'R^2':>7}  "
           f"{'tau pas':>8}  {'tau dio':>8}  {'slew V/us':>9}  {'flat':>5}  {'shape':>5}  "
           f"{'off':>3}  {'Vbe min':>7}  {'I_snk mA':>8}  {'ts1%':>8}")
     for r in rows:
@@ -323,7 +326,7 @@ def main():
         shape = "slew" if slew else "exp"
         fit = ("-", "-", "-") if slew else (
             eng(r["tau"], "s"), f"{r['vinf']:.3f}", f"{r['r2']:.4f}")
-        print(f"{r['label']:32}  {r['vlow']:6.3f}  {fit[0]:>8}  "
+        print(f"{r['label']:{w}}  {r['vlow']:6.3f}  {fit[0]:>8}  "
               f"{fit[1]:>6}  {fit[2]:>7}  {eng(r['taupred'], 's'):>8}  "
               f"{eng(r['taudiode'], 's'):>8}  {r['fslew'] * 1e-6:9.3f}  "
               f"{r['fflat'] * 100:4.0f}%  {shape:>5}  {'yes' if r['off'] else 'no':>3}  "
