@@ -23,6 +23,28 @@ below but do not count toward §7.
 
 ---
 
+## Breadboard build stages
+
+The bench log refers to these stages. They split blueprint **Phase 1** (sweep
+source on breadboard, current limit working) into steps small enough to debug
+one at a time:
+
+1. Rails, star ground, decoupling
+2. Op-amp inserted and powered, no circuit
+3. Gain network only, feedback from op-amp output
+4. Add BD139 and `R_B`, feedback moves to emitter
+5. Scope for VHF oscillation before proceeding
+6. Add `R_sense`, feedback moves past it
+7. Add 1N4148 B-E clamp and Q2 current limiter
+8. Add `R_iso`, DUT socket, load test and short test
+
+The feedback tap moves deliberately: op-amp output (stage 3), then emitter
+(stage 4), then past `R_sense` (stage 6). Three positions, moved twice, so
+each addition inside the loop is tested on its own. `R_iso` at stage 8 does
+not move it — feedback stays on the emitter side of `R_iso` (§3.1).
+
+---
+
 ## Bench log
 
 ### 2026-09-18 — Stage 3: gain network only, no pass transistor
@@ -77,10 +99,10 @@ more.
     resistance lowers V_out relative to the supply ground, so it would read
     the gain low, not high. With the meter referenced to circuit ground it
     cancels entirely. It may not explain the sign of this error.
-  - The DMM's resistance accuracy (typically a few tenths of a percent to ~1%
-    on a handheld meter, applied to both resistors) is an alternative.
-    Re-measuring R_f and R_G in the same session as the gain points would
-    separate the two.
+  - Meter error is the other candidate. A scale error on the ohms range
+    largely cancels in R_f / R_G if both are read on the same range, so the
+    re-measurement in next-session item 3 separates meter error from a wiring
+    fault.
 
 **Status at end of session:** the circuit stopped working after the ground
 wiring was redone. Suspect a jumper in the wrong hole group. Unresolved.
@@ -91,7 +113,11 @@ wiring was redone. Suspect a jumper in the wrong hole group. Unresolved.
    connection, no shared alligator clips.
 2. Verify 0.000 V between the GND jack and the ground rail before measuring.
 3. Retake the three gain points with V_in under 3.3 V so the output stays clear
-   of the LM324 ceiling. Expect ~2.986.
+   of the LM324 ceiling. Expect ~2.986. In the same session, re-measure R_f and
+   R_G out of circuit on the same meter and the same range. A systematic
+   ohms-range error partly cancels in the ratio R_f / R_G, so if the
+   re-measured ratio still predicts ~2.986 and the gain still reads ~3.02, a
+   meter scale error is ruled out and the discrepancy points to the wiring.
 4. Resolve the op-amp package question: SOIC-to-DIP adapter, or stay on the
    LM324 through stage 8 and swap before Phase 7.
 5. Locate a TO-220 NPN (BD139, TIP31C, or similar) for stage 4.
