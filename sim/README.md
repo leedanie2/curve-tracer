@@ -1,7 +1,7 @@
 # sim/ — LTspice experiments
 
 One file per experiment, and that file is the source of truth. Circuits with
-topology worth seeing are LTspice schematics (`.asc`: 00–03, 08, 09); circuits
+topology worth seeing are LTspice schematics (`.asc`: 00–03, 08–10); circuits
 that are just a resistor network are plain netlists (`.cir`: 04–07). Vendor
 models live in `models/`. LTspice's `.log`, `.raw`, `.db`, `.op.raw` and `.net`
 outputs are regenerable and gitignored.
@@ -234,4 +234,81 @@ circuit's.
 
 ```
 python3 host/parse_tran_overshoot.py sim/09_sweep_source_clamped.raw
+```
+
+## 10_current_limit.asc — the current limiter (Q2 + R_sense)
+
+**Circuit:** 09 plus the limiter, the one block no earlier sim covered.
+`R_sense` (10 Ω) sits between the BD139 emitter (`e_bjt`) and the feedback tap
+(`fb`), with `R_iso` (22 Ω) from `fb` to the load (`out`). Q2 is a 2N3904 with
+its base on `e_bjt`, emitter on `fb`, and collector on the BD139 base. The
+1N4148 clamp is across the BD139's own B-E junction (`e_bjt` → `base`).
+`V2` is DC 3.0 V, so the setpoint is 10 V at `fb`.
+
+**Sweeps:** `Rb` over 100 and 330 Ω × op-amp `Ilimit` over 25 mA and 65 mA ×
+`Cload` over 100 pF and 100 nF (8 runs). `Ilimit` is set through the op-amp's
+`SpiceLine`: 25 mA is the `UniversalOpAmp2` default and 65 mA is the OPA2197's
+typical. It has to be stepped because at 25 mA both `Rb` values deliver exactly
+25 mA of drive, which would make the `Rb` comparison meaningless. The load is a
+time-varying resistor: open (1 MΩ) to 0.2 ms, a log ramp to 0.1 Ω by 2.2 ms, a
+held short to 3.2 ms, then snapped back open. `.tran 0 3.6m 0 10n`; the `.raw`
+is ~130 MB and a batch run takes ~15 s.
+
+**Question:** where does the limiter engage, what does `R_B` change, and what
+happens when the short is removed?
+
+**Results — held short at 3.1 ms** (batch run, 2026-09-18; identical at 100 pF
+and 100 nF):
+
+| Rb | op-amp Ilimit | I(R_sense) | op-amp drive | in own limit? | load current | Q2 | BD139 |
+|----|---------------|------------|--------------|---------------|--------------|----|-------|
+| 100 Ω | 25 mA | 74.3 mA | 25.0 mA | yes | 99.0 mA | 24.6 mA, 41 mW | 894 mW |
+| 330 Ω | 25 mA | 74.3 mA | 25.0 mA | yes | 99.0 mA | 24.6 mA, 41 mW | 894 mW |
+| 100 Ω | 65 mA | 77.8 mA | 65.0 mA | yes | 142.6 mA | 64.6 mA, 109 mW | 860 mW |
+| **330 Ω** | **65 mA** | **75.2 mA** | **32.2 mA** | **no** | **107.0 mA** | 31.8 mA, 53 mW | 891 mW |
+
+- **Q2's threshold is log-insensitive to drive, as predicted.** Going from 32
+  to 65 mA of drive moves the `R_sense` current by 2.6 mA (3%). With the
+  default 25 mA clamp both `Rb` rows are identical, which is why `Ilimit` is
+  stepped.
+- **The threshold is ~75 mA, not ~65 mA.** Q2's V_BE is ~0.75 V at these
+  currents. The stock `2N3904` model has round, generic-looking parameters
+  (`IS=1E-14 VAF=100 Bf=300`), so the same case was cross-checked with the
+  fitted Rohm `SST3904` (swap Q2's value): 76.5 / 79.9 mA at 330 / 100 Ω,
+  within 2%.
+- **The load current is not limited to the `R_sense` current.** Q2's emitter
+  returns to the output side of `R_sense`, so the drive it steals from the
+  BD139 base goes to the load: load = `R_sense` current + drive. At 330 Ω the
+  load current is ~81 mA when the output has drooped 1% and 107 mA into a hard
+  short, because the drive grows as the output collapses.
+- **Op-amp dissipation** is 12 mW at 330 Ω and 238 mW at 100 Ω (65 mA limit),
+  from (15 V − V(oa)) × drive. The model rails at exactly 15 V, so treat these
+  as lower bounds.
+
+**Results — recovery when the short is removed (3.2 ms):**
+
+| Cload | peak V(out) | above 10.1 V for | back within 1% |
+|-------|-------------|------------------|----------------|
+| 100 pF | 14.8 V (+48%) | ~1.6 µs | 1.9 µs |
+| 100 nF | no overshoot at `out` (V(fb) peaks 10.8–10.9 V) | — | 12–14 µs |
+
+With a light load the output jumps to within a V_BE of the op-amp's rail. It
+holds near 14.2 V for ~1 µs while the op-amp comes out of saturation, then
+slews back to 10 V. The same happens whenever a heavy load current suddenly
+stops, for example when a MOSFET DUT in the current limit is switched off. The
+peak is structural: the op-amp is at its rail when the short clears. The
+duration depends on the op-amp's overload recovery, which this model does not
+represent faithfully. Results are the same for both `Rb` values and both
+`Ilimit` settings.
+
+**Read this before citing the op-amp rows:** the model's output stage (hard
+rail at 15 V, ideal current clamp) is not the OPA2197's, so the op-amp's own
+condition in the fault is not trustworthy here. The trip point, the Q2 and
+BD139 figures, and the drive routing are.
+
+**Convergence:** the four `Rb` = 330 Ω runs need Gmin stepping to find the
+initial operating point; all succeed, with no timestep failures.
+
+```
+python3 host/parse_current_limit.py sim/10_current_limit.raw
 ```
