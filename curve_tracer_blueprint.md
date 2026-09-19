@@ -267,20 +267,37 @@ If the numbers agree within a few percent, you have demonstrated the entire chip
 |---|---|---|
 | Nucleo-F303RE (or G474RE) | 1 | $18 |
 | OPA2197 (dual, 36 V, precision) | 4 | $24 |
+| SOIC-8 to DIP adapter — the OPA2197 is SOIC-only (see below) | 4 | ~$6 |
 | BD139 / TIP31C + TO-220 heatsink | 2 | $4 |
 | 0.1% resistor assortment (1 k, 10 k, 20 k, 23.3 k, 30 k, 100 Ω, 10 k shunt) | — | $15 |
 | 1 Ω 1% 1 W shunt | 2 | $2 |
 | 15 V / 1 A wall adapter + barrel jack | 1 | $10 |
 | 22 Ω 1% (`R_iso`) | 5 | $1 |
+| 10 Ω 1% — `R_sense`, sets the ~65 mA limiter trip; no substitute | 5 | ~$1 |
+| 330 Ω — `R_B` | 5 | ~$1 |
+| 200 Ω 1 W — 50 mA load test (0.5 W dissipated; wattage matters) | 3 | ~$2 |
+| 100 nF ceramic — decoupling at every op-amp and at the BD139 collector | 20 | ~$3 |
+| 10 µF electrolytic, ≥25 V — bulk decoupling | 5 | ~$2 |
+| 10 kΩ trimpot — manual input before the DAC drives it | 3 | ~$3 |
 | BAT54S clamp diodes | 10 | $3 |
 | 1N4148 — B-E clamp; buy extras, they're also useful as DUTs for diode I-V curves | 10 | ~$1 |
 | PTC resettable fuse, 100 mA | 5 | $3 |
 | DUT devices: 2N7000, BS170, 2N3904, LEDs, Zeners (1N4148 above) | — | $8 |
 | Small-signal relays (phase 2 auto-ranging) | 3 | $9 |
 | Breadboard, jumpers, headers | — | on hand |
-| **Total** | | **~$98** |
+| **Total** | | **~$116** |
 
 Order **two of every active component.** You will destroy at least one op-amp and one pass transistor.
+
+**The OPA2197 has no DIP package.** It ships in SOIC-8 and VSSOP-8 only, so breadboard work needs a SOIC-8 to DIP adapter and fine-pitch soldering.
+
+**Bench substitute path.** Until the adapters are on hand, use an **LM324** (quad, DIP-14). It runs on the single +15 V rail with inputs down to ground, so it covers breadboard stages 3–8 of the sweep source (stages are defined in `docs/characterization.md`). The **TL074 does not work** here: its input common-mode range excludes ground, which single-supply operation requires.
+
+Substitutes are acceptable through Phase 6 for bring-up, firmware and host work. The OPA2197 must be installed before **Phase 7** parameter extraction, because every accuracy figure in §7 assumes it. What an LM324 result does *not* carry over to the OPA2197:
+
+- **Loop stability (stage 5).** The LM324's ~1 MHz GBW puts crossover about 10× lower than the OPA2197's 10 MHz, well away from the follower pole that forced `R_iso` in Phase 0 (§12). A stable LM324 loop says nothing about the OPA2197 loop. Repeat the stage 5 oscillation check and settling after the swap.
+- **Short test (stage 8).** The LM324's own output current limit is typically ~40 mA, close to the ~42 mA that `R_B` = 330 Ω asks for when the limiter trips. The op-amp may be limiting instead of the external limiter, which is the meaningless result §3.1 warns about. Treat a stage 8 short test on the LM324 as functional only; repeat it on the OPA2197.
+- **Phase 2–3 gates.** Tens of nA of input bias current and mV-level offset swamp current range 3 (100 nA – 10 µA). Rerun the "within 1%" and "5-decade span" gates on the OPA2197 before counting them as passed.
 
 ---
 
