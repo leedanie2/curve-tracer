@@ -124,9 +124,33 @@ Closing the remaining gap would need the op-amp drive down near 2 mA, i.e. `R_B`
 
 **Why `R_B` = 680 Ω is rejected — stability (sim 08, re-run 2026-09-22).** Small-signal overshoot into 100 nF / 200 Ω rises from **10.3% at 330 Ω to 21.4% at 680 Ω**, implying damping ζ ≈ 0.44 and phase margin near **44°**, and 1% settling nearly doubles (0.50 → 0.94 µs). The `R_B·C_jc` pole halves, 13.4 → **6.5 MHz**, against a ~3 MHz crossover. Nothing oscillates in simulation — but the breadboard pole below (stray input capacitance at 2–3 MHz, *not* in this sim) costs roughly 45° on its own where it sits. From 59° that is recoverable with the 2–4 pF `C_f`; from 44° it is not. §12's lesson applies directly.
 
+**Independently of stability: `R_B` never bought any reduction in pass-transistor dissipation.** Worst-case BD139 dissipation is set by `R_sense` alone. Across sim 11's nine rows it groups strictly by `R_sense` — **891–895 mW at 10 Ω, 759–762 mW at 12 Ω, 621–624 mW at 15 Ω** — with a spread of **≤0.5% across `R_B`** inside each group, and it rises very slightly with `R_B` rather than falling:
+
+| pair | `I_C` | implied `V_CE` | BD139 |
+|---|---|---|---|
+| 330 / 10 | 75.2 mA | 11.85 V | **891 mW** |
+| 680 / 10 | 73.1 mA | 12.24 V | **895 mW** |
+
+The two effects cancel: raising `R_B` lowers the threshold current 2.8%, but less total current through `R_iso` lets the emitter sit lower, raising `V_CE` by 3.3%. The product moves 0.45% — the wrong way.
+
+**So what did 680 Ω actually buy?** Only load current below the PTC's 100 mA hold (89.2 mA against 107.0 mA). §3.6 now classifies the PTC as a fire backstop against limiter failure rather than DUT protection, so **that benefit is moot** — nothing downstream depends on the load current sitting under the hold rating. This is independent support for 330 Ω, separate from the stability rejection above: even had 680 Ω passed the stability gate, it would have bought nothing that still matters.
+
 **The limiter's job has narrowed.** With the firmware limit (§4) now carrying DUT protection, the analog limiter only has to protect the *instrument*. That inverts the priority: **margin against nuisance tripping matters more than a tighter ceiling**, which is what picks 10 Ω over 12 Ω and 330 Ω over 680 Ω.
 
 **Bench verification required:** measure the actual trip threshold and confirm it against 75.2 mA, and re-measure after the circuit has been held in limit long enough to warm up — the −2 mV/°C drift is the figure most likely to disagree with simulation.
+
+**The stability gate, stated numerically.** Sizing decisions above were made against a "well damped" criterion that was never written down. It is defined here so the Phase 1 bench work has something to check against. **This is a design decision, not a measured result** — the numbers are chosen, and choosing differently is legitimate if the reasoning below is challenged.
+
+| | Gate | equivalent ζ | ~PM |
+|---|---|---|---|
+| **Simulated** (sizing decisions) | small-signal overshoot **≤ 15%** into 100 nF / 200 Ω, and no oscillation or sustained ringing at any load from 100 pF to 100 nF | ≥ 0.52 | ≳ 52° |
+| **Bench, Phase 1** (the gate that counts) | overshoot **≤ 25%** at the emitter into 100 nF, decaying to within 1% inside **5 µs**, no sustained ringing | ≥ 0.40 | ≳ 40° |
+
+**Why 15% simulated.** `R_B` = 330 Ω sits at 10.3% and 390 Ω at 12.7%, so the gate admits the chosen value with room; 470 Ω (15.6%) is marginal and 680 Ω (21.4%) is out. More to the point, §12 found this loop fails by *cliff*, not by drift: bare, it was stable to ~1 nF and oscillating by 2.2 nF. A loop with that character should be held well clear of the edge, not sized to just clear it.
+
+**Why the bench gate is looser, not tighter.** The simulation does not contain the breadboard's stray input pole at 2–3 MHz (see *Breadboard risks* below), which is real and costs phase margin the sim never charges for. A built circuit is therefore *expected* to overshoot more than its simulation; requiring it to match would fail good hardware. 25% is the point past which the remaining margin stops being trustworthy.
+
+**Two conditions on the bench measurement.** It must be taken on the **OPA2197**, not the LM324 substitute — §8 records that no transient measurement transfers across that swap, and the LM324's 0.4 V/µs slew rate would mask ringing entirely. And it must be taken **with the 2–4 pF `C_f` fitted**, since that capacitor exists specifically to cancel the stray input pole this gate is sized around. A failure without `C_f` is not a failure of `R_B`.
 
 **The 65 mA figure is typical, not guaranteed.** The OPA2197's short-circuit current varies with output voltage and temperature, so the 32 mA it supplies at 330 Ω is margin against a typical value, not a worst case. **Sim 10 models the limiter, not the op-amp's own fault behaviour.** The `UniversalOpAmp2` default 25 mA clamp is below the drive in both `R_B` cases, so sim 10 also steps it to 65 mA; either way the model's output stage (hard rail, ideal clamp) is not the OPA2197's. The trip point and Q2's numbers are trustworthy; the op-amp's condition in the fault is not. **Bench verification required:** with the limiter tripped into a short, measure the op-amp output current (the drop across `R_B`) and confirm the op-amp is not in its own current limit.
 
@@ -390,7 +414,7 @@ What else an LM324 result does *not* carry over to the OPA2197:
 | Phase | Deliverable | Gate to proceed |
 |---|---|---|
 | **0** | ~~LTspice model of sweep source~~ **DONE** — sweep source (§12) *and* difference amp CMRR + input loading (§13) | Sweep source settles cleanly into ≥100 nF with `R_iso`; diff amp buffering decided |
-| **1** | Sweep source on breadboard, current limit working | 0–10 V linear at low current, current limit trips at **~75 mA** (§3.1); re-measure warm |
+| **1** | Sweep source on breadboard, current limit working | 0–10 V linear at low current; current limit trips at **~75 mA** (§3.1), re-measured warm; **stability gate met** — ≤25% overshoot into 100 nF, 1% in 5 µs, on the OPA2197 with `C_f` fitted (§3.1) |
 | **2** | Current sense, range 1 only | Reads a known resistor within 1% |
 | **3** | Ranges 2 & 3 + Kelvin sense | 5-decade span verified against precision resistors |
 | **4** | Firmware sweep + serial CSV | First complete diode I-V curve |
