@@ -64,7 +64,14 @@ more.
   single-supply operation requires.
 - Gain resistors: 5% lab parts, measured out of circuit at
   **R_f = 19.34 kΩ** and **R_G = 9.74 kΩ**, standing in for the
-  23.3 kΩ / 10 kΩ 0.1% pair (gain 3.33) in §3.1.
+  **23.2 kΩ / 10 kΩ** 0.1% pair (gain **3.32**) in §3.1.
+  *This reference was 23.3 kΩ / gain 3.33 until Sep 22, 2026.* 23.3 kΩ is not
+  an E96 value and was never orderable; 23.2 kΩ is the stocked neighbour.
+  The six `sim/*.asc` files still carry `23.3k` and have **not** been re-run:
+  the difference is 0.4% in `R_f` and 0.3% in `R_f + R_g` (33.2 kΩ vs the
+  33.3 kΩ the sims used), which is below the precision of every result quoted
+  from them, so re-running buys nothing. Recorded here so the discrepancy is
+  not re-derived later and mistaken for an error.
 - Input from the trainer's 10 kΩ pot.
 - DMM probe tips are too large for the breadboard holes and read 0 on contact
   with the board surface. Measure at component legs or via a wire stub.
