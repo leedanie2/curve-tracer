@@ -62,8 +62,9 @@ DAC output is 0–3.3 V at ~5 mA drive. Needs to become 0–10 V at 50 mA.
 | Op-amp | OPA2197 (or OPA2196) | 36 V supply capable, rail-to-rail, precision |
 | Supply | +15 V single | Headroom above 10 V output |
 | Gain resistors | R_f = 23.2 kΩ, R_g = 10 kΩ, 0.1% | Gain = 3.32. E96 value — see below |
-| Pass transistor | BD139-16, on a TO-126 heatsink (§8); **tab = collector, tied to +15 V** | Worst-case dissipation **~0.85 W** (65 mA × 12.8 V under hard short) |
-| Base resistor | **330 Ω** | Bounds the op-amp's drive during a fault, which Q2 passes straight into the load: held-short load current **107 mA** at 330 Ω vs **143 mA** at 100 Ω, and the op-amp supplies 32 mA and stays out of its own limit (sim 10). Clamp-diode discharge: **21.9 mA** peak sink (sim 09). Overshoot into 100 nF is 10.3% small-signal / 2.2% full-scale — well damped (sim 08). See below |
+| Pass transistor | BD139-16, on a TO-126 heatsink (§8); **tab = collector, tied to +15 V** | Worst-case dissipation **~0.89 W** measured, hard short at 330 Ω / 10 Ω (sim 11) |
+| Base resistor | **330 Ω** | Bounds the op-amp's drive during a fault, which Q2 passes straight into the load: held-short load current **107 mA** at 330 Ω vs **143 mA** at 100 Ω, and the op-amp supplies 32 mA and stays out of its own limit (sim 10). Clamp-diode discharge: **21.9 mA** peak sink (sim 09). Overshoot into 100 nF is 10.3% small-signal / 2.2% full-scale — well damped (sim 08). **680 Ω was evaluated and rejected on stability** — see below |
+| Sense resistor | `R_sense` = **10 Ω**, 1% | Sets the limiter threshold at **75.2 mA** (sim 11). 12 Ω and 15 Ω were evaluated and rejected — see below |
 | B-E clamp diode | 1N4148, anode at emitter, cathode at base | BD139 `V_EBO` is 5 V. Unclamped, falling edges reverse-bias the junction to **−6.3 V** at 100 pF and **−9.0 V** at 100 nF, open load (sim 08). Clamped to −0.74 V, and it gives the follower its only active pull-down (sim 09) — see below |
 | Isolation resistor | `R_iso` = 22 Ω, emitter → load | **Required for stability — see Phase 0 findings** |
 | Compensation cap | ~~10–100 pF across R_f~~ | **REMOVED — destabilizes this topology (Phase 0)** |
@@ -86,14 +87,46 @@ A cap across `R_f` is *transimpedance* compensation. It works in a TIA because t
 
 **Trade-off:** `R_iso`'s drop is outside the loop and therefore uncorrected — 1.1 V at 50 mA. Harmless here *only because* `V_DS` is Kelvin-sensed at the DUT (§3.4). The stability fix and the Kelvin-sensing requirement are coupled decisions, not independent ones.
 
-**Base resistor sizing — what `R_B` actually does (sim 10 plus analysis).** An earlier version of this section argued that at 100 Ω the op-amp's own protection would engage first and make the limit test meaningless. That was wrong. The limiter's threshold is Q2's V_BE across `R_sense`, and op-amp drive enters it only logarithmically, as V_T·ln of Q2's collector-current ratio. Sim 10 confirms it: roughly doubling the drive, from 32 to 65 mA, moves the `R_sense` current from 75.2 to 77.8 mA (3%; V_T·ln 2 predicts 1.8 mA). `R_B` still matters, for four reasons:
+**Base resistor sizing — what `R_B` actually does (sim 10 plus analysis).** An earlier version of this section argued that at 100 Ω the op-amp's own protection would engage first and make the limit test meaningless. That was wrong. The limiter's threshold is Q2's V_BE across `R_sense`, and op-amp drive enters it only logarithmically, as V_T·ln of Q2's collector-current ratio. Sim 10 confirms it: roughly doubling the drive, from 32 to 65 mA, moves the `R_sense` current from 75.2 to 77.8 mA (3%; V_T·ln 2 predicts 1.8 mA).
+
+**Sim 11 is the third independent confirmation of that same logarithmic term, and the first to measure it across `R_B`.** Implied V_BE (`I(R_sense) × R_sense`) is flat across `R_sense` but falls with `R_B` as the drive falls:
+
+| `R_B` | drive | implied V_BE at `R_sense` = 10 / 12 / 15 Ω | step |
+|---|---|---|---|
+| 330 Ω | 32.2 mA | 752.0 / 752.4 / 753.0 mV | — |
+| 470 Ω | 23.3 mA | 741.0 / 741.6 / 742.5 mV | −11 mV (V_T·ln predicts −8.4) |
+| 680 Ω | 16.5 mA | 730.8 / 730.8 / 732.0 mV | −10 mV (V_T·ln predicts −9.0) |
+
+Flat to within **0.1% across `R_sense`** at fixed `R_B` — that is the threshold formula confirmed directly. The ~10 mV fall per `R_B` step is the logarithmic drive term, and V_T·ln of the drive ratio predicts it to within a few mV (the 470 → 680 step agrees closely, 9.0 against 10; the 330 → 470 step predicts 8.4 against a measured 11, so the agreement is order-of-magnitude, not exact). **Quote V_BE for the `R_B` you actually build:** at 330 Ω it is 752 mV, not the 731 mV of the 680 Ω rows. `R_B` still matters, for four reasons:
 
 - **It sets part of the short-circuit current directly.** Q2's emitter returns to the output side of `R_sense`, so the base drive Q2 diverts is delivered to the load. Held-short load current = `R_sense` current + op-amp drive: **107 mA at 330 Ω, 143 mA at 100 Ω** (sim 10, op-amp limit set to the OPA2197's 65 mA typical). This is the largest effect and the main reason `R_B` should be large. It also means the load current keeps rising after the limiter engages: at 330 Ω it is ~81 mA when the output has drooped 1% and 107 mA into a hard short. At the load the limit is neither constant-current nor foldback.
 - **It bounds the op-amp's operating point during a sustained fault.** At 330 Ω the op-amp supplies 32 mA with its output near 14.6 V and stays out of its own limit, dissipating ~12 mW. At 100 Ω it sits in its 65 mA limit with its output near 11.3 V, dissipating ~0.24 W — roughly a 30 °C rise in SOIC-8 at ~120 °C/W, on a circuit that will be shorted repeatedly. In a short at the load the BD139 base sits at ~4–5 V, not 0.85 V, because the load current's drop across `R_iso` and `R_sense` lifts it. *These op-amp figures are analysis-grade:* the model rails at exactly 15 V (`Rail=0`) with an ideal current clamp, so its dissipation is a lower bound.
 - **It bounds Q2's collector current and dissipation:** 32 mA / 53 mW at 330 Ω, 65 mA / 109 mW at 100 Ω (sim 10).
 - **It sets the `R_B · C_jc` pole** (below; ~13 MHz at 330 Ω, unchanged).
 
-**Open item from sim 10:** the `R_sense` current limits at **~75 mA, not ~65 mA**. Q2's V_BE is ~0.75 V at these collector currents, not 0.65 V; the generic `2N3904` and the fitted Rohm `SST3904` models agree to within 2%. The ~65 mA figures in the pass-transistor row, the current-limiting paragraphs below, the §8 BOM, the Phase 1 gate (§9) and §12 predate sim 10 and are not yet updated.
+**The ≤65 mA load target is abandoned. It is not achievable in this topology.** Every "~65 mA" figure in earlier drafts was a target, never a measurement; the measured figures replace it throughout. Three facts close the question:
+
+- **The threshold is `V_BE / R_sense`,** where V_BE is Q2's base-emitter drop at its operating collector current — ~752 mV at `R_B` = 330 Ω, not the 650 mV the original target assumed. That single error is most of the gap. The generic `2N3904` and the fitted Rohm `SST3904` models agree to within 2%.
+- **Load current ≈ threshold + op-amp drive,** because Q2's emitter returns to the output side of `R_sense`, so the drive Q2 diverts is delivered to the load. Sim 11 records a systematic **0.2–0.4 mA less** than that sum on every row, so treat it as a close approximation, not an identity.
+- **`R_sense` cannot exceed ~12 Ω.** The threshold falls as `R_sense` rises, and 15 Ω puts it at **48.8–50.2 mA** — inside the 50 mA full-scale sweep spec, so legitimate sweeps would trip the limiter. That sets a hard ceiling on how low the threshold can be pushed.
+
+Closing the remaining gap would need the op-amp drive down near 2 mA, i.e. `R_B` ≈ 5 kΩ, which puts the `R_B·C_jc` pole at **880 kHz — below the ~3 MHz crossover.** The loop would not survive it. **The two targets are incompatible; the load target is the one that yields.**
+
+**Chosen pair: `R_B` = 330 Ω, `R_sense` = 10 Ω.** Threshold **75.2 mA**, hard-short load current **107.0 mA**, **50% margin** over the 50 mA full-scale spec.
+
+| pair | threshold | load, hard short | margin over 50 mA | small-signal overshoot |
+|---|---|---|---|---|
+| **330 / 10** | **75.2 mA** | **107.0 mA** | **50%** | **10.3%** |
+| 680 / 10 | 73.1 mA | 89.2 mA | 46% | 21.4% — rejected |
+| 680 / 12 | 60.9 mA | 77.5 mA | 22% | 21.4% — rejected |
+
+**Why `R_sense` = 12 Ω is rejected — thermal margin, not performance.** Q2's V_BE drifts **−2 mV/°C**, so a 20 °C rise costs 40 mV. At 12 Ω that takes the threshold from 60.9 mA to **~57.6 mA — only 15% over a full-scale sweep**, close enough to nuisance-trip a legitimate 50 mA measurement. At 10 Ω the same rise gives 71.2 mA, still 42% clear. And 20 °C is conservative: Q2 sits next to a BD139 dissipating **0.89 W** under a sustained short.
+
+**Why `R_B` = 680 Ω is rejected — stability (sim 08, re-run 2026-09-22).** Small-signal overshoot into 100 nF / 200 Ω rises from **10.3% at 330 Ω to 21.4% at 680 Ω**, implying damping ζ ≈ 0.44 and phase margin near **44°**, and 1% settling nearly doubles (0.50 → 0.94 µs). The `R_B·C_jc` pole halves, 13.4 → **6.5 MHz**, against a ~3 MHz crossover. Nothing oscillates in simulation — but the breadboard pole below (stray input capacitance at 2–3 MHz, *not* in this sim) costs roughly 45° on its own where it sits. From 59° that is recoverable with the 2–4 pF `C_f`; from 44° it is not. §12's lesson applies directly.
+
+**The limiter's job has narrowed.** With the firmware limit (§4) now carrying DUT protection, the analog limiter only has to protect the *instrument*. That inverts the priority: **margin against nuisance tripping matters more than a tighter ceiling**, which is what picks 10 Ω over 12 Ω and 330 Ω over 680 Ω.
+
+**Bench verification required:** measure the actual trip threshold and confirm it against 75.2 mA, and re-measure after the circuit has been held in limit long enough to warm up — the −2 mV/°C drift is the figure most likely to disagree with simulation.
 
 **The 65 mA figure is typical, not guaranteed.** The OPA2197's short-circuit current varies with output voltage and temperature, so the 32 mA it supplies at 330 Ω is margin against a typical value, not a worst case. **Sim 10 models the limiter, not the op-amp's own fault behaviour.** The `UniversalOpAmp2` default 25 mA clamp is below the drive in both `R_B` cases, so sim 10 also steps it to 65 mA; either way the model's output stage (hard rail, ideal clamp) is not the OPA2197's. The trip point and Q2's numbers are trustworthy; the op-amp's condition in the fault is not. **Bench verification required:** with the limiter tripped into a short, measure the op-amp output current (the drop across `R_B`) and confirm the op-amp is not in its own current limit.
 
@@ -118,9 +151,9 @@ At 100 nF the unclamped τ matches `C·(R_L ‖ 33.3 kΩ)` to 3 significant figu
 
 **Not yet simulated:** both sims step 1 V → 9 V. Below ~1 V the follower's bias current (V_E / 33.3 kΩ through the feedback divider) falls into the µA range, where `r_e = V_T / I_E` reaches kilohms, so the **1.3 µs Phase 0 settling figure is still one operating point**, not a specification. The 1N4148 is LTspice's stock `standard.dio` model (`Cjo` = 4 pF, `tt` = 20 ns). Its `tt` implies ~14 ns reverse recovery against the datasheet's 4 ns, so the sim is pessimistic there; it does not model reverse breakdown, which the clamp never approaches.
 
-**Current limiting (constant-current limit — not foldback):** series 10 Ω sense resistor in the pass transistor emitter + a second transistor whose base-emitter sees that drop; at ~65 mA it turns on and steals base drive. Non-negotiable — students and mistakes will short the DUT terminals.
+**Current limiting (constant-current limit — not foldback):** series 10 Ω sense resistor in the pass transistor emitter + a second transistor whose base-emitter sees that drop; at **75.2 mA** (sim 11) it turns on and steals base drive. Non-negotiable — students and mistakes will short the DUT terminals.
 
-**This is a constant-current limit, not foldback.** Foldback requires an output-to-base divider that *reduces* the limit threshold as the output collapses. The circuit as drawn has no such divider, so under a hard short it holds at ~65 mA instead of folding back to a lower value — which is exactly why worst-case dissipation is 0.85 W (65 mA × 12.8 V) and not lower. Do not call it foldback in the README or specs.
+**This is a constant-current limit, not foldback.** Foldback requires an output-to-base divider that *reduces* the limit threshold as the output collapses. The circuit as drawn has no such divider, so under a hard short the `R_sense` current holds at **75.2 mA** instead of folding back to a lower value — which is exactly why worst-case BD139 dissipation is **~0.89 W** (sim 11) and not lower. Do not call it foldback in the README or specs.
 
 **Feedback must be tapped after the 10 Ω sense resistor,** not before it. Tapping ahead of the sense resistor puts the sense drop inside the loop, so the op-amp corrects it away and the limiter never sees the voltage it needs to trip on.
 
@@ -176,15 +209,30 @@ This is a genuine four-wire measurement, and explaining why it's necessary is a 
 
 ### 3.6 Protection (required, not optional)
 
-- Constant-current limit on the sweep source (§3.1)
-- Series PTC resettable fuse (100 mA hold) in the drain path
+- Constant-current limit on the sweep source (§3.1) — protects the **instrument**
+- Firmware current limit (§4, `i_limit_ma`) — protects the **DUT**
+- Series PTC resettable fuse (RXEF010, 100 mA hold) in the drain path — **fault/fire backstop only; it does not protect the DUT**
 - Clamp diodes on both ADC inputs
 - Gate series resistor (1 kΩ) + Zener clamp to protect against ESD-sensitive parts
 - DUT socket: 3-pin ZIF or screw terminal, clearly labeled G/D/S
 
+**Division of responsibility — three mechanisms, three jobs, no substitutions.**
+
+| Mechanism | Protects | Timescale | Trips at |
+|---|---|---|---|
+| Analog limiter (§3.1) | the **instrument** | ~µs, continuous | 75.2 mA at `R_sense` |
+| Firmware limit (§4) | the **DUT** | one measurement interval, ~ms | `i_limit_ma`, per device |
+| PTC (RXEF010) | against **limiter failure** | seconds | 200 mA guaranteed |
+
+**Neither of the first two substitutes for the other.** The analog limiter reacts in microseconds but its threshold is fixed in hardware at 75.2 mA — far above what a small-signal DUT survives, and not adjustable per device. The firmware limit is per-device and arbitrarily low, but it can only act *after* a measurement completes.
+
+**The gap is real and must be stated.** Firmware cannot react faster than one measurement interval: `settle_us` plus 64× oversampling, on the order of **1 ms** per point. Between the DAC step and the comparison, the DUT sees whatever the analog limiter allows — up to 75.2 mA through `R_sense`, and up to 107 mA at the load into a hard short. **A fragile DUT can therefore be destroyed by a single sweep point before firmware sees it.** Lowering `i_limit_ma` does not close this gap; it only stops the *second* bad point. For genuinely fragile parts the mitigations are a lower `V_max`, a finer step so no single step is a large jump, or an external series resistor — not a firmware value.
+
 **Short-recovery overshoot (sim 10).** When a heavy load current stops abruptly, the op-amp is at its rail and the output overshoots before the loop recovers. At 100 pF the load node reaches 14.8 V on a 10 V setpoint (+48%), holds near 14.2 V for ~1 µs, and settles within 1% by 1.9 µs. At 100 nF there is no overshoot and recovery takes 12–14 µs. The peak is structural and trustworthy; the duration depends on the op-amp model's overload recovery and is not. Sim 11 gives the same peak (+48%) for every `R_B` / `R_sense` pair it tried, so resizing the limiter does not change it. This is not only a fault case: a MOSFET DUT sitting in the current limit and then switching off produces the same edge. Every DUT is selected against the instrument's 10 V ceiling (§1 non-goals), so 14.8 V at the socket can exceed a DUT's rating. Mitigation is unresolved; bench-verify the real magnitude in Phase 1 before relying on the PTC or the ADC clamps to cover it.
 
-**PTC and the limiter interact — unplanned, but acceptable.** The PTC is specified at 100 mA *hold*. With `R_B` = 330 Ω and `R_sense` = 10 Ω, the load current in a sustained short is **107 mA** (sim 10), just above the hold rating. The PTC was meant as a backstop if the limiter fails, not as part of normal short behavior; this interaction was not designed in. It is also not a guaranteed trip: a PTC is only guaranteed to open at its *trip* current (typically ~2× hold), so between 100 mA and the trip rating it may or may not open, depending on temperature and time. Either outcome is safe — the limiter already bounds the current, and a tripped PTC only removes it — so the interaction is acceptable. After the limiter is resized (sim 11), the short-circuit load current may fall below the hold rating, and the PTC then goes back to being a pure backstop.
+**The PTC does not protect the DUT. Do not count it as DUT protection.** The RXEF010 holds **100 mA** and is only guaranteed to open at its **200 mA** trip current. The limiter's sustained-short load current is **107 mA** (sim 11), which sits between the two: above hold, far below trip. It may or may not open there, depending on ambient temperature and how long the fault persists, and either outcome is safe — the limiter already bounds the current, and a tripped PTC only removes it.
+
+**The problem is that no PTC can fill this role.** A device that reliably tripped near the limiter's 107 mA would also trip during a legitimate 50 mA sweep, because PTC hold ratings are specified at 23 °C and derate sharply with ambient — a part chosen to open at 107 mA has a hold current near the top of the instrument's own operating range. **There is no PTC that trips on a DUT-damaging current but not on a valid measurement.** The PTC is therefore reclassified: it is a **fault and fire backstop** against a failure *of the limiter itself* — a shorted Q2, a mis-stuffed `R_sense` — and nothing else. DUT protection is the firmware limit's job (§4).
 
 ---
 
@@ -200,10 +248,16 @@ for each V_GS in step_list:
         delay(settle_us)
         I = oversample(ADC1, 64)
         V = oversample(ADC2, 64)
+        if I > i_limit_ma:              # DUT protection — see §3.6
+            set DAC2 = 0
+            emit_csv_error("ilimit", V_GS, V, I)
+            break out of both loops
         emit_csv(V_GS, V, I, range)
         if pulsed_mode: set DAC2 = 0; delay(duty_off_us)
     set DAC2 = 0
 ```
+
+**The current check is not optional and belongs before `emit_csv`, not after.** Every sweep point already measures current, so the check costs one comparison. Zeroing DAC2 must happen before the point is emitted and before the next `set DAC2`, or the sweep walks one further up the curve into a DUT that is already over its ceiling.
 
 **Key parameters to expose and tune:**
 
@@ -213,6 +267,7 @@ for each V_GS in step_list:
 | `N` (points/sweep) | 200 | Tradeoff: resolution vs. total sweep time vs. heating |
 | `duty_off_us` | 10 ms | Pulsed mode: lets the DUT cool between points |
 | `oversample_n` | 64 | Noise floor vs. speed |
+| `i_limit_ma` | 60 | **DUT protection ceiling, per device, from the sweep config.** Exceeded → zero DAC2 and abort the sweep. The default sits above the 50 mA full-scale spec so a legitimate sweep cannot trip it, and below the analog limiter so firmware acts first on anything it can catch (§3.6). Fragile parts want a much lower value — set it per DUT, not once |
 
 **Pulsed vs. DC mode is a headline feature.** In DC mode a power device self-heats during the sweep, and its curves visibly droop in saturation — you're measuring thermal effects, not the device. Pulsed mode (bias applied only during the measurement window, ~1% duty cycle) suppresses this. **Overlaying a DC sweep and a pulsed sweep of the same device on one plot is one of the best figures in the project.**
 
@@ -293,7 +348,7 @@ If the numbers agree within a few percent, you have demonstrated the entire chip
 | 1 Ω 1% 1 W shunt | 2 | $2 |
 | 15 V / 1 A wall adapter + barrel jack | 1 | $10 |
 | 22 Ω 1% (`R_iso`) | 5 | $1 |
-| 10 Ω 1% — `R_sense`, sets the ~65 mA limiter trip; no substitute | 5 | ~$1 |
+| 10 Ω 1% — `R_sense`, sets the **75.2 mA** limiter trip; no substitute (§3.1) | 5 | ~$1 |
 | 330 Ω — `R_B` | 5 | ~$1 |
 | 200 Ω 1 W — 50 mA load test (0.5 W dissipated; wattage matters) | 3 | ~$2 |
 | 100 nF ceramic — decoupling at every op-amp and at the BD139 collector | 20 | ~$3 |
@@ -335,7 +390,7 @@ What else an LM324 result does *not* carry over to the OPA2197:
 | Phase | Deliverable | Gate to proceed |
 |---|---|---|
 | **0** | ~~LTspice model of sweep source~~ **DONE** — sweep source (§12) *and* difference amp CMRR + input loading (§13) | Sweep source settles cleanly into ≥100 nF with `R_iso`; diff amp buffering decided |
-| **1** | Sweep source on breadboard, current limit working | 0–10 V linear at low current, current limit trips at ~65 mA |
+| **1** | Sweep source on breadboard, current limit working | 0–10 V linear at low current, current limit trips at **~75 mA** (§3.1); re-measure warm |
 | **2** | Current sense, range 1 only | Reads a known resistor within 1% |
 | **3** | Ranges 2 & 3 + Kelvin sense | 5-decade span verified against precision resistors |
 | **4** | Firmware sweep + serial CSV | First complete diode I-V curve |
@@ -400,7 +455,7 @@ Simulation files: `sim/01_sweep_source_compensation.asc` (2N2222), `sim/02_sweep
 
 **Previously open, now closed:** difference amplifier CMRR simulation — completed Sep 18, 2026, results in **§13**.
 
-**Bench items carried forward to Phase 1:** confirm `R_iso` behavior with the real BD139 and real breadboard parasitics; measure actual settling; verify the current limit trips at ~65 mA.
+**Bench items carried forward to Phase 1:** confirm `R_iso` behavior with the real BD139 and real breadboard parasitics; measure actual settling; verify the current limit trips at **~75 mA** (sim 11; the ~65 mA in earlier drafts was a target, never a measurement — see §3.1).
 
 ---
 

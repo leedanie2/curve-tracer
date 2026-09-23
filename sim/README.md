@@ -138,8 +138,8 @@ needs the vendor model.
 
 ## 08_sweep_source_rb_sweep.asc — base resistor and falling edge, no clamp
 
-**Sweeps:** three nested steps, 32 runs in all:
-- `Rb` over 100, 220, 330 and 390 Ω.
+**Sweeps:** three nested steps, 48 runs in all:
+- `Rb` over 100, 220, 330, 390, 470 and 680 Ω (470 and 680 added 2026-09-22).
 - Four load cases, stepped as `lcase` 1–4 with `Cload` and `RL` set by
   `table()`: 100 nF / 200 Ω, 100 nF / open (1 GΩ), 100 pF / 200 Ω, 100 pF / open.
 - Two drive cases, stepped as `tcase` with the `V2` pulse levels set by
@@ -152,24 +152,41 @@ LTspice sets `.tran` once per run, not per step, so both drive cases share
 finish while keeping the 10 ns max timestep (blueprint §12, item 3); the
 small-signal measurements only use 0–90 µs. `.save` limits output to
 `V(emitter)`, `V(n004)` (the BD139 base, which has no FLAG) and `I(Rbase)`.
-Even so the `.raw` is ~1.3 GB and a batch run takes ~7 min.
+Even so the `.raw` is ~1.8 GB and a batch run takes ~20 min. (It was ~1.3 GB
+and ~7 min at the original four `Rb` values.) The `tcase` = 2 / `lcase` = 2
+steps — full scale into 100 nF with an open load — dominate the runtime: a
+3.33 ms passive fall resolved at a 10 ns maximum timestep.
 
 **Question:** which base resistor, and what does the falling edge do when the
 follower can only source current?
 
 **Results — `Rb` vs small-signal overshoot** (`tcase` = 1, 100 nF / 200 Ω;
-batch run, 2026-09-18):
+batch runs 2026-09-18 and 2026-09-22, the first four rows reproduced exactly):
 
-| Rb | Overshoot | 1% settling |
-|----|-----------|-------------|
-| 100 Ω | 0.28% | 0.23 µs |
-| 220 Ω | 5.28% | 0.36 µs |
-| 330 Ω | 10.34% | 0.50 µs |
-| 390 Ω | 12.73% | 0.56 µs |
+| Rb | Overshoot | 1% settling | ζ (2nd-order) | implied PM |
+|----|-----------|-------------|---------------|------------|
+| 100 Ω | 0.28% | 0.23 µs | 0.88 | ~88° |
+| 220 Ω | 5.28% | 0.36 µs | 0.68 | ~68° |
+| **330 Ω** | **10.34%** | **0.50 µs** | **0.59** | **~59°** |
+| 390 Ω | 12.73% | 0.56 µs | 0.55 | ~55° |
+| 470 Ω | 15.57% | 0.62 µs | 0.51 | ~51° |
+| 680 Ω | 21.35% | 0.94 µs | 0.44 | ~44° |
 
-All four are well damped; damping does not set `Rb`. It is set by op-amp
-current when the current limiter trips (~13.95 V / `Rb`), which this netlist
-does not model — see blueprint §3.1. That picks **330 Ω**.
+The 470 and 680 Ω rows were added in a re-run on **2026-09-22** (48 steps,
+~20 min, 2.0 GB `.raw`) to test whether a larger `Rb` could cut the
+short-circuit load current; see 11. Nothing oscillates at any `Rb`, and the
+100 pF cases show no overshoot at all. But ζ falls monotonically, and at
+680 Ω the `Rb·C_jc` pole has halved to 6.5 MHz against a ~3 MHz crossover.
+
+**680 Ω was rejected.** Not for anything in this sim, which it passes, but
+because the breadboard input pole at 2–3 MHz (blueprint §3.1) is *not*
+modelled here and costs ~45° where it sits. From 330 Ω's ~59° that is
+recoverable with the prescribed 2–4 pF `C_f`; from ~44° it is not.
+
+Up to 390 Ω, damping does not set `Rb`; op-amp current does, when the limiter
+trips (~13.95 V / `Rb`), which this netlist does not model — see blueprint
+§3.1. Beyond 470 Ω damping becomes the binding constraint. Both point to
+**330 Ω**.
 
 At full scale (`tcase` = 2), rising edges are slew-limited at 9.1–9.95 V/µs
 and settle to 1% in 0.87–1.18 µs across all four loads and all four `Rb`.
