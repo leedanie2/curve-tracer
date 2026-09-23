@@ -176,6 +176,10 @@ This is a genuine four-wire measurement, and explaining why it's necessary is a 
 - Gate series resistor (1 kΩ) + Zener clamp to protect against ESD-sensitive parts
 - DUT socket: 3-pin ZIF or screw terminal, clearly labeled G/D/S
 
+**Short-recovery overshoot (sim 10).** When a heavy load current stops abruptly, the op-amp is at its rail and the output overshoots before the loop recovers. At 100 pF the load node reaches 14.8 V on a 10 V setpoint (+48%), holds near 14.2 V for ~1 µs, and settles within 1% by 1.9 µs. At 100 nF there is no overshoot and recovery takes 12–14 µs. The peak is structural and trustworthy; the duration depends on the op-amp model's overload recovery and is not. Sim 11 gives the same peak (+48%) for every `R_B` / `R_sense` pair it tried, so resizing the limiter does not change it. This is not only a fault case: a MOSFET DUT sitting in the current limit and then switching off produces the same edge. Every DUT is selected against the instrument's 10 V ceiling (§1 non-goals), so 14.8 V at the socket can exceed a DUT's rating. Mitigation is unresolved; bench-verify the real magnitude in Phase 1 before relying on the PTC or the ADC clamps to cover it.
+
+**PTC and the limiter interact — unplanned, but acceptable.** The PTC is specified at 100 mA *hold*. With `R_B` = 330 Ω and `R_sense` = 10 Ω, the load current in a sustained short is **107 mA** (sim 10), just above the hold rating. The PTC was meant as a backstop if the limiter fails, not as part of normal short behavior; this interaction was not designed in. It is also not a guaranteed trip: a PTC is only guaranteed to open at its *trip* current (typically ~2× hold), so between 100 mA and the trip rating it may or may not open, depending on temperature and time. Either outcome is safe — the limiter already bounds the current, and a tripped PTC only removes it — so the interaction is acceptable. After the limiter is resized (sim 11), the short-circuit load current may fall below the hold rating, and the PTC then goes back to being a pure backstop.
+
 ---
 
 ## 4. Firmware (STM32, C)

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Current-limiter metrics per step from sim 10's .raw.
+"""Current-limiter metrics per step from sim 10/11's .raw.
 
 Usage: python3 host/parse_current_limit.py sim/10_current_limit.raw
+       python3 host/parse_current_limit.py sim/11_limit_sizing.raw
 
 Sim 10 holds the output at its setpoint, ramps the load from open to a short,
 holds the short, then removes it. Node names follow the netlist: e_bjt is the
@@ -90,7 +91,7 @@ def main():
         return 1
 
     names, time, data = read_raw(path)
-    params, _, notes = read_log(os.path.splitext(path)[0] + ".log")
+    params, meas, notes = read_log(os.path.splitext(path)[0] + ".log")
     wanted = ("V(fb)", "V(out)", "V(base)", "V(e_bjt)", "V(oa)",
               "I(Rbase)", "I(Rsense)", "Ic(Q2)", "Ib(Q2)")
     cols = {k: names.index(k) - 1 for k in wanted}
@@ -100,10 +101,11 @@ def main():
         sig = {k: data[idx, c].astype(np.float64) for k, c in cols.items()}
         r = measure(time[idx], sig)
         p = params[i] if i < len(params) else {}
-        ilim = float(p.get("ilim", "nan"))
+        # ilim is a step in sim 10; sim 11 fixes it and logs it as .meas ilimit
+        fixed = meas.get("ilimit", [])
+        ilim = float(p["ilim"]) if "ilim" in p else (fixed[i] if i < len(fixed) else float("nan"))
         r["limited"] = r["i_op"] >= 0.98 * ilim
-        r["label"] = (f"{i + 1}  Rb={p.get('rb', '?'):>3}  Ilim={ilim * 1e3:.0f}mA  "
-                      f"C={float(p.get('cload', 'nan')) * 1e9:g}nF")
+        r["label"] = f"{i + 1}  " + "  ".join(f"{k}={v}" for k, v in p.items())
         r["conv"] = notes[i] if i < len(notes) else "?"
         rows.append(r)
     w = max(len(r["label"]) for r in rows)

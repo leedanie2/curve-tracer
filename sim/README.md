@@ -1,7 +1,7 @@
 # sim/ — LTspice experiments
 
 One file per experiment, and that file is the source of truth. Circuits with
-topology worth seeing are LTspice schematics (`.asc`: 00–03, 08–10); circuits
+topology worth seeing are LTspice schematics (`.asc`: 00–03, 08–11); circuits
 that are just a resistor network are plain netlists (`.cir`: 04–07). Vendor
 models live in `models/`. LTspice's `.log`, `.raw`, `.db`, `.op.raw` and `.net`
 outputs are regenerable and gitignored.
@@ -311,4 +311,61 @@ initial operating point; all succeed, with no timestep failures.
 
 ```
 python3 host/parse_current_limit.py sim/10_current_limit.raw
+```
+
+## 11_limit_sizing.asc — joint R_B / R_sense sizing
+
+**Circuit:** identical to 10, with `R_sense` set by the parameter `Rs`.
+
+**Sweeps:** `Rb` over 330, 470 and 680 Ω × `Rs` over 10, 12 and 15 Ω ×
+setpoint (`vin` 3.0 V → 10 V at `fb`; `vin` 3.3 V, the DAC's full scale →
+11 V at `fb`). That is 18 runs. The op-amp `Ilimit` is fixed at 65 mA (the
+OPA2197's typical) and `Cload` at 100 pF; the sim 10 short-circuit figures did
+not depend on `Cload`. The load profile is the same as 10. The .raw is ~280 MB
+and a batch run takes ~30 s.
+
+**Question:** the spec is now **load** current in a hard short, ≤ 65 mA. Load
+current = `R_sense` current + op-amp drive, because Q2's emitter is on the
+output side of `R_sense`. Which pair gets there?
+
+**Results** (batch run, 2026-09-18). "Onset" is the load current when `V(fb)`
+first droops 1% below its setpoint during the ramp, i.e. where limiting begins
+to bite. Everything else is the held short and does not depend on the
+setpoint.
+
+| Rb | Rs | load, hard short | I(R_sense) | op-amp drive | Q2 | BD139 | onset @ 10 V | onset @ 11 V |
+|----|----|------------------|------------|--------------|----|-------|--------------|--------------|
+| 330 | 10 | 107.0 mA | 75.2 mA | 32.2 mA | 53 mW | 891 mW | 81.2 mA | 77.3 mA |
+| 470 | 10 | 97.1 mA | 74.1 mA | 23.3 mA | 38 mW | 895 mW | 77.3 mA | 74.2 mA |
+| 680 | 10 | 89.2 mA | 73.1 mA | 16.5 mA | 26 mW | 895 mW | 74.0 mA | 71.6 mA |
+| 330 | 12 | 95.4 mA | 62.7 mA | 32.9 mA | 54 mW | 759 mW | 69.4 mA | 65.7 mA |
+| 470 | 12 | 85.4 mA | 61.8 mA | 23.9 mA | 39 mW | 762 mW | 65.6 mA | 62.7 mA |
+| 680 | 12 | 77.5 mA | 60.9 mA | 16.9 mA | 27 mW | 762 mW | 62.5 mA | 60.3 mA |
+| 330 | 15 | 83.7 mA | 50.2 mA | 33.7 mA | 55 mW | 621 mW | 57.5 mA | 54.0 mA |
+| 470 | 15 | 73.7 mA | 49.5 mA | 24.4 mA | 40 mW | 624 mW | 53.9 mA | 51.2 mA |
+| 680 | 15 | **65.8 mA** | 48.8 mA | 17.3 mA | 28 mW | 623 mW | 51.0 mA | **49.0 mA** |
+
+The op-amp stays out of its own 65 mA limit in every case. Its dissipation is
+3–13 mW, a lower bound because the model rails at exactly 15 V. The
+short-removal overshoot is +47.9 to +48.3% for every pair, the same as 10.
+The 330 / 10 row reproduces sim 10's matching row exactly.
+
+**Read this before choosing a pair:** only 680 / 15 reaches the ≤ 65 mA
+load-current target, and at the 11 V spec corner it starts limiting at
+**49.0 mA**, below the 50 mA sweep spec.
+
+The two targets conflict in this topology. The gap between onset and hard
+short is roughly the op-amp drive current, which grows as the output collapses
+and base headroom opens up. That gap is still ~17 mA at 680 Ω. Closing it to
+~10 mA would need `Rb` near 1.4 kΩ, which puts the `Rb·C_jc` pole at ~3 MHz,
+on top of the ~3 MHz crossover.
+
+Onset is also lower at the higher setpoint, because less headroom above the
+base means less drive. On top of that, Q2's V_BE falls about 2 mV/°C, which
+lowers every onset figure as Q2 warms.
+
+**Convergence:** 13 of the 18 runs need Gmin stepping; all succeed.
+
+```
+python3 host/parse_current_limit.py sim/11_limit_sizing.raw
 ```
