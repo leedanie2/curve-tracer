@@ -10,7 +10,7 @@
 
 | Parameter | Target | Notes |
 |---|---|---|
-| Sweep voltage (V_DS / V_AK) | 0 – 10 V (low current); **~9.85 V max at 50 mA** | 4096 steps (12-bit DAC), ~2.7 mV/step. Full 10 V is not reachable at full current — see §3.1 |
+| Sweep voltage (V_DS / V_AK) | 0 – 9.9 V (low current); **~8.75 V max at 50 mA** | 4096 steps (12-bit DAC), ~2.42 mV/step. At gain 3.00, 10 V is not reachable at **any** current — see §3.1 |
 | Sweep current | 0 – 50 mA | Covers small-signal MOSFETs, BJTs, diodes, LEDs |
 | Step voltage (V_GS) | 0 – 10 V | Second DAC channel |
 | Current measurement range | 100 nA – 50 mA | 3 switchable ranges, ~5.7 decades |
@@ -34,7 +34,7 @@
                     │  USB CDC ──► host             │
                     └───────────────────────────────┘
 
-  DAC2 ──► [scale ×3.33] ──► [composite power buffer] ──► [shunt] ──┬──► DUT drain
+  DAC2 ──► [scale ×3.00] ──► [composite power buffer] ──► [shunt] ──┬──► DUT drain
                                                           │         │
                                                     [diff amp]   [Kelvin sense
                                                           │        + divider + buffer]
@@ -55,18 +55,22 @@
 
 DAC output is 0–3.3 V at ~5 mA drive. Needs to become 0–10 V at 50 mA.
 
-**Topology:** non-inverting amp (gain 3.33) with an emitter-follower pass transistor **inside the feedback loop** (composite amplifier). Feedback taken from the follower's emitter, so the op-amp corrects the follower's V_BE drop and nonlinearity.
+**Topology:** non-inverting amp (gain 3.00) with an emitter-follower pass transistor **inside the feedback loop** (composite amplifier). Feedback taken from the follower's emitter, so the op-amp corrects the follower's V_BE drop and nonlinearity.
 
 | Component | Value | Rationale |
 |---|---|---|
 | Op-amp | OPA2197 (or OPA2196) | 36 V supply capable, rail-to-rail, precision |
 | Supply | +15 V single | Headroom above 10 V output |
-| Gain resistors | R_f = 23.3 kΩ, R_g = 10 kΩ, 0.1% | Gain = 3.33 |
+| Gain resistors | R_f = 20 kΩ, R_g = 10 kΩ, 0.1% | Gain = 3.00. Bench-measured 19.89 kΩ / 9.94 kΩ → 3.001 — see below |
 | Pass transistor | BD139 or TIP31C, on heatsink; **tab = collector, tied to +15 V** | Worst-case dissipation **~0.85 W** (65 mA × 12.8 V under hard short) |
 | Base resistor | **330 Ω** | Bounds the op-amp's drive during a fault, which Q2 passes straight into the load: held-short load current **107 mA** at 330 Ω vs **143 mA** at 100 Ω, and the op-amp supplies 32 mA and stays out of its own limit (sim 10). Clamp-diode discharge: **21.9 mA** peak sink (sim 09). Overshoot into 100 nF is 10.3% small-signal / 2.2% full-scale — well damped (sim 08). See below |
 | B-E clamp diode | 1N4148, anode at emitter, cathode at base | BD139 `V_EBO` is 5 V. Unclamped, falling edges reverse-bias the junction to **−6.3 V** at 100 pF and **−9.0 V** at 100 nF, open load (sim 08). Clamped to −0.74 V, and it gives the follower its only active pull-down (sim 09) — see below |
 | Isolation resistor | `R_iso` = 22 Ω, emitter → load | **Required for stability — see Phase 0 findings** |
 | Compensation cap | ~~10–100 pF across R_f~~ | **REMOVED — destabilizes this topology (Phase 0)** |
+
+**Gain is 3.00, not 3.33 — set by what is stock.** 23.3 kΩ is not a standard value and was not ordered; the 0.1% part on hand is **20 kΩ**, giving `1 + 20/10` = **3.00**. Bench-measured: `R_f` = **19.89 kΩ**, `R_g` = **9.94 kΩ**, predicted gain **3.001**. Both readings sit ~0.6% low on 0.1% parts — that is a meter scale error, not part error, and it **cancels in the ratio**, which is the only thing the gain depends on.
+
+**What the lower gain costs — this is a real spec reduction, not recovered headroom.** DAC full scale × 3.00 = **9.9 V** at the feedback node, against 11 V at gain 3.33. The feedback node is tapped after `R_sense` and **ahead of** `R_iso`, so both the `R_iso` drop (1.10 V at 50 mA) and the shunt burden (50 mV on range 1) come off it downstream, uncorrected. The DUT therefore sees **~8.75 V at 50 mA**, down from 9.85 V, and the ceiling at zero current is **9.9 V, not 10 V**. The 3.33 gain was not buying headroom the output stage could not deliver — it was paying for `R_iso` and the shunt by design, exactly as the trade-off note below describes. §1 is updated to match. **Open for Phase 1:** if the full 10 V matters, the options are a smaller `R_iso` (costs stability margin — see Phase 0) or a higher-gain 0.1% pair; neither is decided.
 
 **Design issue you will actually hit — corrected by Phase 0 simulation:**
 
@@ -95,7 +99,7 @@ A cap across `R_f` is *transimpedance* compensation. It works in a TIA because t
 
 **The tradeoff:** `R_B · C_jc` forms a pole with the BD139's `C_jc` = 36.1 pF. At 100 Ω that pole sits near **44 MHz**, far outside the loop; at 330 Ω it is about **13 MHz**, still above the ~3 MHz crossover. Sim 08 (`sim/08_sweep_source_rb_sweep.asc`, `tcase` = 1) measured the effect: 100 mV step overshoot into 100 nF / 200 Ω is 0.3 / 5.3 / 10.3 / 12.7% at 100 / 220 / 330 / 390 Ω. All are well damped, so damping does not set `R_B`; op-amp current does.
 
-**Output headroom.** DAC full scale × 3.33 = **11 V** at the feedback node. After the `R_iso` drop and the shunt burden, the DUT sees about **9.85 V at 50 mA**. **10 V at 50 mA is not reachable — do not claim it in the specs.** The full 10 V is available only at low current, where the `R_iso` and shunt drops are small.
+**Output headroom.** DAC full scale × 3.00 = **9.9 V** at the feedback node. After the `R_iso` drop and the shunt burden, the DUT sees about **8.75 V at 50 mA**. **10 V is not reachable at any current — do not claim it in the specs.** 9.9 V is the low-current ceiling; the margin falls from there as the `R_iso` and shunt drops grow with load.
 
 **The follower sources current only — falling edges and the clamp diode (sims 08, 09).** An emitter follower can pull its output up but not down. Without a clamp, once the op-amp drives the base low the BD139 cuts off and the load discharges *passively* through `R_L ‖ (R_f + R_g + R_iso ≈ 33.3 kΩ)`, while the base-emitter junction is reverse-biased by nearly the full output swing. Full-scale step, 9 V → 1 V at the emitter, `R_B` = 330 Ω:
 
@@ -107,6 +111,8 @@ A cap across `R_f` is *transimpedance* compensation. It works in a TIA because t
 | **100 pF, open** | τ = 3.05 µs, passive | **9.4 µs** | **−6.3 V** | driven, ~10 V/µs | **1.7 µs** | −0.58 V | 1.0 mA |
 
 At 100 nF the unclamped τ matches `C·(R_L ‖ 33.3 kΩ)` to 3 significant figures (3.33 ms open, 19.9 µs at 200 Ω). At 100 pF open it is 3.05 µs against 3.33 µs predicted and not a clean single exponential. With the clamp, a second path — emitter → diode → `R_B` → op-amp — runs in parallel, giving τ ≈ `C·[R_L ‖ (R_iso + R_B)]`: 12.7 / 34.9 µs predicted, 12.9 / 36.6 µs fitted. The remaining ~5% open-load is diode resistance plus the model op-amp's 10 Ω output switch. The clamped decay heads toward ~0.6 V (V_f above the op-amp's low rail) and hands back to the loop at the setpoint. At 100 pF the clamp makes the fall op-amp slew-limited (~10 V/µs).
+
+**These sims were run at `R_f` = 23.3 kΩ and have not been re-run.** The 33.3 kΩ above is `R_f + R_g` at the old value. At `R_f` = 20 kΩ it becomes **30.0 kΩ**, so the *unclamped* passive-discharge constants scale by ~0.90 — 3.33 ms → ~3.0 ms open at 100 nF, 19.9 → ~19.7 µs at 200 Ω (the 200 Ω load dominates the parallel combination, so that one barely moves). The numbers in the table are left as measured rather than rescaled. **The clamped figures are unaffected:** they are set by `R_iso + R_B`, which did not change, and the clamped path is the one that governs the settling budget. Re-run sims 08–11 at 20 kΩ when convenient; nothing in the `R_B` or clamp conclusions depends on it.
 
 **Current range 3 is the case that matters.** 100 pF with no load is the actual operating condition for range 3 (100 nA – 10 µA, subthreshold MOSFET). There, unclamped, the BD139 turns off and sees **−6.3 V — over its 5 V `V_EBO` — on every falling step**, and the fall takes 9.4 µs to settle. The clamp holds V_BE at −0.58 V and settles in 1.7 µs. Rising edges are unchanged by the diode (overshoot, sustained slew and settling identical across sims 08 and 09): slew-limited at ~9.2–9.9 V/µs, settling in 0.87–1.14 µs across all four loads.
 
@@ -281,8 +287,8 @@ If the numbers agree within a few percent, you have demonstrated the entire chip
 | Nucleo-F303RE (or G474RE) | 1 | $18 |
 | OPA2197 (dual, 36 V, precision) | 4 | $24 |
 | SOIC-8 to DIP adapter — the OPA2197 is SOIC-only (see below) | 4 | ~$6 |
-| BD139 / TIP31C + TO-220 heatsink | 2 | $4 |
-| 0.1% resistor assortment (1 k, 10 k, 20 k, 23.3 k, 30 k, 100 Ω, 10 k shunt) | — | $15 |
+| BD139-16 + TO-126 heatsink (see package note) | 3 | $6 |
+| 0.1% resistor assortment (1 k, 10 k, 20 k, 30 k, 100 Ω, 10 k shunt) | — | $15 |
 | 1 Ω 1% 1 W shunt | 2 | $2 |
 | 15 V / 1 A wall adapter + barrel jack | 1 | $10 |
 | 22 Ω 1% (`R_iso`) | 5 | $1 |
@@ -298,9 +304,11 @@ If the numbers agree within a few percent, you have demonstrated the entire chip
 | DUT devices: 2N7000, BS170, 2N3904, LEDs, Zeners (1N4148 above) | — | $8 |
 | Small-signal relays (phase 2 auto-ranging) | 3 | $9 |
 | Breadboard, jumpers, headers | — | on hand |
-| **Total** | | **~$116** |
+| **Total** | | **~$118** |
 
 Order **two of every active component.** You will destroy at least one op-amp and one pass transistor.
+
+**Package note — the BD139-16 is SOT-32 / TO-126, not TO-220.** The part that shipped is a **BD139-16** in **SOT-32**, which is ST's name for the JEDEC **TO-126** outline. TO-126 has a smaller tab and a different hole pattern than TO-220, so **TO-220 clip-on heatsinks and mounting hardware will not fit** — buy TO-126 heatsinks. As on TO-220, **the tab is the collector**, and in this circuit the collector is tied to **+15 V**: the tab is live at 15 V, so it must not contact a grounded chassis, and it cannot share an un-insulated heatsink with anything else. Use an insulating pad and shoulder washer if either applies. (The `-16` suffix is the h_FE bin, 63–160; it does not affect the design, which relies on the follower being inside the feedback loop rather than on any particular gain.)
 
 **The OPA2197 has no DIP package.** It ships in SOIC-8 and VSSOP-8 only, so breadboard work needs a SOIC-8 to DIP adapter and fine-pitch soldering.
 
