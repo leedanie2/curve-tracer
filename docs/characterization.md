@@ -128,3 +128,58 @@ wiring was redone. Suspect a jumper in the wrong hole group. Unresolved.
 4. Resolve the op-amp package question: SOIC-to-DIP adapter, or stay on the
    LM324 through stage 8 and swap before Phase 7.
 5. Locate a TO-220 NPN (BD139, TIP31C, or similar) for stage 4.
+   *Superseded — see the 2026-09-22 blueprint revision: the part is a
+   **BD139-16 in SOT-32 / TO-126**, and TO-220 heatsinks and hardware do not
+   fit it. TIP31C is no longer in the BOM.*
+
+---
+
+### 2026-09-24 — Stage 4 attempted: no data, bench supply fault
+
+**No data. Nothing here counts toward the test matrix, and nothing here says
+anything about the circuit.** Stage 4 (add BD139 and `R_B`, feedback moves to
+emitter) was wired but **never successfully powered**.
+
+**What happened**
+
+- Lab trainer **unit 12**. All three supplies — yellow adjustable, +5 V and
+  −15 V — read **~1.2 V in magnitude** instead of their set or nominal values.
+- The supplies were measured **with the board disconnected**, so the collapse
+  was present with no load from the circuit at all.
+- **Fuse intact.**
+- Hardware fault reported for the unit.
+
+**What this does and does not tell us**
+
+- **The circuit is not implicated, and this session cannot be used as evidence
+  against it either way.** The rails were already collapsed with the board
+  disconnected. Stage 4's wiring remains **unvalidated — not known-good, and
+  not known-bad.** It has never had power applied.
+- *Inference, not established:* three rails failing together points to a
+  **common upstream element** — shared transformer secondary, rectifier, or
+  regulator feed — rather than three independent failures. The **−15 V rail is
+  the strongest evidence for this**, because the stage 3 setup is
+  single-supply and never connected to it, so nothing in this build could have
+  loaded it.
+- *Inference:* an intact fuse argues against gross sustained overcurrent
+  downstream of it, which is consistent with a fault ahead of the fuse or in a
+  regulator stage rather than a short pulled by anything plugged in.
+- A common rail sitting near 1.2 V on all three outputs looks like the rails
+  being held at some common low value rather than merely unregulated, but
+  diagnosing the trainer is not this project's problem — it is the lab's.
+
+**Status at end of session:** blocked on bench hardware. Stage 4 wired,
+unpowered, untested. The stage 3 items above were **not** closed by this
+session — the gain discrepancy and the ground-wiring fault both remain open.
+
+**Next session**
+
+1. **Use a different trainer**, or confirm unit 12 has been repaired. Either
+   way, verify all three rails at the jacks *before* wiring or connecting
+   anything.
+2. Treat the stage 4 wiring as unverified: re-check it against §3.1 before
+   applying power, including that the feedback tap has actually moved to the
+   emitter.
+3. Confirm the pass transistor on hand is the **BD139-16 (TO-126)** and that
+   its tab — **the collector, at +15 V** — is not touching anything grounded.
+4. Carry forward all five open items from 2026-09-18; none were addressed.
