@@ -1,0 +1,9 @@
+build/
+*.dSYM/
+__pycache__/
+.pytest_cache/
+# CubeIDE / CubeMX generated
+stm32/Drivers/
+stm32/Debug/
+stm32/Release/
+stm32/.settings/
