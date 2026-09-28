@@ -235,6 +235,10 @@ This is a genuine four-wire measurement, and explaining why it's necessary is a 
 
 **Board:** Nucleo-F303RE (2× 12-bit DAC, 4× fast ADC, plentiful RAM) or Nucleo-G474RE. Both have the DAC peripheral — many STM32 lines do not. Verify before ordering.
 
+**PA5 cannot be used as a DAC output on a Nucleo-64 — it drives LD2.** The obvious mapping for two DAC channels is the two channels of peripheral DAC1, `DAC1_OUT1` on **PA4** and `DAC1_OUT2` on **PA5**. PA5 is unusable here: on every Nucleo-64 board it also drives **LD2, the green user LED**, so the LED and its series resistor sit directly on the DAC output as an uncontrolled load. Use the F303RE's *second* DAC peripheral instead — the sweep source goes to **`DAC2_OUT1` on PA6**, the gate/step source stays on `DAC1_OUT1` / PA4.
+
+**The cost of that choice:** DAC1 and DAC2 are separate peripherals, so they cannot perform a **synchronised dual-channel update** the way DAC1's two channels could (`DUALTRIG` / a shared trigger). The sweep engine (§4) sets gate and then drain sequentially, so this costs nothing in DC mode. **It would matter if pulsed mode is ever restored**, where gate and drain ideally step together on one trigger to keep the measurement window tight; that would need either both channels on DAC1 — reworking around LD2, e.g. by lifting solder bridge SB21 — or accepting the skew between two software writes. Record the constraint now rather than rediscovering it when pulsed mode is built.
+
 **ADC config:** 12-bit, longest sampling time, VREF from the board's 3.3 V rail. Add a `10 nF` cap at each ADC pin and clamp diodes (BAT54S) to rails for protection.
 
 **Oversampling:** average 64 samples per point → ~3 extra effective bits (~15-bit) at the cost of ~1 ms per point. Standard `√N` noise averaging; state the measured improvement in the README rather than assuming it.
@@ -305,7 +309,11 @@ for each V_GS in step_list:
 
 **Pulsed vs. DC mode is a headline feature.** In DC mode a power device self-heats during the sweep, and its curves visibly droop in saturation — you're measuring thermal effects, not the device. Pulsed mode (bias applied only during the measurement window, ~1% duty cycle) suppresses this. **Overlaying a DC sweep and a pulsed sweep of the same device on one plot is one of the best figures in the project.**
 
-**Transport:** USB CDC virtual COM, plain CSV lines, `115200` baud minimum. Text protocol keeps debugging trivial.
+**Transport: USART2 through the ST-LINK Virtual COM Port, not a USB device stack.** Plain CSV lines, `115200` baud. Text protocol keeps debugging trivial.
+
+Earlier drafts said "USB CDC virtual COM", which is right about what the *host* sees and wrong about what the MCU does. The F303RE does have a native USB device peripheral on PA11/PA12, but **the Nucleo-64 does not route it to a connector** — there is no USB device socket and no 1.5 kΩ pull-up. What the board provides is the ST-LINK's Virtual COM Port, hard-wired to **USART2 (PA2/PA3)**, which enumerates on the PC as a USB CDC serial port. So the host still opens an ordinary CDC serial device; the firmware side is a plain UART and needs no USB stack, no descriptors and no middleware. Do not add USB device middleware to this project — on this board it would have nothing to connect to.
+
+**Timing: transmission dominates, not conversion.** At 115200 baud a ~64-byte CSV row takes **~5.5 ms** to send, against ~1.1 ms for 128 ADC conversions (2 channels × 64× oversampling). A blocking write would therefore hold the DUT at each bias point roughly 5× longer than the measurement itself needs — which is precisely the self-heating that pulsed mode exists to suppress. **Use interrupt- or DMA-driven TX with a ring buffer** so conversion overlaps transmission. A 200-point sweep then lands near 1.2 s.
 
 ---
 
