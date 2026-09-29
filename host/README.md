@@ -264,10 +264,34 @@ included.
 ## Known limitations
 
 - **Range 1 only**, matching the firmware. No auto-ranging, no pulsed mode.
-- **`R_DS(on)` is biased high by the window.** It is fitted over
-  `0 < V_DS <= 0.25·V_ov`, where the triode term `−½V_DS²` still curves the
-  line; on the simulator it reads 14–15 Ω against a small-signal 12.5 Ω. The fit
-  range is reported, so the bias is visible, but it is not corrected.
+- **`R_DS(on)` is biased high by its fit window, deliberately uncorrected.**
+  Blueprint §5 defines it as the slope of the linear region, and it is fitted
+  over `0 < V_DS <= 0.25·V_ov`. Across that window the triode expression
+  `I_D = k(V_ov·V_DS − ½V_DS²)` is still curving, so a straight-line slope
+  understates the conductance: on the simulator it reads **14.4 Ω against a
+  12.5 Ω small-signal value** (`1/(k·V_ov)` at `V_DS → 0`, with `V_ov` = 1.45 V
+  at the top gate step), a **+15%** overestimate. It is consistent rather than
+  random — a second sweep at a lower top gate step gave 15.3 Ω against 13.5 Ω,
+  the same +14% — so it is bias, not noise, and narrowing the window would
+  reduce it at the cost of having only two or three points left to fit.
+
+  The bias is **visible rather than hidden** — `describe()` prints the window
+  bounds, the point count and the rule, so the number is always read alongside
+  what produced it:
+
+  ```
+  R_DS(on) = 14.366 ± 0.31241 ohm
+             range   : 5 of 60 points over 0.06125 .. 0.3223 V (V_DS)  [default]
+             rule    : highest gate step (V_GS = 3.601 V), 0 < V_DS <= 0.25*V_ov
+  ```
+
+  It is left uncorrected because **`R_DS(on)` is not on the closed-loop path.**
+  The validation in blueprint §6 runs on `V_th`, `beta`/`KP` and `lambda` —
+  the parameters that go into the `.model` card and therefore into the LTspice
+  comparison. `R_DS(on)` is reported for reference and is labelled as such in
+  the generated card. Fitting the full triode equation would remove the bias
+  and is the right fix if it ever becomes load-bearing; doing it now would add
+  a nonlinear solve to serve a number nothing downstream consumes.
 - **`I_S` carries a few percent bias** from quantisation at the low-current
   end of the fit, where the lowest points sit near the ADC LSB.
 - **Overlay comparison against LTspice** (blueprint §5 item 5) is not

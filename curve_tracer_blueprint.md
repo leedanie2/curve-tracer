@@ -501,6 +501,13 @@ The "what I'd do differently" section is the one interviewers respond to. Write 
 | STM32 ADC noisier than spec | Oversample; if still poor, add an external ADC (ADS1115) as phase 2 |
 | Scope creep into BJT/auto-ranging | Phases 0–9 first. Phase 2 is optional |
 | Blown parts stall progress | Duplicates of every active component on hand from day one |
+| A model parameter is documented but never applied | Check that changing a parameter changes the output before trusting a result that depends on it — see below |
+
+**A recurring failure mode: the parameter that is accepted but not applied.** Twice now a model has carried a parameter that was documented, accepted, and silently ignored, and both times the simulation output looked correct. In Phase 0 a MODPEX-generated BD139 model had `CJE = CJC = 1e-11` exactly — placeholders standing in for real junction capacitances — and with it the composite amplifier appeared unconditionally stable, hiding the `C_comp` error that the ST model exposed immediately (§12.2). In September 2026 the host simulator's `--rs` flag was parsed, stored, listed in `firmware/README.md`, and never read by the diode current function; the diode nevertheless showed a convincing high-current roll-off from the ideal line, so nothing looked wrong.
+
+The tell was the same both times: **a physical effect appeared, and it was attributed to the wrong cause.** The placeholder `Cjc` did not remove the follower's pole, it just made a different circuit that happened to be stable. The missing `rs` did not remove the roll-off, because `R_iso`'s drop was producing one — the front-end series resistance masquerading as device bulk resistance, and the two are only distinguishable by remembering that the Kelvin sense sits between them.
+
+Neither bug is detectable by reading the output, because the output is plausible. Both are detectable in one step: **sweep the parameter and confirm the result moves.** A parameter that changes nothing is either irrelevant to the question being asked, in which case it should not be in the model, or it is not wired up. The host's diode tests now parametrise over four devices with different `rs` values for exactly this reason, and a zero `rs` is required to come back as *unresolved* rather than as a small number.
 
 ---
 
