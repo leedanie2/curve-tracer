@@ -268,7 +268,10 @@ pytest tests/test_csv_contract.py
 ```
 
 The simulator is also a standalone tool that speaks the real protocol, so the
-Python host can be developed against it with no board attached:
+Python host can be developed against it with no board attached. It **streams**
+— each line is written and flushed as the sweep produces it, exactly as rows
+arrive over the serial link — so the host's live plot is developed and tested
+against it rather than against a replayed file:
 
 ```sh
 printf 'SET n 50\nSET vgs_list 2.5,3.0,3.5\nSWEEP\n' | ./build/ct_sim --dut mosfet
@@ -301,9 +304,9 @@ to exercise the sweep engine, the CSV writer and the current limit.
 | `test_sweep.c` | row counts, header ordering, **limit fires**, **DAC zeroed before emit**, STOP, settle called per point, ramp endpoints, accumulator semantics, the `vds` delta |
 | `test_csv.c` | row shape, field count, float formatting and rounding, buffer-overflow safety, framing rule, CRLF, metadata presence |
 | `test_params.c` | bounds rejection, `vgs_list` parsing, unit conversions, command parsing, line framing, overlong lines |
-| `test_csv_contract.py` | the format as a naive Python host consumes it |
+| `test_csv_contract.py` | the format as a naive Python host consumes it, **no truncation on a full-size family**, **output streams rather than arriving in one block** |
 
-Current status: **176 C checks and 14 pytest cases, all passing.**
+Current status: **176 C checks and 16 pytest cases, all passing.**
 
 ---
 

@@ -18,6 +18,10 @@
 
 #include "ct_device.h"
 
+/* Output sink. Set one and emitted bytes go straight out instead of into the
+ * capture buffer — see ct_sim_set_sink(). */
+typedef void (*ct_sim_sink_fn)(void *user, const char *data, uint32_t len);
+
 typedef enum {
     CT_SIM_MOSFET = 0,      /* square-law, with a subthreshold tail */
     CT_SIM_DIODE,           /* exponential with series resistance */
@@ -58,11 +62,15 @@ typedef struct {
     uint16_t last_sweep_code;
     uint32_t gate_writes;
 
-    /* Output sink: the tests capture emitted bytes here. */
+    /* Output: either a capture buffer (the C tests) or a streaming sink
+     * (main_sim). A sink takes precedence and bypasses the buffer entirely. */
     char    *out;
     uint32_t out_cap;
     uint32_t out_len;
     uint32_t out_truncated;
+
+    ct_sim_sink_fn sink;
+    void          *sink_user;
 
     /* Deterministic PRNG state for the noise term. */
     uint32_t rng;
@@ -73,6 +81,12 @@ void ct_sim_init(ct_sim_t *s, ct_sim_kind_t kind);
 
 /* Attach an output buffer. Pass NULL to discard output. */
 void ct_sim_set_output(ct_sim_t *s, char *buf, uint32_t cap);
+
+/* Attach a streaming sink, which takes precedence over any capture buffer.
+ * Emitted bytes are passed straight through as the sweep produces them, so a
+ * consumer sees rows arrive rather than one block at the end, and no sweep is
+ * large enough to overflow anything. Pass NULL to go back to buffering. */
+void ct_sim_set_sink(ct_sim_t *s, ct_sim_sink_fn fn, void *user);
 
 /* Build the ct_device_t vtable bound to this simulator. */
 ct_device_t ct_sim_device(ct_sim_t *s);

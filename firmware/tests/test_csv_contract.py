@@ -209,6 +209,63 @@ def test_blank_lines_produce_no_output():
     assert run("\n\n\n").strip() == ""
 
 
+def test_large_sweep_is_not_truncated():
+    """A full-size family must survive intact.
+
+    The simulator used to stage output in a fixed 64 KB buffer flushed once
+    per input line, so a sweep this size overran it: the transcript lost its
+    `# end:` marker and the final row was cut mid-field. It streams now, so
+    there is no buffer to overflow.
+    """
+    text = run("SET n 200\nSET vgs_list 2.5,3,3.5,4,4.5,5,5.5,6\n"
+               "SET vds_max 10\nSET i_limit_ma 165\nSWEEP\n")
+    meta, columns, rows = parse(text)
+
+    assert meta.get("end") == "ok", "no end marker: transcript was truncated"
+    assert len(rows) == 200 * 8
+    assert columns == EXPECTED_COLUMNS
+    # A cut row would show up as a short field count or an unparseable number.
+    assert [int(r["point"]) for r in rows] == list(range(200 * 8))
+    for row in rows:
+        float(row["i_meas_ma"])
+        int(row["i_acc"])
+
+
+def test_output_streams_rather_than_arriving_as_one_block():
+    """Rows must reach the host as they are produced, not all at the end.
+
+    This is what lets the live plot be developed against the simulator with
+    no board attached; buffering a whole sweep would leave that path
+    untestable. Asserted by reading the first row before the sweep finishes.
+    """
+    if not SIM.exists():
+        pytest.skip(f"{SIM} not built; run `make -C firmware` first")
+
+    proc = subprocess.Popen(
+        [str(SIM)],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1,
+    )
+    try:
+        proc.stdin.write("SET n 400\nSET vgs_list 2.5,3,3.5,4\n"
+                         "SET i_limit_ma 165\nSWEEP\n")
+        proc.stdin.flush()
+
+        seen = 0
+        first_row_seen_before_end = False
+        for line in proc.stdout:
+            if line.startswith("# end"):
+                break
+            if not line.startswith(("#", "!")) and "," in line:
+                seen += 1
+                if seen == 2:           # 1 is the column header
+                    first_row_seen_before_end = True
+        assert first_row_seen_before_end, "no row arrived before the end marker"
+        assert seen == 400 * 4 + 1
+    finally:
+        proc.stdin.close()
+        proc.wait(timeout=60)
+
+
 def test_noise_does_not_break_the_format():
     """With ADC noise on, the format must still parse exactly."""
     _, columns, rows = parse(

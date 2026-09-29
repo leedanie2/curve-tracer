@@ -17,26 +17,26 @@
 #include "ct_params.h"
 #include "ct_sim_device.h"
 
-/* Large enough for a 16-gate x 4096-point sweep; the simulator streams to
- * stdout as it fills, so this is a staging buffer, not a transcript. */
-#define OUT_CHUNK 65536u
-
-static char g_out[OUT_CHUNK];
-
-/* Flush the simulator's capture buffer to stdout and reset it. Called after
- * every command so long sweeps do not need an unbounded buffer. */
-static void flush(ct_sim_t *sim)
+/* Stream emitted bytes to stdout, flushing on each line.
+ *
+ * Per-line flushing is what makes this a usable development target for the
+ * Python host: a sweep's rows arrive as they are produced, exactly as they do
+ * over the serial link, so the live plot can be exercised with no board
+ * attached. Buffering a whole sweep and writing it at the end would deliver
+ * one block and leave that path untestable.
+ *
+ * It also removes a failure mode. This used to stage output in a 64 KB array
+ * flushed after each *input* line; a 1600-row sweep overran it, and the
+ * result was a transcript with no `# end:` marker and a row cut mid-field.
+ * Detectable — that is exactly what README.md tells a host to treat as a
+ * failed capture — but a needless trap. There is now no buffer to overflow. */
+static void stdout_sink(void *user, const char *data, uint32_t len)
 {
-    if (sim->out_len > 0u) {
-        fwrite(sim->out, 1u, sim->out_len, stdout);
-        sim->out_len = 0u;
-        sim->out[0] = '\0';
+    (void)user;
+    fwrite(data, 1u, (size_t)len, stdout);
+    if (memchr(data, '\n', (size_t)len) != NULL) {
+        fflush(stdout);
     }
-    if (sim->out_truncated) {
-        fprintf(stderr, "ct_sim: output buffer overflowed\n");
-        sim->out_truncated = 0u;
-    }
-    fflush(stdout);
 }
 
 static void usage(void)
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
         }
     }
 
-    ct_sim_set_output(&sim, g_out, sizeof(g_out));
+    ct_sim_set_sink(&sim, stdout_sink, NULL);
     ct_device_t dev = ct_sim_device(&sim);
 
     ct_params_t params;
@@ -117,13 +117,10 @@ int main(int argc, char **argv)
     int c;
     while ((c = fgetc(stdin)) != EOF) {
         ct_cmd_feed_char(&cmd, (char)c);
-        if (c == '\n') {
-            flush(&sim);
-        }
     }
     /* A final line with no trailing newline still runs. */
     ct_cmd_feed_char(&cmd, '\n');
-    flush(&sim);
+    fflush(stdout);
 
     return 0;
 }

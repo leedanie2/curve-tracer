@@ -45,6 +45,12 @@ void ct_sim_set_output(ct_sim_t *s, char *buf, uint32_t cap)
     }
 }
 
+void ct_sim_set_sink(ct_sim_t *s, ct_sim_sink_fn fn, void *user)
+{
+    s->sink = fn;
+    s->sink_user = user;
+}
+
 float ct_sim_dut_current_a(const ct_sim_t *s, float vgs, float vds)
 {
     if (vds <= 0.0f) {
@@ -211,6 +217,12 @@ static void sim_delay(void *ctx, uint32_t us)
 static void sim_emit(void *ctx, const char *str, size_t len)
 {
     ct_sim_t *s = (ct_sim_t *)ctx;
+
+    /* A sink streams; there is nothing to accumulate and nothing to overflow. */
+    if (s->sink != NULL) {
+        s->sink(s->sink_user, str, (uint32_t)len);
+        return;
+    }
 
     if (s->out == NULL || s->out_cap == 0u) {
         return;
