@@ -231,6 +231,10 @@ Divider `÷4` (30 kΩ / 10 kΩ, 0.1%) into a unity-gain buffer (high input Z so 
 
 This is a genuine four-wire measurement, and explaining why it's necessary is a strong README paragraph.
 
+**Consequence for analysis: a fixed-`V_DS` slice is not a column lookup.** The drop across `R_iso` plus the shunt burden scales with current (§3.1), so at one commanded `vds_set_v` every gate curve in a family reaches a *different* measured `vds_meas_v` — the higher the gate drive, the larger the drop. In a simulated 2N7000-ish family, a commanded 2.052 V lands at 1.921 V on the `V_GS` = 2.6 V curve and at 0.899 V on the `V_GS` = 3.6 V curve, a spread of over a volt.
+
+So extracting anything at a fixed `V_DS` — `V_th` and `β` from a `√I_D` fit above all — requires **interpolating each curve onto a common measured-`V_DS` grid**. Grouping rows by `vds_set_v` looks correct and is not: it silently compares points taken at different actual bias, and on the example above it would compare a device in saturation against one pushed into triode. Implemented in `host/ct_host/dataset.py`.
+
 ### 3.5 ADC and MCU
 
 **Board:** Nucleo-F303RE (2× 12-bit DAC, 4× fast ADC, plentiful RAM) or Nucleo-G474RE. Both have the DAC peripheral — many STM32 lines do not. Verify before ordering.
@@ -333,10 +337,31 @@ Earlier drafts said "USB CDC virtual COM", which is right about what the *host* 
 | Parameter | Method |
 |---|---|
 | `V_th` | Linear extrapolation of `√I_D` vs `V_GS` in saturation → x-intercept |
-| `k` (transconductance param) | Slope² of that same fit |
+| `β` (transconductance param) | Slope² of that same fit, in the convention `I_D = β(V_GS − V_th)²`. **See the note on conventions below** — this is a factor of 2 away from SPICE's |
 | `λ` (channel-length mod.) | Slope of `I_D` vs `V_DS` in saturation; `V_A = 1/λ` |
 | Subthreshold slope | `dV_GS / d(log₁₀ I_D)` in weak inversion, mV/decade. Theoretical floor is ~60 mV/dec at 300 K — measure how close a real device gets |
 | `R_DS(on)` | Slope of the linear region at high `V_GS` |
+
+**Two corrections the fit needs, both of which change the answer.**
+
+*The transconductance convention is ambiguous, so state it.* Two are in common use and they differ by a factor of two:
+
+| Convention | Expression | Name here |
+|---|---|---|
+| Fit-natural | `I_D = β(V_GS − V_th)²` | `β` — the slope² above |
+| SPICE Level 1 | `I_D = ½·KP·(W/L)·(V_GS − V_th)²` | `KP·(W/L) = 2β` |
+
+Writing "k = slope²" without saying which one is an invitation to a silent 2× error in a `.model` card. The host extractor reports **both**, named `beta` and `kp_wl`, and `host/ct_host/spice.py` emits `KP` from the latter.
+
+*`β` fitted at a nonzero `V_DS` slice is inflated by channel-length modulation.* The saturation current carries the `(1 + λV_DS)` factor, so a fit at slice voltage `V_DS,slice` returns
+
+```
+β_fit = β_true · (1 + λ · V_DS,slice)
+```
+
+This is not a small correction at the voltages this instrument works in. **At a 7 V slice with λ = 0.012 V⁻¹ it is 8.4%** — an order of magnitude larger than the fit's own standard error, and in a consistent direction, so it reads as a good measurement of the wrong quantity. Verified against the host simulator: feeding a known `k` = 0.055 A/V² and recovering 0.0597 before de-embedding, 0.0275 = `k`/2 after. The extractor de-embeds using the fitted `λ` and reports both values.
+
+`V_th` is unaffected — it is the x-intercept, and a multiplicative factor on `√I_D` does not move it.
 
 **Parameter extraction — diode**
 
@@ -351,7 +376,7 @@ Fit `I = I_S(exp(V/nV_T) − 1)` on a semilog plot. Slope gives ideality factor 
 This sequence is the whole point of the project. Do it, document it, lead the README with it.
 
 1. Measure a 2N7000 MOSFET on your tracer.
-2. Extract `V_th`, `k`, `λ` with your Python script.
+2. Extract `V_th`, `β`, `λ` with your Python script.
 3. Generate a SPICE `.model` card from those numbers.
 4. In LTspice, build a common-source amplifier using **your** model. Simulate gain and bias point.
 5. Build that exact amplifier on the breadboard.
