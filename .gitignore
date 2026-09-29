@@ -4,3 +4,8 @@
 *.net
 *.op.raw
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/

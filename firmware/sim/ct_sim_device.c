@@ -61,12 +61,32 @@ float ct_sim_dut_current_a(const ct_sim_t *s, float vgs, float vds)
     case CT_SIM_RESISTOR:
         return vds / s->r_load;
 
-    case CT_SIM_DIODE:
+    case CT_SIM_DIODE: {
         /* Exponential, clamped before expf overflows. */
         if (vds > 2.0f) {
             vds = 2.0f;
         }
-        return s->is * (expf(vds / (s->n_diode * VT_300K)) - 1.0f);
+        if (s->rs <= 0.0f) {
+            return s->is * (expf(vds / (s->n_diode * VT_300K)) - 1.0f);
+        }
+        /* With bulk resistance the terminal voltage splits between the
+         * junction and rs: vds = vj + I(vj)*rs. Unlike R_iso this is inside
+         * the device, so the Kelvin sense sees it and it shows up as the
+         * high-current roll-off from the ideal line that a host extracts rs
+         * from. Bisect on vj, as the current is monotonic in it. */
+        float lo = 0.0f, hi = vds;
+        for (int it = 0; it < 60; it++) {
+            float vj = 0.5f * (lo + hi);
+            float i  = s->is * (expf(vj / (s->n_diode * VT_300K)) - 1.0f);
+            if (vj + (i * s->rs) > vds) {
+                hi = vj;
+            } else {
+                lo = vj;
+            }
+        }
+        float vj = 0.5f * (lo + hi);
+        return s->is * (expf(vj / (s->n_diode * VT_300K)) - 1.0f);
+    }
 
     case CT_SIM_MOSFET:
     default: {
