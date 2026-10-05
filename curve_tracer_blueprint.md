@@ -162,6 +162,8 @@ Losing ~19° from the simulated ~59° leaves ~40°, which is **25.4% overshoot**
 
 **Two conditions on the bench measurement.** It must be taken on the **OPA2197**, not the LM324 substitute — §8 records that no transient measurement transfers across that swap, and the LM324's 0.4 V/µs slew rate would mask ringing entirely. And it must be taken **with `C_f` fitted and swept** as above. A failure without `C_f`, or at a single untuned `C_f`, is not a failure of `R_B`.
 
+**This gate is measured at H4, on the assembled board** (§9), where the OPA2197 condition is satisfied by construction — the fab fits it. It is **not** the Phase 1 breadboard gate, which is narrower (no `R_iso`, no clamp, no 100 nF load), asks only whether the bare loop oscillates, and therefore runs on a ≥8 MHz DIP-8 substitute instead. §14.3 has the reasoning and the GBW table.
+
 **The 65 mA figure is typical, not guaranteed.** The OPA2197's short-circuit current varies with output voltage and temperature, so the 32 mA it supplies at 330 Ω is margin against a typical value, not a worst case. **Sim 10 models the limiter, not the op-amp's own fault behaviour.** The `UniversalOpAmp2` default 25 mA clamp is below the drive in both `R_B` cases, so sim 10 also steps it to 65 mA; either way the model's output stage (hard rail, ideal clamp) is not the OPA2197's. The trip point and Q2's numbers are trustworthy; the op-amp's condition in the fault is not. **Bench verification required:** with the limiter tripped into a short, measure the op-amp output current (the drop across `R_B`) and confirm the op-amp is not in its own current limit.
 
 **Second constraint: clamp-diode discharge.** With the B-E clamp diode, the op-amp *sinks* the load's discharge current through the diode and `R_B` on every falling edge: peak ≈ (V_E − V_f) / (`R_B` + `R_iso`). Sim 09 gives **21.9 mA at 330 Ω** (100 nF, open load, 9 V → 1 V). At 220 Ω the hand estimate is ~33 mA, and the sim's 25 mA op-amp clamp engaged, so the 220 Ω clamped figures in sim 09 show the model's limit, not the circuit. 330 Ω satisfies both constraints.
@@ -439,7 +441,9 @@ Order **two of every active component.** You will destroy at least one op-amp an
 
 **Bench substitute path.** Until the adapters are on hand, use an **LM324** (quad, DIP-14). It runs on the single +15 V rail with inputs down to ground, so it covers breadboard stages 3–8 of the sweep source (stages are defined in `docs/characterization.md`). The **TL074 does not work** here: its input common-mode range excludes ground, which single-supply operation requires.
 
-Substitutes are acceptable for firmware and host work. The OPA2197 must be installed before **Phase 7** parameter extraction, because every accuracy figure in §7 assumes it — **and before Phase 1**, whose entire content is a transient stability measurement that does not transfer from the LM324 (see below, and §14.3, where this collides with the decision to have the board assembled by the fab).
+Substitutes are acceptable for firmware and host work. The OPA2197 must be installed before **Phase 7** parameter extraction, because every accuracy figure in §7 assumes it — and on the PCB it always is, since the board is assembled by the fab with OPA2197s fitted (§14.3).
+
+**The SOIC-8 adapters are no longer on the critical path.** They were, while Phase 1 required an OPA2197 on a breadboard; §14.3 withdrew that requirement. Phase 1 now runs on **the fastest DIP-8 op-amp in the lab, ≥8 MHz GBW** — enough to keep crossover inside the 2–3 MHz band where the stray input pole sits, which is the only thing that gate asks. **The LM324 is still not that part:** at 1.3 MHz GBW its crossover lands ~8× below the pole, so it cannot see the interaction at all, independently of the slew-rate problem below. Adapters are a nice-to-have for post-bring-up bench work.
 
 **No transient measurement on the LM324 transfers.** It slews at **0.4 V/µs** typical (V+ = 15 V, unity gain, R_L = 2 kΩ, C_L = 100 pF), ~25× slower than the 9.2–9.9 V/µs edges sim 08 measured. Every step-response, settling-time and edge-shape measurement taken on the substitute is slew-limited and says nothing about the OPA2197 circuit. Only DC measurements — gain ratio, linearity, limiter trip point — transfer, and those only with the caveats below.
 
@@ -464,10 +468,10 @@ Everything after that is built and validated on the board.
 | Phase | Deliverable | Gate to proceed |
 |---|---|---|
 | **0** | ~~LTspice model of sweep source~~ **DONE** — sweep source (§12) *and* difference amp CMRR + input loading (§13) | Sweep source settles cleanly into ≥100 nF with `R_iso`; diff amp buffering decided |
-| **1** | **Composite amplifier on breadboard — stability GO/NO-GO, nothing else.** Stages 1–6 of `docs/characterization.md` (rails → op-amp → gain network → BD139 + `R_B` → scope for VHF → `R_sense`, feedback past it) | **No oscillation with real parasitics**, at any stage, with `C_f` fitted and swept per §3.1, on the **OPA2197** (not the LM324 — §8). A NO-GO means the topology is reworked *before* layout, not after |
+| **1** | **Composite amplifier on breadboard — stability GO/NO-GO, nothing else.** Stages 1–6 of `docs/characterization.md` (rails → op-amp → gain network → BD139 + `R_B` → scope for VHF → `R_sense`, feedback past it) | **No oscillation with real parasitics**, at any stage, with `C_f` fitted and swept per §3.1. Run on **the fastest DIP-8 op-amp in the lab, ≥8 MHz GBW** — *not* the OPA2197, and *not* the LM324 (§14.3) |
 | **H1** | KiCad schematic, in `hardware/` | Every §3 block drawn; test points placed on every node §3 names (§14); alternate-value footprints placed (§14) |
-| **H2** | KiCad layout | §14 layout constraints met; the analog-critical nets listed in `hardware/README.md` routed **by hand**, not autorouted |
-| **H3** | Design freeze → PCBA ordered | The date gates below |
+| **H2** | KiCad layout | §14 layout constraints met; the analog-critical nets listed in `hardware/README.md` routed **by hand**, not autorouted; **DRC clean** |
+| **H3** | Design freeze → PCBA ordered, **express shipping** (§14.3) | The date gates below. Order as soon as H2 is DRC-clean *and* Phase 1 has passed — do not wait for a calendar date |
 | **H4** | Board bring-up | Rails and star ground first. Then sweep source: 0–10 V linear at low current; limiter trips at **~75 mA** (§3.1), **re-measured warm**; **§3.1 stability gate** — ≤25% overshoot into 100 nF, 1% in 5 µs, `C_f` fitted *and swept*. Also the §3.6 short-recovery overshoot, bench-verified |
 | **2** | Current sense, range 1 — **on the PCB** | Reads a known resistor within 1% |
 | **3** | Kelvin sense — **on the PCB**. Ranges 2 & 3 only if the board gets there (MVP is range 1 — §14) | Kelvin `V_DS` tracks a DMM at the DUT within 0.5%. Ranges 2–3, if reached: 5-decade span against precision resistors |
@@ -491,28 +495,49 @@ is the GO. **The cost of this choice is explicit: `R_iso` and the limiter go to
 layout validated in simulation only.** Both are cheap to make adjustable on the
 board (§14), and that is where the adjustability budget is being spent.
 
+**And because the gate is narrow, it does not need the OPA2197.** This follows
+from the narrowing above and is the reason the part requirement changed —
+reasoning in §14.3. The short form: Phase 1 asks *GBW against the follower pole
+with real stray capacitance at the inverting node*, which any op-amp with
+comparable GBW answers. It does **not** measure the §3.1 overshoot spec, so it
+has no claim on the exact part.
+
 ### Date gates
 
-Hard dates. Each row is a gate, not a milestone.
+Hard dates. Each row is a gate, not a milestone. **The order is event-driven,
+not calendar-driven** — it goes out the moment layout is DRC-clean and Phase 1
+has passed, which is why the two order rows read "target" and "no later than"
+rather than naming one day.
 
 | Date | Gate | Missed → |
 |---|---|---|
-| **Mon Oct 12** | **Breadboard stability GO/NO-GO** (Phase 1) | Schematic proceeds anyway; the GO/NO-GO has until Oct 19 to arrive, and after that it cannot change the board |
-| **Mon Oct 19** | **Design freeze.** Schematic and layout final, `hardware/` committed | Slip eats the Oct 20 → Oct 26 slack directly |
-| **Tue Oct 20** | **PCBA ordered** | Slack runs to Oct 26 |
+| **Mon Oct 12** | **Breadboard stability GO/NO-GO** (Phase 1) | A NO-GO, or no result, blocks the Oct 13 order target and pushes it toward the Oct 20 backstop |
+| **Tue Oct 13** | **Target: design freeze and PCBA ordered**, express shipping. Requires H2 DRC-clean *and* Phase 1 passed | Falls through to the two backstop rows below, spending slack |
+| **Mon Oct 19** | **Design freeze — backstop.** Schematic and layout final, `hardware/` committed | Slip eats the Oct 20 → Oct 26 slack directly |
+| **Tue Oct 20** | **PCBA ordered — no later than this.** Still express | Slack runs to Oct 26 |
 | **Mon Oct 26** | **Checkpoint — if not ordered, abandon the PCB and finish on breadboard.** No further extension | — (this *is* the decision point) |
-| **Tue Nov 3** | Boards expected — 14 days of fab + assembly + shipping from Oct 20 | Re-check against the Nov 16 freeze the day the slip is known, not later |
+| **Tue Nov 3** | **Boards expected — backstop arrival.** Derived from the Oct 20 backstop order plus 14 days of standard fab + assembly + shipping. The target path beats it twice over: **7 days** from ordering on Oct 13 instead, plus whatever express saves on the shipping leg. Take the real number from the fab's quote at order time rather than trusting either figure here | Re-check against the Nov 16 freeze the day the slip is known, not later |
 | **Mon Nov 16** | **Repo freeze** | — |
 
-**Where this plan is tight: the 13 days from Nov 3 to Nov 16.** Those 13 days
-carry board bring-up (H4), phases 2 and 3, and phases 4, 5, 7, 8 and 9. The
-front half of the schedule has 6 days of ordering slack and the back half has
-none, so **a fab slip past Nov 3 comes straight out of phases 7–9** —
-extraction, closed-loop validation and the README, which are the phases the
-project exists to produce. Firmware and host work (phases 4, 5, 7) do not
-depend on the board arriving and should be finished *during* the Oct 20 – Nov 3
-fab window, against the simulated DUT already in `firmware/sim/`, so that
-Nov 3 opens with bring-up as the only unstarted work.
+**Why order early rather than freeze late.** Nothing improves between a
+DRC-clean layout and Oct 20 — the board does not get better by being looked
+at, and §14.4's whole strategy is to make the uncertain parts *adjustable on
+the board* rather than resolved before it. The only thing the wait buys is the
+Phase 1 result, and that arrives Oct 12. After that, every day held is a day
+subtracted from bring-up.
+
+**Where this plan is tight: the window from arrival to Nov 16.** Against the
+Nov 3 backstop that is **13 days**, carrying board bring-up (H4), phases 2 and
+3, and phases 4, 5, 7, 8 and 9. The front half of the schedule has 6 days of
+ordering slack and the back half has none, so **a slip in arrival comes
+straight out of phases 7–9** — extraction, closed-loop validation and the
+README, which are the phases the project exists to produce. Two consequences:
+
+- **Express shipping is bought for this reason** (§14.3), not for comfort.
+- **Firmware and host work (phases 4, 5, 7) do not depend on the board** and
+  should be finished *during* the fab window, against the simulated DUT
+  already in `firmware/sim/`, so that arrival day opens with bring-up as the
+  only unstarted work.
 
 **The Oct 26 fallback is the old staged breadboard plan.** Stages 7–8 of
 `docs/characterization.md` stay in that document for exactly this reason: if
@@ -552,7 +577,7 @@ The "what I'd do differently" section is the one interviewers respond to. Write 
 | Composite amp oscillates | Simulate compensation first (Phase 0); breadboard stability GO/NO-GO before layout freezes (Phase 1, §9); scope every stage before adding the next |
 | Noise floor limits low range | Star-ground, short leads, decoupling at every op-amp — §14.5 makes these layout constraints rather than breadboard hygiene. Range 3 is outside MVP scope (§14.2); if it is reached and unusable, report the measured limitation honestly — that's a legitimate finding |
 | **One PCB revision, and the analog front end goes to layout validated in simulation only** | `R_iso`, `R_B` and `R_sense` get alternate-value footprints; `C_f` gets a footprint and is fitted after measuring; test points on every §3 node (§14.4). The Oct 26 checkpoint (§9) is the abandon path |
-| **Fab slips past Nov 3** | Only 13 days separate Nov 3 from the Nov 16 freeze, and they carry bring-up plus phases 2–9. Finish phases 4, 5 and 7 against the simulated DUT *during* the fab window, not after (§9) |
+| **Fab slips, or arrival lands late** | Only 13 days separate the Nov 3 backstop arrival from the Nov 16 freeze, and they carry bring-up plus phases 2–9. Three mitigations, all already decided: order **event-driven** the moment layout is DRC-clean (target Oct 13, §9); pay for **express shipping** (§14.3a); and finish phases 4, 5 and 7 against the simulated DUT *during* the fab window, not after |
 | STM32 ADC noisier than spec | Oversample; if still poor, add an external ADC (ADS1115) as phase 2 |
 | Scope creep into BJT/auto-ranging | Phases 0–9 first. Phase 2 is optional |
 | Blown parts stall progress | Duplicates of every active component on hand from day one |
@@ -634,10 +659,15 @@ fabricated, and §12 found this loop fails by cliff.
 
 **MVP only.** Identical to the scope `firmware/README.md` already states:
 
-- **Range 1 only** (1 Ω shunt, 1–50 mA). The 3-pin manual shunt jumper of §3.3
-  is still populated — three resistors and a header cost nothing and keep
-  ranges 2–3 reachable after the freeze — but **only range 1 is inside the
-  Nov 16 gate.**
+- **Range 1 is the only range inside the Nov 16 gate** (1 Ω shunt, 1–50 mA).
+  **The board nevertheless carries all three shunts — 1 Ω, 100 Ω and 10 kΩ —
+  and §3.3's 3-pin selection header.** All three are populated, deliberately:
+  the point is that **reaching ranges 2–3 must not require a board
+  revision**, and there is only one revision. Three resistors and a header are
+  the cheapest insurance on the board. §8 already carries all three values
+  (the 1 Ω 1% 1 W shunt, and 100 Ω and 10 kΩ from the 0.1% assortment), so
+  this costs nothing in the BOM either. What is *not* in the MVP is the
+  switching: selection is the manual jumper, and only range 1 is validated.
 - **DC sweep only.**
 - **No auto-ranging.** No relays. §3.3's relay auto-ranging stays Phase 2.
 - **No pulsed mode.** Phase 6 is dropped from the MVP (§9). Note the §3.5
@@ -656,19 +686,72 @@ package and ships SOIC-8 / VSSOP-8 only, and the board needs four of them.
 Hand-soldering SOIC is **not a skill I have, and acquiring it on the critical
 path is the wrong place to learn it** — a cold joint on an op-amp supply pin
 presents as a stability or offset problem, i.e. as a *design* fault, and
-debugging it would burn the Nov 3 – Nov 16 window diagnosing the assembly
-instead of the circuit.
+debugging it would burn the arrival-to-freeze window — 13 days against the
+Nov 3 backstop (§9) — diagnosing the assembly instead of the circuit.
 
-**This cuts against Phase 1.** The Oct 12 GO/NO-GO has to run on an OPA2197
-(§3.1: no transient measurement transfers from the LM324, whose 0.4 V/µs slew
-rate would mask ringing entirely) — and on a breadboard that means an OPA2197
-on a SOIC-8-to-DIP adapter, which is the hand-soldering this section just
-declined. **Unresolved, and on the critical path.** Options, in order of
-preference: buy a pre-assembled SOIC-8 breakout; have the adapter populated as
-a tiny separate PCBA ordered now, ahead of the main board; or accept hand-
-soldering **two** adapters only (one dual op-amp drives the whole Phase 1
-circuit), with duplicates on hand per §8. What is *not* acceptable is running
-the Oct 12 gate on the LM324 and recording the result as a pass.
+**The SOIC-8 adapters are off the critical path.** An earlier draft of this
+section had the Oct 12 GO/NO-GO requiring an OPA2197, which on a breadboard
+means a SOIC-8-to-DIP adapter — the hand-soldering this section just declined,
+needed in the same week as the gate it was blocking. **That requirement is
+withdrawn.** Since the board is assembled by the fab, every OPA2197 that
+matters arrives already soldered, and the adapters become a **nice-to-have**:
+useful for bench experiments after bring-up, not a prerequisite for anything
+dated. Buy them or don't; nothing in §9 waits on them.
+
+**What Phase 1 runs on instead: the fastest DIP-8 op-amp in the lab, ≥8 MHz
+GBW.** The justification is the narrowing in §9. Phase 1 tests the **§12
+cliff at light load** — does the bare loop, with real breadboard stray
+capacitance at the inverting node, oscillate at all — and it does **not**
+measure the §3.1 overshoot spec, which needs `R_iso`, the clamp and a 100 nF
+load and has moved to H4. A gate that narrow cannot justify putting
+hand-soldered SOIC on the critical path.
+
+**The question being asked is GBW against the follower pole, and that is what
+the ≥8 MHz threshold protects.** Closed-loop crossover is roughly GBW / 3.32:
+
+| Part | GBW | ≈ crossover | vs. the 2–3 MHz stray pole |
+|---|---|---|---|
+| OPA2197 (design part) | 10 MHz | ~3.0 MHz | the pole sits *at* crossover — §3.1 |
+| **≥8 MHz DIP-8 substitute** | ≥8 MHz | **≥2.4 MHz** | still inside the band — **the question survives** |
+| LM324 | 1.3 MHz | ~0.39 MHz | ~8× below it — **the pole is invisible** |
+
+That is the whole criterion. At ≥8 MHz the substitute's crossover lands inside
+the same 2–3 MHz band where §3.1 puts the stray pole, so the interaction Phase 1
+exists to find is still in range. **The LM324 remains unsuitable** — and not
+only for its 0.4 V/µs slew rate (§8), but for the more basic reason that its
+crossover sits nearly an order of magnitude below the pole, so a quiet LM324
+loop is evidence of nothing.
+
+**This changes the supply topology, not the question.** Most fast DIP-8 parts
+do not include ground in their input common-mode range, which single-supply
+operation requires — the same property that ruled out the TL074 in §8. So the
+Phase 1 breadboard may need to run on a **dual supply** where the design runs
+on +15 V single. Record it when logging the result: the rails differ from the
+design, and therefore **no DC figure from Phase 1 — offset, output swing near
+ground, low-end linearity — transfers to the board.** The stability question
+does transfer, because it is set by GBW and the loop's poles, and neither
+depends on where the negative rail sits.
+
+### 14.3a Cost
+
+§8's **~$121** is the parts BOM and **excludes the board entirely** — no fab,
+no assembly, no shipping. The real project cost is that plus:
+
+| Item | Note |
+|---|---|
+| PCB fab + PCBA | Assembly is the §14.3 decision; quote at order time |
+| **Express fab shipping** | **Bought deliberately.** See below |
+| Stencil / setup fees, if the fab charges them | Quote at order time |
+
+**Why express shipping is not optional.** The schedule's slack is all in the
+front half: 6 days between the Oct 13 order target and the Oct 20 backstop,
+and **zero** between arrival and the Nov 16 freeze (§9). Standard shipping
+spends a week of the one window that has no give, and it spends it on the
+phases the project exists to produce — extraction, closed-loop validation and
+the README. **A week of fab time is worth more than $30**, and the trade is
+not close: $30 is under a quarter of the parts BOM, while a week is more than
+half the 13-day backstop window. Order express even if the layout finishes
+early; arriving early is itself the hedge against bring-up going badly.
 
 ### 14.4 One revision only — design for it
 

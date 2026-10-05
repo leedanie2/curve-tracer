@@ -28,15 +28,6 @@ below but do not count toward §7.
 The bench log refers to these stages, which split the sweep source into steps
 small enough to debug one at a time.
 
-**Scope changed Oct 5, 2026 — the project now targets an assembled PCB**
-(blueprint §14). Blueprint **Phase 1 is now stages 1–6 only**: a stability
-GO/NO-GO on the composite amplifier, due **Oct 12**, gate is *no oscillation
-with real parasitics* on the OPA2197 with `C_f` swept. **Stages 7–8 are no
-longer breadboarded** — the clamp, the limiter, `R_iso`, and the load and
-short tests move to PCB bring-up (phase H4). They stay documented here
-because they are the **fallback path**: if the Oct 26 checkpoint abandons the
-PCB, Phase 1 reverts to all eight stages (§9).
-
 1. Rails, star ground, decoupling
 2. Op-amp inserted and powered, no circuit
 3. Gain network only, feedback from op-amp output
@@ -50,6 +41,35 @@ The feedback tap moves deliberately: op-amp output (stage 3), then emitter
 (stage 4), then past `R_sense` (stage 6). Three positions, moved twice, so
 each addition inside the loop is tested on its own. `R_iso` at stage 8 does
 not move it — feedback stays on the emitter side of `R_iso` (§3.1).
+
+### What Phase 1 covers now
+
+**Scope changed Oct 5, 2026 — the project now targets an assembled PCB**
+(blueprint §14). Blueprint **Phase 1 is now stages 1–6 only**: a stability
+GO/NO-GO on the composite amplifier, due **Oct 12**, gate is *no oscillation
+with real parasitics*, with `C_f` fitted and swept. **Stages 7–8 are no
+longer breadboarded** — the clamp, the limiter, `R_iso`, and the load and
+short tests move to PCB bring-up (phase H4). They stay documented here
+because they are the **fallback path**: if the Oct 26 checkpoint abandons the
+PCB, Phase 1 reverts to all eight stages (§9).
+
+**Part for Phase 1: the fastest DIP-8 op-amp in the lab, ≥8 MHz GBW.** Not the
+OPA2197 — the SOIC-8 adapters are off the critical path now that the fab
+assembles the board (§14.3) — and **not the LM324**, whose 1.3 MHz GBW puts
+crossover ~8× below the 2–3 MHz stray input pole this gate exists to find. At
+≥8 MHz the substitute's crossover is ≥2.4 MHz, inside the same band as the
+OPA2197's ~3.0 MHz, which is the only property the gate depends on.
+
+**Log the supply topology with the result.** A fast DIP-8 part likely needs a
+**dual supply**, because its input common-mode range probably excludes ground
+(the property that ruled out the TL074, §8), whereas the design runs on +15 V
+single. The stability answer still transfers; **no DC figure does** — offset,
+swing near ground and low-end linearity all belong to the substitute's rails,
+not the design's. Record which part, what GBW, and what rails.
+
+The test-matrix rule at the top of this file stands: a number counts toward §7
+only when it comes from the intended parts. **A Phase 1 GO is a go/no-go, not
+a §7 entry.**
 
 ---
 

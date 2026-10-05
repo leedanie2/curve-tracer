@@ -25,10 +25,32 @@ hardware/
 
 | | |
 |---|---|
-| **EDA** | **KiCad** (schematic capture, layout, gerber/BOM/CPL export) |
-| **Review** | **`kicad-happy` agent skills** — ERC/DRC review, netlist and footprint checks, BOM and CPL sanity before the order goes out |
-| **Assembly** | **PCBA** — assembled by the fab. Rationale in §14.3: the OPA2197 is SOIC-only and there are four of them |
+| **EDA** | **KiCad 10.0.6** (schematic capture, layout, gerber/BOM/CPL export) |
+| **Review** | **`kicad-happy` v2.3.0** agent skills — ERC/DRC review, netlist and footprint checks, BOM and CPL sanity before the order goes out |
+| **Assembly** | **PCBA** — assembled by the fab, **express shipping** (§14.3, §14.3a) |
 | **Routing** | Analog-critical nets **by hand**. Everything else may be autorouted |
+
+### Installed state
+
+Both are installed on this machine as of **Oct 5, 2026** — `kicad-happy` must
+be present before **H1** (§9), and it is.
+
+| | |
+|---|---|
+| KiCad | **10.0.6**, `/Applications/KiCad/KiCad.app`, CLI at `/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`. Installed from the official universal `.dmg`, **not** Homebrew — the cask writes to a root-owned path and wants a sudo password. Upgrades are therefore manual: fetch a new `.dmg` from kicad.org |
+| `kicad-happy` | **v2.3.0** (`aklofas/kicad-happy`), cloned to `~/.claude/kicad-happy`, with all **11** skills symlinked into `~/.claude/skills/` — `kicad`, `spice`, `emc`, `datasheets`, `bom`, `digikey`, `mouser`, `lcsc`, `element14`, `jlcpcb`, `pcbway`. Global, so available in every project. **Upgrade with `git pull` in that clone** — upstream documents `/plugin update` as unreliable, which is why this is a symlink install rather than a marketplace plugin |
+
+`kicad-happy` needs Python 3.10+ and has no required dependencies (stdlib
+only); this machine has 3.12.7. It does **not** need KiCad at runtime — it
+parses saved `.kicad_sch` / `.kicad_pcb` files directly, and supports KiCad
+5 through 10.
+
+Optional, not set up: `DIGIKEY_CLIENT_ID` / `DIGIKEY_CLIENT_SECRET`,
+`MOUSER_SEARCH_API_KEY`, `ELEMENT14_API_KEY`. Without them the sourcing skills
+fall back to web search. LCSC needs no key, which is the one that matters if
+the board goes to JLCPCB.
+
+### What the review skills do and do not settle
 
 The `kicad-happy` skills are a review pass, not an authority. Every §14.5
 constraint is a geometric claim about the finished board — trace length,
@@ -80,8 +102,13 @@ fine, then check it does not cut across nets 1–6 or break the star ground.
 
 ## Before the order goes out
 
-The Oct 19 design freeze means this list is finished, not started, on Oct 19.
-Dates and the Oct 26 abandon-the-PCB checkpoint are in §9.
+**The order is event-driven: it goes out as soon as this list is clear and
+Phase 1 has passed — target Oct 13, no later than Oct 20** (§9). Nothing on
+the board improves by waiting, so do not hold a DRC-clean layout for a
+calendar date. The Oct 26 abandon-the-PCB checkpoint is in §9.
+
+**Order with express shipping** (§14.3a). The slack is all in front of the
+order; there is none between arrival and the Nov 16 freeze.
 
 - [ ] Every node named in §3 has a test point (§14.4 enumerates them)
 - [ ] Alternate-value footprints placed: `R_iso`, `R_B`, `R_sense` (§14.4)
@@ -94,8 +121,13 @@ Dates and the Oct 26 abandon-the-PCB checkpoint are in §9.
       for a net at +15 V
 - [ ] BAT54S ADC clamps and gate Zener placed; output-clamp footprint at the
       DUT socket for §3.6's +48% short-recovery overshoot, unstuffed is fine
+- [ ] All three shunts populated — **1 Ω, 100 Ω, 10 kΩ** — plus §3.3's 3-pin
+      selection header. Only range 1 is validated by Nov 16, but ranges 2–3
+      must not need a board revision (§14.2)
 - [ ] ERC and DRC clean; `kicad-happy` review pass on schematic and layout
 - [ ] BOM and CPL checked against §8 — including that `R_f` is **23.2 kΩ**
       (E96; 23.3 kΩ does not exist and has never been orderable)
 - [ ] Phase 1 breadboard stability result is in `docs/characterization.md`,
-      and it is a **GO**
+      and it is a **GO** — taken on a ≥8 MHz DIP-8 part, with the substitute
+      and its rails recorded (§14.3)
+- [ ] **Express shipping selected** on the fab order
