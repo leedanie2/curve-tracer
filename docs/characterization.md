@@ -25,9 +25,17 @@ below but do not count toward §7.
 
 ## Breadboard build stages
 
-The bench log refers to these stages. They split blueprint **Phase 1** (sweep
-source on breadboard, current limit working) into steps small enough to debug
-one at a time:
+The bench log refers to these stages, which split the sweep source into steps
+small enough to debug one at a time.
+
+**Scope changed Oct 5, 2026 — the project now targets an assembled PCB**
+(blueprint §14). Blueprint **Phase 1 is now stages 1–6 only**: a stability
+GO/NO-GO on the composite amplifier, due **Oct 12**, gate is *no oscillation
+with real parasitics* on the OPA2197 with `C_f` swept. **Stages 7–8 are no
+longer breadboarded** — the clamp, the limiter, `R_iso`, and the load and
+short tests move to PCB bring-up (phase H4). They stay documented here
+because they are the **fallback path**: if the Oct 26 checkpoint abandons the
+PCB, Phase 1 reverts to all eight stages (§9).
 
 1. Rails, star ground, decoupling
 2. Op-amp inserted and powered, no circuit

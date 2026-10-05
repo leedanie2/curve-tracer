@@ -2,7 +2,7 @@
 
 **One-line:** A programmable instrument that sweeps bias across a semiconductor device, measures its I-V characteristics across ~5 decades of current, exports data, and extracts SPICE model parameters.
 
-**Why it's the project:** it closes the loop `physics → measurement → model → design → verification` on a breadboard. Measure a real MOSFET, extract its parameters, simulate a circuit in LTspice with *your* model, build that circuit, show simulation matches bench.
+**Why it's the project:** it closes the loop `physics → measurement → model → design → verification` on hardware you built. Measure a real MOSFET, extract its parameters, simulate a circuit in LTspice with *your* model, build that circuit, show simulation matches bench.
 
 ---
 
@@ -439,7 +439,7 @@ Order **two of every active component.** You will destroy at least one op-amp an
 
 **Bench substitute path.** Until the adapters are on hand, use an **LM324** (quad, DIP-14). It runs on the single +15 V rail with inputs down to ground, so it covers breadboard stages 3–8 of the sweep source (stages are defined in `docs/characterization.md`). The **TL074 does not work** here: its input common-mode range excludes ground, which single-supply operation requires.
 
-Substitutes are acceptable through Phase 6 for bring-up, firmware and host work. The OPA2197 must be installed before **Phase 7** parameter extraction, because every accuracy figure in §7 assumes it.
+Substitutes are acceptable for firmware and host work. The OPA2197 must be installed before **Phase 7** parameter extraction, because every accuracy figure in §7 assumes it — **and before Phase 1**, whose entire content is a transient stability measurement that does not transfer from the LM324 (see below, and §14.3, where this collides with the decision to have the board assembled by the fab).
 
 **No transient measurement on the LM324 transfers.** It slews at **0.4 V/µs** typical (V+ = 15 V, unity gain, R_L = 2 kΩ, C_L = 100 pF), ~25× slower than the 9.2–9.9 V/µs edges sim 08 measured. Every step-response, settling-time and edge-shape measurement taken on the substitute is slew-limited and says nothing about the OPA2197 circuit. Only DC measurements — gain ratio, linearity, limiter trip point — transfer, and those only with the caveats below.
 
@@ -454,19 +454,71 @@ What else an LM324 result does *not* carry over to the OPA2197:
 
 ## 9. Build phases
 
+**The deliverable is an assembled PCB, not a breadboard** (§14). That changes
+what the breadboard is for. It is no longer the build platform staged through
+phases 1–3; it survives as **one measurement** — a stability GO/NO-GO on the
+composite amplifier (§3.1), the block simulation cannot settle on its own,
+taken *before* layout freezes so a NO-GO can still change the schematic.
+Everything after that is built and validated on the board.
+
 | Phase | Deliverable | Gate to proceed |
 |---|---|---|
 | **0** | ~~LTspice model of sweep source~~ **DONE** — sweep source (§12) *and* difference amp CMRR + input loading (§13) | Sweep source settles cleanly into ≥100 nF with `R_iso`; diff amp buffering decided |
-| **1** | Sweep source on breadboard, current limit working | 0–10 V linear at low current; current limit trips at **~75 mA** (§3.1), re-measured warm; **stability gate met** — ≤25% overshoot into 100 nF, 1% in 5 µs, on the OPA2197 with `C_f` fitted (§3.1) |
-| **2** | Current sense, range 1 only | Reads a known resistor within 1% |
-| **3** | Ranges 2 & 3 + Kelvin sense | 5-decade span verified against precision resistors |
+| **1** | **Composite amplifier on breadboard — stability GO/NO-GO, nothing else.** Stages 1–6 of `docs/characterization.md` (rails → op-amp → gain network → BD139 + `R_B` → scope for VHF → `R_sense`, feedback past it) | **No oscillation with real parasitics**, at any stage, with `C_f` fitted and swept per §3.1, on the **OPA2197** (not the LM324 — §8). A NO-GO means the topology is reworked *before* layout, not after |
+| **H1** | KiCad schematic, in `hardware/` | Every §3 block drawn; test points placed on every node §3 names (§14); alternate-value footprints placed (§14) |
+| **H2** | KiCad layout | §14 layout constraints met; the analog-critical nets listed in `hardware/README.md` routed **by hand**, not autorouted |
+| **H3** | Design freeze → PCBA ordered | The date gates below |
+| **H4** | Board bring-up | Rails and star ground first. Then sweep source: 0–10 V linear at low current; limiter trips at **~75 mA** (§3.1), **re-measured warm**; **§3.1 stability gate** — ≤25% overshoot into 100 nF, 1% in 5 µs, `C_f` fitted *and swept*. Also the §3.6 short-recovery overshoot, bench-verified |
+| **2** | Current sense, range 1 — **on the PCB** | Reads a known resistor within 1% |
+| **3** | Kelvin sense — **on the PCB**. Ranges 2 & 3 only if the board gets there (MVP is range 1 — §14) | Kelvin `V_DS` tracks a DMM at the DUT within 0.5%. Ranges 2–3, if reached: 5-decade span against precision resistors |
 | **4** | Firmware sweep + serial CSV | First complete diode I-V curve |
 | **5** | Host live plot + CSV export | First MOSFET curve family |
-| **6** | Pulsed mode | DC vs. pulsed overlay figure |
+| **6** | ~~Pulsed mode~~ — **out of MVP scope** (§14) | — |
 | **7** | Parameter extraction | SPICE model card generated |
 | **8** | Closed-loop validation | Simulated vs. measured amplifier plot |
 | **9** | Characterization + README | Repo publishable |
-| **P2** | BJT support, relay auto-ranging, INA828 comparison | Only if phases 0–9 are polished |
+| **P2** | BJT support, relay auto-ranging, INA828 comparison, pulsed mode | Only if the board works and phases 0–9 are polished |
+
+**Phase 1's gate is narrower than §3.1's stability gate, deliberately.** Stages
+1–6 stop short of `R_iso` (stage 8), the clamp diode and the limiter (stage 7),
+and the DUT socket and load test (stage 8) — so the ≤25%-overshoot-into-100 nF
+figure §3.1 defines **cannot be measured in Phase 1** and moves to H4. What
+Phase 1 does test is the thing §12 says fails by cliff: whether the bare loop,
+with real breadboard stray capacitance at the inverting node, oscillates at
+all. §12 found it stable to ~1 nF and oscillating by 2.2 nF *without* `R_iso`,
+so a bare breadboard loop sitting quiet — with `C_f` swept both directions —
+is the GO. **The cost of this choice is explicit: `R_iso` and the limiter go to
+layout validated in simulation only.** Both are cheap to make adjustable on the
+board (§14), and that is where the adjustability budget is being spent.
+
+### Date gates
+
+Hard dates. Each row is a gate, not a milestone.
+
+| Date | Gate | Missed → |
+|---|---|---|
+| **Mon Oct 12** | **Breadboard stability GO/NO-GO** (Phase 1) | Schematic proceeds anyway; the GO/NO-GO has until Oct 19 to arrive, and after that it cannot change the board |
+| **Mon Oct 19** | **Design freeze.** Schematic and layout final, `hardware/` committed | Slip eats the Oct 20 → Oct 26 slack directly |
+| **Tue Oct 20** | **PCBA ordered** | Slack runs to Oct 26 |
+| **Mon Oct 26** | **Checkpoint — if not ordered, abandon the PCB and finish on breadboard.** No further extension | — (this *is* the decision point) |
+| **Tue Nov 3** | Boards expected — 14 days of fab + assembly + shipping from Oct 20 | Re-check against the Nov 16 freeze the day the slip is known, not later |
+| **Mon Nov 16** | **Repo freeze** | — |
+
+**Where this plan is tight: the 13 days from Nov 3 to Nov 16.** Those 13 days
+carry board bring-up (H4), phases 2 and 3, and phases 4, 5, 7, 8 and 9. The
+front half of the schedule has 6 days of ordering slack and the back half has
+none, so **a fab slip past Nov 3 comes straight out of phases 7–9** —
+extraction, closed-loop validation and the README, which are the phases the
+project exists to produce. Firmware and host work (phases 4, 5, 7) do not
+depend on the board arriving and should be finished *during* the Oct 20 – Nov 3
+fab window, against the simulated DUT already in `firmware/sim/`, so that
+Nov 3 opens with bring-up as the only unstarted work.
+
+**The Oct 26 fallback is the old staged breadboard plan.** Stages 7–8 of
+`docs/characterization.md` stay in that document for exactly this reason: if
+the PCB is abandoned, Phase 1 reverts to its full scope (clamp, limiter,
+`R_iso`, load and short tests) and phases 2–3 are built on the breadboard as
+originally planned. That path is not deleted, only deprioritised.
 
 ---
 
@@ -480,6 +532,7 @@ curve-tracer/
 │   ├── characterization.md← §7 results table + plots
 │   └── schematic.pdf
 ├── sim/                   ← LTspice .asc files, compensation sweep
+├── hardware/              ← KiCad schematic + layout, fab outputs (§14)
 ├── firmware/              ← STM32 C, CubeIDE project
 ├── host/                  ← Python capture, plot, extraction
 ├── data/                  ← raw CSVs of measured devices
@@ -496,8 +549,10 @@ The "what I'd do differently" section is the one interviewers respond to. Write 
 
 | Risk | Mitigation |
 |---|---|
-| Composite amp oscillates | Simulate compensation first (Phase 0); scope every stage before adding the next |
-| Breadboard noise floor limits low range | Star-ground, short leads, decoupling at every op-amp; if range 3 is unusable, report the measured limitation honestly — that's a legitimate finding |
+| Composite amp oscillates | Simulate compensation first (Phase 0); breadboard stability GO/NO-GO before layout freezes (Phase 1, §9); scope every stage before adding the next |
+| Noise floor limits low range | Star-ground, short leads, decoupling at every op-amp — §14.5 makes these layout constraints rather than breadboard hygiene. Range 3 is outside MVP scope (§14.2); if it is reached and unusable, report the measured limitation honestly — that's a legitimate finding |
+| **One PCB revision, and the analog front end goes to layout validated in simulation only** | `R_iso`, `R_B` and `R_sense` get alternate-value footprints; `C_f` gets a footprint and is fitted after measuring; test points on every §3 node (§14.4). The Oct 26 checkpoint (§9) is the abandon path |
+| **Fab slips past Nov 3** | Only 13 days separate Nov 3 from the Nov 16 freeze, and they carry bring-up plus phases 2–9. Finish phases 4, 5 and 7 against the simulated DUT *during* the fab window, not after (§9) |
 | STM32 ADC noisier than spec | Oversample; if still poor, add an external ADC (ADS1115) as phase 2 |
 | Scope creep into BJT/auto-ranging | Phases 0–9 first. Phase 2 is optional |
 | Blown parts stall progress | Duplicates of every active component on hand from day one |
@@ -529,7 +584,7 @@ Simulation files: `sim/01_sweep_source_compensation.asc` (2N2222), `sim/02_sweep
 
 **Previously open, now closed:** difference amplifier CMRR simulation — completed Sep 18, 2026, results in **§13**.
 
-**Bench items carried forward to Phase 1:** confirm `R_iso` behavior with the real BD139 and real breadboard parasitics; measure actual settling; verify the current limit trips at **~75 mA** (sim 11; the ~65 mA in earlier drafts was a target, never a measurement — see §3.1).
+**Bench items carried forward — split by phase after the §9 restructure.** To **Phase 1** (breadboard, stages 1–6): measure actual settling, and confirm the bare loop does not oscillate with real parasitics. To **H4** (PCB bring-up), because stages 7–8 are no longer breadboarded: confirm `R_iso` behavior with the real BD139; verify the current limit trips at **~75 mA** (sim 11; the ~65 mA in earlier drafts was a target, never a measurement — see §3.1), re-measured warm.
 
 ---
 
@@ -549,4 +604,161 @@ Simulation files: `sim/04_diffamp_cmrr.cir` (worst-case tolerance corner), `sim/
 
 **Method note.** This LTspice is the Windows build in a CrossOver bottle; `-b` against the `/Applications` binary exits 0 without simulating. The working headless invocation is recorded in `sim/README.md`. `.meas` on a stepped `.op` logs only the first step, so per-step values come from the `.raw` file — and `.raw` is float32 while `.meas` is double (§3.5).
 
-**Bench items carried forward to Phase 1:** verify the buffered difference amp's actual CMRR against the 74.4 dB floor with real 0.1% parts; confirm range 3 is usable with buffers on a real breadboard; measure input bias current contribution directly rather than trusting the datasheet typ.
+**Bench items carried forward to H4 / Phase 2 — on the PCB, not a breadboard** (§9: Phase 1 is now the composite amplifier only): verify the buffered difference amp's actual CMRR against the 74.4 dB floor with real 0.1% parts; measure input bias current contribution directly rather than trusting the datasheet typ. The range-3 usability question moves with it, and is now **outside MVP scope** (§14.2) — the buffers are still required, because unbuffered error is 0.95% on range 1 alone.
+
+---
+
+## 14. PCB revision
+
+**Decided Oct 5, 2026.** The project targets an assembled PCB by Nov 16, not a
+breadboard. §9 carries the phases and dates; this section carries the why, the
+scope, and the constraints the layout has to honour.
+
+### 14.1 Why
+
+**The deliverable is a usable instrument, not a demonstration rig.** A
+breadboard that produces one good curve family proves the design closes; it
+does not produce a thing that can be picked up and used, and it cannot be
+honestly photographed as one. Every §7 accuracy figure is also easier to
+defend on a board: §11 already lists "breadboard noise floor limits low range"
+as a live risk with "report the measured limitation honestly" as its
+mitigation, which is a graceful way of saying range 3 might not work. A board
+with a star ground and short feedback traces removes the excuse rather than
+documenting it.
+
+The breadboard keeps exactly one job — the Phase 1 stability GO/NO-GO — because
+that is the one question a PCB answers *worse*: it is unchangeable once
+fabricated, and §12 found this loop fails by cliff.
+
+### 14.2 Scope
+
+**MVP only.** Identical to the scope `firmware/README.md` already states:
+
+- **Range 1 only** (1 Ω shunt, 1–50 mA). The 3-pin manual shunt jumper of §3.3
+  is still populated — three resistors and a header cost nothing and keep
+  ranges 2–3 reachable after the freeze — but **only range 1 is inside the
+  Nov 16 gate.**
+- **DC sweep only.**
+- **No auto-ranging.** No relays. §3.3's relay auto-ranging stays Phase 2.
+- **No pulsed mode.** Phase 6 is dropped from the MVP (§9). Note the §3.5
+  consequence: with the sweep DAC on `DAC2_OUT1`/PA6 and the gate on
+  `DAC1_OUT1`/PA4, the two channels cannot take a synchronised dual-channel
+  update, so restoring pulsed mode later needs rework around LD2 regardless.
+  Dropping it now costs nothing that was reachable anyway.
+
+Anything not on this list is not on the board. Scope creep here does not cost
+timeline, it costs a **board revision**, and there is only one.
+
+### 14.3 Assembly: PCBA
+
+**Assembled by the fab, not by hand.** The driver is §8: the OPA2197 has no DIP
+package and ships SOIC-8 / VSSOP-8 only, and the board needs four of them.
+Hand-soldering SOIC is **not a skill I have, and acquiring it on the critical
+path is the wrong place to learn it** — a cold joint on an op-amp supply pin
+presents as a stability or offset problem, i.e. as a *design* fault, and
+debugging it would burn the Nov 3 – Nov 16 window diagnosing the assembly
+instead of the circuit.
+
+**This cuts against Phase 1.** The Oct 12 GO/NO-GO has to run on an OPA2197
+(§3.1: no transient measurement transfers from the LM324, whose 0.4 V/µs slew
+rate would mask ringing entirely) — and on a breadboard that means an OPA2197
+on a SOIC-8-to-DIP adapter, which is the hand-soldering this section just
+declined. **Unresolved, and on the critical path.** Options, in order of
+preference: buy a pre-assembled SOIC-8 breakout; have the adapter populated as
+a tiny separate PCBA ordered now, ahead of the main board; or accept hand-
+soldering **two** adapters only (one dual op-amp drives the whole Phase 1
+circuit), with duplicates on hand per §8. What is *not* acceptable is running
+the Oct 12 gate on the LM324 and recording the result as a pass.
+
+### 14.4 One revision only — design for it
+
+There is budget for **one** board. The design therefore spends area and parts
+on adjustability wherever a simulated result has not been confirmed on
+hardware, which after the §9 restructure is most of the analog front end.
+
+- **Test points on every node §3 names.** At minimum: op-amp output, BD139
+  base, BD139 emitter, the `R_sense` feedback tap, the load node after
+  `R_iso`, the inverting-input node, +15 V and +3.3 V rails, star-ground
+  reference, both shunt terminals, difference-amp output (ADC1), both Kelvin
+  sense lines at the DUT, divider/buffer output (ADC2), gate-source output,
+  and both PTC terminals. A node that cannot be scoped cannot be debugged, and
+  there is no second board on which to add the pad.
+- **Footprints for alternate values wherever a sim result is uncertain.**
+  Specifically `R_iso` (22 Ω, never confirmed on hardware — stage 8 was never
+  reached), `R_B` (330 Ω, chosen over 680 Ω on a simulated 10.3% vs 21.4%
+  overshoot that no bench measurement has checked), and `R_sense` (10 Ω, which
+  sets the limiter trip at a threshold whose −2 mV/°C drift §3.1 flags as "the
+  figure most likely to disagree with simulation").
+- **Headers, not soldered connections**, for the supply, the DUT socket, the
+  shunt selection, and the Kelvin leads.
+- **The Nucleo sits on headers, not soldered down.** It is $18 of the BOM and
+  the single most likely part to be swapped (F303RE ↔ G474RE, §3.5) or
+  destroyed.
+
+**`C_f` gets a footprint even though its value is not yet knowable.** §3.1
+sizes it at **2–4 pF** from `C_f = C_in · R_g / R_f`, and `C_in` is known only
+as 5–10 pF — a 2× uncertainty that puts the exact value anywhere in
+2.16–4.31 pF. On a PCB `C_in` is *different again*, and smaller, because the
+breadboard rows that dominated the estimate are gone. So the value cannot be
+chosen before the board exists: **place the footprint, leave it unstuffed, and
+fit `C_f` after measuring, per §3.1.** Bring-up sweeps it in both directions —
+§3.1's residual table is two-sided, and below ~7.5 pF of `C_in` a 3.3 pF `C_f`
+*over*-compensates, which is the §12 failure mode rather than a milder version
+of the under-compensated one. Keep the pads close to `R_f`; a footprint reached
+by a long trace adds its own stray capacitance to the node it is correcting.
+
+### 14.5 Layout constraints — not negotiable
+
+These come out of §3.1 and are the reason the analog nets are hand-routed
+rather than autorouted (`hardware/README.md`).
+
+1. **The feedback trace from the `R_sense` tap back to the op-amp inverting
+   input must be short, and must not run near the collector.** It is a
+   high-impedance node (`R_f ‖ R_g` = 7 kΩ) carrying the loop's only error
+   signal, and the collector is the node with the largest `dV/dt` and the full
+   load current.
+2. **Minimise stray capacitance at the inverting node.** This is not a
+   general tidiness request: §3.1 identifies it as the pole at **2–3 MHz**,
+   which sits **right at the ~3 MHz crossover**. It is the single parasitic
+   that can cost ~45° of phase margin, and `C_f` only partly cancels it. No
+   ground pour under the inverting-input node or under `R_f`/`R_g`; keep the
+   copper at that node to the minimum the pads require.
+3. **Decoupling within ~5 mm of the BD139 collector and of every op-amp supply
+   pin.** 100 nF ceramic each (§8), plus the bulk 10 µF on the rail. "Within
+   5 mm" means the cap body, measured along the actual trace, not the
+   schematic.
+4. **Star ground.** One reference point. The BD139 emitter/`R_sense` return
+   carries up to 107 mA into a hard short (§3.1) and must not share copper
+   with the difference-amp or Kelvin returns — a shared millohm of return
+   impedance at 107 mA is millivolts injected directly into a sense path whose
+   range-3 full scale is 100 mV.
+
+Two further constraints follow from §3 and are recorded here so layout does not
+have to rediscover them:
+
+5. **The feedback tap goes after `R_sense` and before `R_iso`.** §3.1 is
+   explicit in both directions: tapping ahead of `R_sense` puts the sense drop
+   inside the loop and the limiter never trips; tapping after `R_iso` puts the
+   load pole back inside the loop and undoes the Phase 0 fix. The tap point is
+   a single via's worth of freedom and it has exactly one correct position.
+6. **The shunt is Kelvin-connected and its two sense traces run as a matched
+   differential pair** to the difference-amp inputs. §13 puts worst-case CMRR
+   at 74.4 dB from resistor tolerance alone; asymmetric sense routing degrades
+   it further and is not recoverable by trimming.
+
+### 14.6 Carried-forward consequences
+
+Recorded so they are not rediscovered during bring-up:
+
+- The BD139's **tab is the collector and is live at +15 V** (§8). On a PCB this
+  means the heatsink is at +15 V: it cannot touch a grounded enclosure, cannot
+  be shared, and needs clearance to every adjacent net. TO-126 footprint, not
+  TO-220 — different tab and hole pattern.
+- Worst-case BD139 dissipation is **~0.89 W** sustained (§3.1), set by
+  `R_sense` alone. The TO-126 heatsink must fit in the layout, with its
+  keep-out drawn, before the board is called frozen.
+- **§3.6's short-recovery overshoot reaches 14.8 V at the load node on a 10 V
+  setpoint** (+48%, structural, every `R_B`/`R_sense` pair). §3.6 calls its
+  mitigation unresolved. On a one-revision board, place the ADC clamp diodes
+  (BAT54S) and the gate Zener before freeze and leave a footprint for an output
+  clamp at the DUT socket, even if it ships unstuffed.
