@@ -12,12 +12,44 @@ buys (test points everywhere, alternate-value footprints, headers over solder).
 ```
 hardware/
 ├── README.md       ← this file
+├── DECISIONS.md    ← where every value on the board came from: blueprint, sim or bench
 ├── curve-tracer.kicad_pro
-├── curve-tracer.kicad_sch
-├── curve-tracer.kicad_pcb
-├── fab/            ← gerbers, BOM, CPL for the PCBA order
-└── lib/            ← project-local symbols and footprints
+├── curve-tracer.kicad_sch   ← H1, captured Oct 5, 2026
+├── curve-tracer.kicad_pcb   ← H2, not started
+├── fp-lib-table    ← registers lib/ as footprint library `curve-tracer`
+├── lib/curve-tracer.pretty/  ← one project footprint: the J3/J4 range-select header
+├── tools/check_topology.py   ← asserts the §3 / §14.5 topology; run after every edit
+├── fab/            ← BOM now; gerbers and CPL for the PCBA order at H3
+└── datasheets/     ← gitignored; re-sync with the lcsc skill's sync_datasheets_lcsc.py
 ```
+
+Symbols are stock KiCad 10. So are the footprints, except J3/J4: a stock 2×3
+header with silkscreen added (RNG1–RNG3 per row, and "J3+J4: SAME
+POSITION"). Each symbol carries `MPN`, `Manufacturer`, `LCSC` and
+`Provenance` fields. `Provenance` links to the symbol's row in `DECISIONS.md`.
+
+### Checking the schematic after an edit
+
+The schematic is the source of truth and is edited by hand from here on. ERC
+proves it is legal; it does not prove it is the circuit §3 describes. Run
+both:
+
+```
+kicad-cli sch erc --severity-all hardware/curve-tracer.kicad_sch
+python3 hardware/tools/check_topology.py --self-test
+```
+
+`check_topology.py` exports the netlist through kicad-cli and asserts every
+connection §3 depends on: each op-amp pin, the three gains and the ÷4, the
+§14.5(5) tap position, limiter and clamp polarity, the Nucleo pin map, star
+ground, and test-point coverage. `--self-test` also plants six faults that
+ERC passes, and fails if any goes uncaught. Change a value on purpose →
+change the matching assertion in the same commit.
+
+**For H2:** KiCad ships a `STM32_Nucleo-64_Morpho` project template
+(`KiCad.app/Contents/SharedSupport/template/`). Its board places the two
+2×19 morpho sockets at the correct spacing, with the mounting holes. Take
+the CN7/CN10 geometry from it rather than measuring a Nucleo.
 
 ---
 
@@ -32,13 +64,15 @@ hardware/
 
 ### Installed state
 
-Both are installed on this machine as of **Oct 5, 2026** — `kicad-happy` must
+All four are installed on this machine as of **Oct 5, 2026** — `kicad-happy` must
 be present before **H1** (§9), and it is.
 
 | | |
 |---|---|
 | KiCad | **10.0.6**, `/Applications/KiCad/KiCad.app`, CLI at `/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`. Installed from the official universal `.dmg`, **not** Homebrew — the cask writes to a root-owned path and wants a sudo password. Upgrades are therefore manual: fetch a new `.dmg` from kicad.org |
 | `kicad-happy` | **v2.3.0** (`aklofas/kicad-happy`), cloned to `~/.claude/kicad-happy`, with all **11** skills symlinked into `~/.claude/skills/` — `kicad`, `spice`, `emc`, `datasheets`, `bom`, `digikey`, `mouser`, `lcsc`, `element14`, `jlcpcb`, `pcbway`. Global, so available in every project. **Upgrade with `git pull` in that clone** — upstream documents `/plugin update` as unreliable, which is why this is a symlink install rather than a marketplace plugin |
+| KiCad library tables | Default global `sym-lib-table` / `fp-lib-table` copied from the bundled template into `~/Library/Preferences/kicad/10.0/` on Oct 5, 2026. KiCad's first-run dialog normally does this; it had never been run here, so `kicad-cli sch erc` reported every symbol as an unknown library |
+| `ngspice` | **47**, Homebrew (`/opt/homebrew/bin/ngspice`), installed Oct 5, 2026 for the `spice` skill's subcircuit checks. LTspice stays the tool for `sim/`; the skill cannot drive the CrossOver bottle. Upgrade with `brew upgrade ngspice` |
 
 `kicad-happy` needs Python 3.10+ and has no required dependencies (stdlib
 only); this machine has 3.12.7. It does **not** need KiCad at runtime — it
@@ -119,6 +153,11 @@ order; there is none between arrival and the Nov 16 freeze.
       leads; **Nucleo on headers**
 - [ ] TO-126 footprint (not TO-220), heatsink keep-out drawn, tab clearance
       for a net at +15 V
+- [ ] BD139 footprint checked against the **physical** E-C-B lead order, not
+      ST's pin numbers, which run the other way (`DECISIONS.md` L-1)
+- [ ] Two 2.54 mm jumper shunts for J3/J4 on the parts order; they are not
+      on the PCBA BOM
+- [ ] `tools/check_topology.py --self-test` passes on the frozen schematic
 - [ ] BAT54S ADC clamps and gate Zener placed; output-clamp footprint at the
       DUT socket for §3.6's +48% short-recovery overshoot, unstuffed is fine
 - [ ] All three shunts populated — **1 Ω, 100 Ω, 10 kΩ** — plus §3.3's 3-pin

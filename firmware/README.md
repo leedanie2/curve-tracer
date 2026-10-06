@@ -95,23 +95,37 @@ difference is a measurement, not noise.**
   the Kelvin sense lines.
 
 They differ because the feedback node is tapped **ahead of `R_iso`**
-(blueprint §3.1), so the drop across `R_iso` (22 Ω) and the shunt burden
-(1 Ω on range 1) are downstream of the loop and uncorrected:
+(blueprint §3.1), so three drops are downstream of the loop and
+uncorrected: `R_iso` (22 Ω), the shunt burden (1 Ω on range 1), and the PTC
+in the drain path (blueprint §3.6):
 
 ```
-delta = vds_set_v - vds_meas_v ≈ I × (R_iso + R_shunt) = I × 23 Ω
+delta = vds_set_v - vds_meas_v ≈ I × (R_iso + R_shunt + R_PTC) = I × (23 Ω + R_PTC)
 ```
 
-**At 50 mA that delta should be about 1.15 V** (blueprint §3.1), and it
-should grow smoothly and monotonically with current. That makes it a useful
-diagnostic:
+**`R_PTC` is not a constant.** The nSMD010 on the board is 1.6 Ω minimum and
+15 Ω maximum, and its datasheet specifies the maximum one hour after reflow,
+so a new board can sit anywhere in that range. **The figure also moves after
+every trip**: the part recovers to a value anywhere up to 15 Ω, not
+necessarily the one it had. So the expected delta is a band, not a line:
+**1.23–1.90 V at 50 mA** (I × 24.6 Ω to I × 38 Ω). The 1.15 V at 50 mA that
+this section used to quote (I × 23 Ω) left the PTC out.
+
+Measure the board's own `R_PTC` at bring-up — the drop from TP5 (`LOAD`) to
+TP17 (`PTC_OUT`) at a known current — and re-measure it after any trip. With
+that number the delta becomes a tight check again. Either way it should grow
+smoothly and monotonically with current, which makes it a useful diagnostic:
 
 | What you see | What it means |
 |---|---|
-| delta ≈ I × 23 Ω | working as designed |
+| delta ≈ I × (23 Ω + R_PTC) | working as designed |
 | delta ≈ 0 at high current | Kelvin leads probably shorted to the force leads, or sensing the wrong node |
-| delta scattered / non-monotonic | noise on ADC2, or a bad Kelvin connection |
-| delta much larger than I × 23 Ω | extra series resistance — lead, socket or contact |
+| delta scattered / non-monotonic | noise on ADC2, or a bad Kelvin connection — **or a PTC still recovering from a trip**, whose resistance drifts during the sweep |
+| delta much larger than I × (23 Ω + R_PTC) | extra series resistance — lead, socket or contact. Rule out a recent trip first |
+
+The host's `vds_delta_report` (`host/ct_host/dataset.py`) still checks
+against `R_iso + shunt` = 23 Ω only. Above about 11.5 Ω of `R_PTC` it will
+report "extra series resistance" on a healthy board.
 
 **Plot `vds_meas_v`, never `vds_set_v`.** The whole reason the instrument has
 a four-wire sense is that the commanded value is wrong by over a volt at full
@@ -291,7 +305,8 @@ commanded voltage becomes a node voltage, the DUT draws current, that current
 drops across `R_iso` and the shunt, and what remains is what ADC2 would
 Kelvin-sense. So `vds_set_v` and `vds_meas_v` differ in simulation for the
 same physical reason they differ on the bench, and the tests can assert the
-23 Ω relationship above.
+23 Ω relationship above. **The simulator has no PTC**, so its delta is the
+low edge of the board's band, I × 23 Ω, not the middle of it.
 
 **It is a test fixture, not a circuit simulator.** No reactive elements, no
 settling, no loop dynamics — sims 08–11 in `sim/` cover those. Its purpose is

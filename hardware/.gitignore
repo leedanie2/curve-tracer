@@ -1,0 +1,14 @@
+# Per-user KiCad state and regenerable outputs
+*.kicad_prl
+*-backups/
+fp-info-cache
+_autosave-*
+~*.lck
+
+# Synced by kicad-happy (lcsc sync_datasheets_lcsc.py); re-sync, do not commit
+datasheets/
+analysis/
+
+# kicad-cli ERC/DRC reports
+*-erc.rpt
+*-drc.rpt

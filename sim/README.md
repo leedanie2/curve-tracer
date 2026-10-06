@@ -99,7 +99,8 @@ I_err = 0.476 / (1000 + Rsh)   [A]
 Against full scale that is **0.95% / 43% / 433%** on ranges 1 / 2 / 3.
 
 **Conclusion:** unity-gain input buffers are required — move to the 3-op-amp
-instrumentation topology. BOM goes from 3 to 4 × OPA2197.
+instrumentation topology. The op-amp count goes from four channels to six,
+i.e. from 2 to 3 × OPA2197.
 
 ## 07_diffamp_buffered.cir — same loading test, with input buffers
 

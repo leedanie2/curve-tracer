@@ -10,7 +10,7 @@
 
 | Parameter | Target | Notes |
 |---|---|---|
-| Sweep voltage (V_DS / V_AK) | 0 – 10 V (low current); **~9.81 V max at 50 mA** | 4096 steps (12-bit DAC), ~2.67 mV/step. Full 10 V is not reachable at full current — see §3.1 |
+| Sweep voltage (V_DS / V_AK) | 0 – 10 V (low current); **9.06–9.73 V max at 50 mA**, set by the PTC's resistance | 4096 steps (12-bit DAC), ~2.67 mV/step. Full 10 V is not reachable at full current — see §3.1, *Output headroom* |
 | Sweep current | 0 – 50 mA | Covers small-signal MOSFETs, BJTs, diodes, LEDs |
 | Step voltage (V_GS) | 0 – 10 V | Second DAC channel |
 | Current measurement range | 100 nA – 50 mA | 3 switchable ranges, ~5.7 decades |
@@ -71,7 +71,7 @@ DAC output is 0–3.3 V at ~5 mA drive. Needs to become 0–10 V at 50 mA.
 
 **Gain is 3.32 — 23.3 kΩ was never orderable.** 23.3 kΩ is not an E96 value (E96 goes 22.6, **23.2**, 23.7), which is why it never appeared in a cart. **23.2 kΩ** is E96 and is stocked in the same Yageo MFP-25BRD52 0.1% family as the parts already on hand, giving `1 + 23.2/10` = **3.32** against the 3.33 originally specified. `R_f + R_g` becomes **33.2 kΩ** against the 33.3 kΩ the sims were run at — a 0.3% difference, below the precision of every figure quoted below, so **no simulated result needs restating**.
 
-**The gain must not be lowered to "save" headroom.** At full scale the feedback node reaches 10.96 V, and the DUT sees ~9.81 V at 50 mA. The gap is not waste: the feedback node is tapped after `R_sense` and **ahead of** `R_iso`, so the `R_iso` drop (1.10 V at 50 mA) and the shunt burden (50 mV on range 1) come off it downstream, uncorrected. The gain is sized to compensate them by design — see the trade-off note below. Dropping to gain 3.00 would carry the DUT maximum down to 8.75 V at 50 mA and put the zero-current ceiling below 10 V entirely.
+**The gain must not be lowered to "save" headroom.** At full scale the feedback node reaches 10.96 V, and the DUT sees 9.06–9.73 V at 50 mA, depending on the PTC (see *Output headroom* below). The gap is not waste: the feedback node is tapped after `R_sense` and **ahead of** `R_iso`, so the `R_iso` drop (1.10 V at 50 mA), the shunt burden (50 mV on range 1) and the PTC's drop (0.08–0.75 V) come off it downstream, uncorrected. The gain is sized to compensate them by design — see the trade-off note below. Dropping to gain 3.00 would carry the DUT maximum down to 8.00–8.67 V at 50 mA and put the zero-current ceiling below 10 V entirely.
 
 **Interim bench substitute (stages 3–6).** Until the 23.2 kΩ parts are in place, the 0.1% pair on hand is **20 kΩ / 10 kΩ**, measured at **19.89 kΩ** and **9.94 kΩ** → gain **3.001**. Both readings sit ~0.6% low on 0.1% parts; that is a meter scale error, not part error, and it **cancels in the ratio**, which is all the gain depends on. This is a substitute, **not the design value**: at gain 3.00 the feedback node reaches only 9.9 V, so the DUT tops out near **8.75 V at 50 mA**. Ratio, linearity and limiter measurements transfer; **no full-scale or top-of-range figure taken on it does.** (Stages are defined in `docs/characterization.md`.)
 
@@ -81,7 +81,7 @@ The follower adds a pole inside the loop, but the problem is not what the origin
 
 A cap across `R_f` is *transimpedance* compensation. It works in a TIA because the noise gain rises with frequency and `C_f` cancels that rise. This circuit is a non-inverting voltage amp with a resistive divider: `β = Z_g/(Z_g+Z_f)`. A cap across `R_f` lowers `Z_f` at high frequency, pushing `β` toward 1 and *raising* loop gain exactly where the follower's phase lag sits. Simulation confirmed it makes things worse monotonically.
 
-**The actual fix is `R_iso`:** a 22 Ω series resistor between the emitter and the load node, with `R_f` feedback tapped on the **emitter side**. The load pole then sits outside the feedback loop where it costs no phase margin.
+**The actual fix is `R_iso`:** a 22 Ω series resistor between the emitter and the load node, with `R_f` feedback tapped on the **emitter side**. The load pole then sits outside the feedback loop where it costs no phase margin. This is the first of two places the design isolates a capacitive load rather than compensating for it; §3.7 states the rule.
 
 **Op-amp datasheets give the same guidance independently.** The ST LM324 datasheet notes that capacitive loads applied directly to an op-amp output reduce loop stability margin (50 pF worst case at unity gain), and recommends resistive isolation for larger loads. Phase 0 reached `R_iso` = 22 Ω empirically; this is the general form of that result.
 
@@ -168,9 +168,13 @@ Losing ~19° from the simulated ~59° leaves ~40°, which is **25.4% overshoot**
 
 **Second constraint: clamp-diode discharge.** With the B-E clamp diode, the op-amp *sinks* the load's discharge current through the diode and `R_B` on every falling edge: peak ≈ (V_E − V_f) / (`R_B` + `R_iso`). Sim 09 gives **21.9 mA at 330 Ω** (100 nF, open load, 9 V → 1 V). At 220 Ω the hand estimate is ~33 mA, and the sim's 25 mA op-amp clamp engaged, so the 220 Ω clamped figures in sim 09 show the model's limit, not the circuit. 330 Ω satisfies both constraints.
 
-**The tradeoff:** `R_B · C_jc` forms a pole with the BD139's `C_jc` = 36.1 pF. At 100 Ω that pole sits near **44 MHz**, far outside the loop; at 330 Ω it is about **13 MHz**, still above the ~3 MHz crossover. Sim 08 (`sim/08_sweep_source_rb_sweep.asc`, `tcase` = 1) measured the effect: 100 mV step overshoot into 100 nF / 200 Ω is 0.3 / 5.3 / 10.3 / 12.7% at 100 / 220 / 330 / 390 Ω. All are well damped, so damping does not set `R_B`; op-amp current does.
+**The tradeoff:** `R_B · C_jc` forms a pole with the BD139's `C_jc` = 36.1 pF. It sits *inside* the loop, which is why `R_B` is not an instance of the §3.7 isolation rule despite looking like one. At 100 Ω that pole sits near **44 MHz**, far outside the loop; at 330 Ω it is about **13 MHz**, still above the ~3 MHz crossover. Sim 08 (`sim/08_sweep_source_rb_sweep.asc`, `tcase` = 1) measured the effect: 100 mV step overshoot into 100 nF / 200 Ω is 0.3 / 5.3 / 10.3 / 12.7% at 100 / 220 / 330 / 390 Ω. All are well damped, so damping does not set `R_B`; op-amp current does.
 
-**Output headroom.** DAC full scale × 3.32 = **10.96 V** at the feedback node. After the `R_iso` drop and the shunt burden, the DUT sees about **9.81 V at 50 mA**. **10 V at 50 mA is not reachable — do not claim it in the specs.** The full 10 V is available only at low current, where the `R_iso` and shunt drops are small.
+**Output headroom.** DAC full scale × 3.32 = **10.96 V** at the feedback node. Three drops come off it downstream of the loop, uncorrected: `R_iso` (1.10 V at 50 mA), the shunt burden (50 mV on range 1), and the PTC (§3.6). An earlier draft quoted **9.81 V at 50 mA**, which counted the first two and left the PTC out.
+
+The PTC is the variable term. The nSMD010 fitted on the board (`hardware/DECISIONS.md`, S-1) is **1.6 Ω minimum and 15 Ω maximum**, and its datasheet specifies the maximum *one hour after reflow* — so a freshly assembled board can sit anywhere in that range, not only one that has tripped, and every trip can move it again. At 50 mA the DUT therefore sees **9.73 V at best (1.6 Ω) and 9.06 V at worst (15 Ω)**. The board's actual value is measurable at bring-up: the drop from TP5 (`LOAD`) to TP17 (`PTC_OUT`) at a known current.
+
+**10 V at 50 mA is not reachable — do not claim it in the specs.** The full 10 V is available only at low current, where all three drops are small.
 
 **The follower sources current only — falling edges and the clamp diode (sims 08, 09).** An emitter follower can pull its output up but not down. Without a clamp, once the op-amp drives the base low the BD139 cuts off and the load discharges *passively* through `R_L ‖ (R_f + R_g + R_iso ≈ 33.3 kΩ)`, while the base-emitter junction is reverse-biased by nearly the full output swing. Full-scale step, 9 V → 1 V at the emitter, `R_B` = 330 Ω:
 
@@ -245,7 +249,7 @@ So extracting anything at a fixed `V_DS` — `V_th` and `β` from a `√I_D` fit
 
 **The cost of that choice:** DAC1 and DAC2 are separate peripherals, so they cannot perform a **synchronised dual-channel update** the way DAC1's two channels could (`DUALTRIG` / a shared trigger). The sweep engine (§4) sets gate and then drain sequentially, so this costs nothing in DC mode. **It would matter if pulsed mode is ever restored**, where gate and drain ideally step together on one trigger to keep the measurement window tight; that would need either both channels on DAC1 — reworking around LD2, e.g. by lifting solder bridge SB21 — or accepting the skew between two software writes. Record the constraint now rather than rediscovering it when pulsed mode is built.
 
-**ADC config:** 12-bit, longest sampling time, VREF from the board's 3.3 V rail. Add a `10 nF` cap at each ADC pin and clamp diodes (BAT54S) to rails for protection.
+**ADC config:** 12-bit, longest sampling time, VREF from the board's 3.3 V rail. Add a `10 nF` cap at each ADC pin and clamp diodes (BAT54S) to rails for protection. Each pin is driven from its op-amp through **51 Ω**, because 10 nF is ten times what an OPA2197 at unity gain is rated to drive directly — §3.7.
 
 **Oversampling:** average 64 samples per point → ~3 extra effective bits (~15-bit) at the cost of ~1 ms per point. Standard `√N` noise averaging; state the measured improvement in the README rather than assuming it.
 
@@ -255,7 +259,7 @@ So extracting anything at a fixed `V_DS` — `V_th` and `β` from a `√I_D` fit
 
 - Constant-current limit on the sweep source (§3.1) — protects the **instrument**
 - Firmware current limit (§4, `i_limit_ma`) — protects the **DUT**
-- Series PTC resettable fuse (RXEF010, 100 mA hold) in the drain path — **fault/fire backstop only; it does not protect the DUT**
+- Series PTC resettable fuse (100 mA hold) in the drain path — **fault/fire backstop only; it does not protect the DUT**. The board carries a TECHFUSE **nSMD010** (1206); the RXEF010 originally specified is not in JLCPCB's assembly library. Comparison in `hardware/DECISIONS.md`, S-1
 - Clamp diodes on both ADC inputs
 - Gate series resistor (1 kΩ) + Zener clamp to protect against ESD-sensitive parts
 - DUT socket: 3-pin ZIF or screw terminal, clearly labeled G/D/S
@@ -266,7 +270,7 @@ So extracting anything at a fixed `V_DS` — `V_th` and `β` from a `√I_D` fit
 |---|---|---|---|
 | Analog limiter (§3.1) | the **instrument** | ~µs, continuous | 75.2 mA at `R_sense` |
 | Firmware limit (§4) | the **DUT** | one measurement interval, ~ms | `i_limit_ma`, per device |
-| PTC (RXEF010) | against **limiter failure** | seconds | 200 mA guaranteed |
+| PTC (nSMD010) | against **limiter failure** | seconds | 250 mA guaranteed |
 
 **Neither of the first two substitutes for the other.** The analog limiter reacts in microseconds but its threshold is fixed in hardware at 75.2 mA — far above what a small-signal DUT survives, and not adjustable per device. The firmware limit is per-device and arbitrarily low, but it can only act *after* a measurement completes.
 
@@ -274,9 +278,31 @@ So extracting anything at a fixed `V_DS` — `V_th` and `β` from a `√I_D` fit
 
 **Short-recovery overshoot (sim 10).** When a heavy load current stops abruptly, the op-amp is at its rail and the output overshoots before the loop recovers. At 100 pF the load node reaches 14.8 V on a 10 V setpoint (+48%), holds near 14.2 V for ~1 µs, and settles within 1% by 1.9 µs. At 100 nF there is no overshoot and recovery takes 12–14 µs. The peak is structural and trustworthy; the duration depends on the op-amp model's overload recovery and is not. Sim 11 gives the same peak (+48%) for every `R_B` / `R_sense` pair it tried, so resizing the limiter does not change it. This is not only a fault case: a MOSFET DUT sitting in the current limit and then switching off produces the same edge. Every DUT is selected against the instrument's 10 V ceiling (§1 non-goals), so 14.8 V at the socket can exceed a DUT's rating. Mitigation is unresolved; bench-verify the real magnitude in Phase 1 before relying on the PTC or the ADC clamps to cover it.
 
-**The PTC does not protect the DUT. Do not count it as DUT protection.** The RXEF010 holds **100 mA** and is only guaranteed to open at its **200 mA** trip current. The limiter's sustained-short load current is **107 mA** (sim 11), which sits between the two: above hold, far below trip. It may or may not open there, depending on ambient temperature and how long the fault persists, and either outcome is safe — the limiter already bounds the current, and a tripped PTC only removes it.
+**The PTC does not protect the DUT. Do not count it as DUT protection.** The nSMD010 holds **100 mA** and is only guaranteed to open at its **250 mA** trip current (the RXEF010 it replaced: 200 mA). The limiter's sustained-short load current is **107 mA** (sim 11), which sits between the two: above hold, far below trip. It may or may not open there, depending on ambient temperature and how long the fault persists, and either outcome is safe — the limiter already bounds the current, and a tripped PTC only removes it.
 
 **The problem is that no PTC can fill this role.** A device that reliably tripped near the limiter's 107 mA would also trip during a legitimate 50 mA sweep, because PTC hold ratings are specified at 23 °C and derate sharply with ambient — a part chosen to open at 107 mA has a hold current near the top of the instrument's own operating range. **There is no PTC that trips on a DUT-damaging current but not on a valid measurement.** The PTC is therefore reclassified: it is a **fault and fire backstop** against a failure *of the limiter itself* — a shorted Q2, a mis-stuffed `R_sense` — and nothing else. DUT protection is the firmware limit's job (§4).
+
+**A tripped PTC costs headroom, not accuracy, until it recovers.** Tripping raises its resistance sharply; it then recovers toward a value anywhere up to its 15 Ω post-trip maximum, not necessarily the value it had before. The *measurement* is unaffected throughout: `V_DS` is Kelvin-sensed at the DUT and current is read at the shunt, and both sit downstream of the PTC. What degrades is how much of the `V_DS` range is reachable at a given current (§3.1, *Output headroom*) and where each commanded point lands. Two practical consequences: a sweep taken while the PTC recovers covers less of the curve than it was asked to, and the `vds_set_v − vds_meas_v` diagnostic (`firmware/README.md`) reads the extra resistance as series resistance in a lead.
+
+
+### 3.7 Capacitive load: isolate, don't compensate
+
+**The rule.** When an op-amp output has to drive capacitance, put a resistor in series between the output and the capacitance, and take the feedback from the op-amp's side of that resistor. The load's pole then sits outside the loop and costs no phase margin. Do not try to fix it with a capacitor in the feedback network.
+
+It appears twice in this design, found independently each time:
+
+| Where | Resistor | Capacitance it isolates | How the value was set |
+|---|---|---|---|
+| Sweep source, emitter → `LOAD` (§3.1) | **`R_iso` = 22 Ω** | The DUT and its leads, 100 pF – 100 nF | **Phase 0 simulation** (§12): bare, the loop is stable to ~1 nF and oscillating by 2.2 nF; with 22 Ω it is clean from 100 pF to 100 nF. Feedback is tapped at `FB_SENSE`, ahead of `R_iso` (§14.5(5)) |
+| ADC buffer outputs → ADC pins (§3.5) | **51 Ω** each (`R19`, `R22` on the board) | The 10 nF §3.5 places at each ADC pin | **OPA2197 datasheet**: unity-gain direct drive is rated to 1 nF (§7.3.5); Table 3 gives 20 Ω for 45° and **51 Ω for 60°** phase margin at 10 nF. 60° was chosen because this is a DC-accuracy path with no bench time budgeted for debugging a marginal buffer |
+
+**The "don't compensate" half is measured, not advice.** Phase 0 tried the obvious alternative first — a cap across `R_f` (`C_comp`) — and every value from 1 pF to 100 pF oscillated, monotonically worse as the capacitance grew (§12, sim 02). §3.1 explains the mechanism: in a non-inverting stage, a feedback cap raises `β` exactly where the load pole's phase lag sits.
+
+**Why the 51 Ω costs no accuracy.** An ADC input draws no DC current, so the only drop across the resistor is from leakage at the pin. The BAT54S clamp is the larger term: ≤ 2 µA at 25 °C (onsemi BAT54SLT1G, `V_R` = 25 V). 2 µA × 51 Ω = 0.10 mV, about 0.13 LSB of a 12-bit, 3.3 V converter. Schottky leakage rises with temperature, so recheck this if the board runs hot.
+
+**`R_B` looks like a third instance and is not one.** `R_B` (330 Ω, §3.1) also sits between an op-amp output and a capacitance — the BD139's `C_jc` — but the feedback is taken *after* it, at the emitter. So `R_B · C_jc` is a pole *inside* the loop, and it costs phase as `R_B` grows. That is exactly why 680 Ω was rejected (sim 08: 10.3% overshoot at 330 Ω against 21.4% at 680 Ω). `R_B`'s value is set by fault current (sim 10), not by isolation. **The tell is where the feedback is taken relative to the resistor.** Before the resistor, the resistor isolates. After it, the resistor adds a pole.
+
+**Scope.** This rule is about capacitance on an output. `C_f` (§3.1) addresses capacitance on the inverting *input* — the stray pole that isolation cannot reach — and is not an exception to it.
 
 ---
 
@@ -409,7 +435,7 @@ If the numbers agree within a few percent, you have demonstrated the entire chip
 | Item | Qty | Est. |
 |---|---|---|
 | Nucleo-F303RE (or G474RE) | 1 | $18 |
-| OPA2197 (dual, 36 V, precision) | 4 | $24 |
+| OPA2197 (dual, 36 V, precision) — six channels, three duals (§13) | 3 | $18 |
 | SOIC-8 to DIP adapter — the OPA2197 is SOIC-only (see below) | 4 | ~$6 |
 | BD139-16 + TO-126 heatsink (see package note) | 3 | $6 |
 | 0.1% resistor assortment (1 k, 10 k, 20 k, 30 k, 100 Ω, 10 k shunt) | — | $15 |
@@ -429,13 +455,13 @@ If the numbers agree within a few percent, you have demonstrated the entire chip
 | DUT devices: 2N7000, BS170, 2N3904, LEDs, Zeners (1N4148 above) | — | $8 |
 | Small-signal relays (phase 2 auto-ranging) | 3 | $9 |
 | Breadboard, jumpers, headers | — | on hand |
-| **Total** | | **~$121** |
+| **Total** | | **~$115** |
 
 Order **two of every active component.** You will destroy at least one op-amp and one pass transistor.
 
 **`R_f` is 23.2 kΩ, an E96 value — 23.3 kΩ does not exist.** Earlier drafts specified 23.3 kΩ, which is in neither E24 nor E96 (E96 runs 22.6, **23.2**, 23.7), so it was never orderable and never shipped. 23.2 kΩ 0.1% is stocked in the same Yageo MFP-25BRD52 family as the parts on hand. **Both** the sweep source (§3.1) and the gate/step source (§3.2) use it, so the two channels stay identical and the BOM carries one value, not two.
 
-**Package note — the BD139-16 is SOT-32 / TO-126, not TO-220.** The part that shipped is a **BD139-16** in **SOT-32**, which is ST's name for the JEDEC **TO-126** outline. TO-126 has a smaller tab and a different hole pattern than TO-220, so **TO-220 clip-on heatsinks and mounting hardware will not fit** — buy TO-126 heatsinks. As on TO-220, **the tab is the collector**, and in this circuit the collector is tied to **+15 V**: the tab is live at 15 V, so it must not contact a grounded chassis, and it cannot share an un-insulated heatsink with anything else. Use an insulating pad and shoulder washer if either applies. (The `-16` suffix is the h_FE bin, 63–160; it does not affect the design, which relies on the follower being inside the feedback loop rather than on any particular gain.)
+**Package note — the BD139-16 is SOT-32 / TO-126, not TO-220.** The part that shipped is a **BD139-16** in **SOT-32**, which is ST's name for the JEDEC **TO-126** outline. TO-126 has a smaller tab and a different hole pattern than TO-220, so **TO-220 clip-on heatsinks and mounting hardware will not fit** — buy TO-126 heatsinks. As on TO-220, **the tab is the collector**, and in this circuit the collector is tied to **+15 V**: the tab is live at 15 V, so it must not contact a grounded chassis, and it cannot share an un-insulated heatsink with anything else. Use an insulating pad and shoulder washer if either applies. (The `-16` suffix is the h_FE bin, 100–250 — 63–160 is the `-10` bin (ST BD135–BD140 datasheet, Rev 5, Table 4); it does not affect the design, which relies on the follower being inside the feedback loop rather than on any particular gain.)
 
 **The OPA2197 has no DIP package.** It ships in SOIC-8 and VSSOP-8 only, so breadboard work needs a SOIC-8 to DIP adapter and fine-pitch soldering.
 
@@ -623,7 +649,7 @@ Simulation files: `sim/04_diffamp_cmrr.cir` (worst-case tolerance corner), `sim/
 
 **3. The unbuffered difference amp loads the shunt — this is the finding that changes the BOM.** With **no DUT connected at all**, the bare four-resistor bridge draws current through the shunt: `V(out)` = **9.512 mV** at `Rsh` = 1 Ω, i.e. **475.6 µA** of phantom current. In general `I_err = 0.476/(1000 + Rsh)` A. Against full scale that is **0.95% / 43% / 433%** on ranges 1 / 2 / 3. Range 3 is not merely inaccurate, it is unusable — the unbuffered output sits at **8.66 V** at `Rsh` = 10 kΩ, near the rail on a 15 V supply.
 
-**4. Conclusion: unity-gain input buffers are required.** Move to the **3-op-amp instrumentation topology**. BOM goes from 3 to 4 × OPA2197 (§8). This is a functional requirement for range 3, not an accuracy refinement.
+**4. Conclusion: unity-gain input buffers are required.** Move to the **3-op-amp instrumentation topology**. The op-amp count goes from four channels to six — sweep, gate, two input buffers, the difference stage and the Kelvin buffer — so from 2 to 3 × OPA2197 (§8). This is a functional requirement for range 3, not an accuracy refinement.
 
 **5. What sim 07 does and does not show.** The buffered netlist returns `V(out)` = **0 at all three `Rsh` values**. That zero comes from **ideal `E`-source buffers, which draw no input current by construction** — it confirms the topology is wired as intended and that the bridge no longer loads the shunt, and **nothing more**. It is **not** evidence of any particular bias-current performance. The real residual is the **OPA2197 input bias current, ~5 pA typical — a datasheet figure, not a simulated one**. Sizing it properly requires swapping the `E` sources for the vendor OPA2197 model.
 
@@ -682,7 +708,9 @@ timeline, it costs a **board revision**, and there is only one.
 ### 14.3 Assembly: PCBA
 
 **Assembled by the fab, not by hand.** The driver is §8: the OPA2197 has no DIP
-package and ships SOIC-8 / VSSOP-8 only, and the board needs four of them.
+package and ships SOIC-8 / VSSOP-8 only, and the board needs three of them
+(six channels: sweep, gate, two input buffers, the difference stage and the
+Kelvin buffer).
 Hand-soldering SOIC is **not a skill I have, and acquiring it on the critical
 path is the wrong place to learn it** — a cold joint on an op-amp supply pin
 presents as a stability or offset problem, i.e. as a *design* fault, and
@@ -734,7 +762,7 @@ depends on where the negative rail sits.
 
 ### 14.3a Cost
 
-§8's **~$121** is the parts BOM and **excludes the board entirely** — no fab,
+§8's **~$115** is the parts BOM and **excludes the board entirely** — no fab,
 no assembly, no shipping. The real project cost is that plus:
 
 | Item | Note |
@@ -749,7 +777,7 @@ and **zero** between arrival and the Nov 16 freeze (§9). Standard shipping
 spends a week of the one window that has no give, and it spends it on the
 phases the project exists to produce — extraction, closed-loop validation and
 the README. **A week of fab time is worth more than $30**, and the trade is
-not close: $30 is under a quarter of the parts BOM, while a week is more than
+not close: $30 is about a quarter of the parts BOM, while a week is more than
 half the 13-day backstop window. Order express even if the layout finishes
 early; arriving early is itself the hedge against bring-up going badly.
 
