@@ -148,9 +148,13 @@ python -m ct_host plot data/run.csv --diagnostic
 ```
 
 which fits the delta against current through the origin and reports the
-implied series resistance against the expected 23 Ω, with the failure
-interpretations from `firmware/README.md` (shorted Kelvin leads, bad sense
-connection, extra contact resistance).
+implied series resistance against the expected `R_iso + shunt + R_PTC`, taken
+from the header's `cal_*` constants, with the failure interpretations from
+`firmware/README.md` (shorted Kelvin leads, bad sense connection, extra
+contact resistance). Until the board's PTC is measured, `cal_r_ptc_ohm` reads
+`unset` and the report says to measure it, quoting the R_PTC the fit implies.
+Pass a fresh measurement after a trip with `--r-ptc OHM` (`extract
+--diagnostics`) or `r_ptc_ohm=` (`vds_delta_report`, `plot_vds_delta`).
 
 ---
 

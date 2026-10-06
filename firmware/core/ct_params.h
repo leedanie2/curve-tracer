@@ -60,4 +60,11 @@ float ct_gate_code_to_volts(uint16_t code);
 float ct_acc_to_current_ma(uint32_t acc, uint32_t n);
 float ct_acc_to_voltage_v(uint32_t acc, uint32_t n);
 
+/* The Kelvin divider's own current at a measured V_DS, in mA. */
+float ct_divider_current_ma(float v_dut);
+
+/* DUT current from the shunt current: the shunt also carries the divider's
+ * current, which is not the DUT's. Blueprint §3.4. */
+float ct_dut_current_ma(float i_shunt_ma, float v_dut);
+
 #endif /* CT_PARAMS_H */

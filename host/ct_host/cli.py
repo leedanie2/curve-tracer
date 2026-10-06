@@ -151,7 +151,7 @@ def cmd_extract(args: argparse.Namespace) -> int:
     print(params.describe())
     if args.diagnostics:
         print()
-        print(vds_delta_report(sweep).describe())
+        print(vds_delta_report(sweep, r_ptc_ohm=args.r_ptc).describe())
     if kind == "mosfet" and args.sensitivity and params.sensitivity is not None:
         print()
         print("V_th across fit-range choices")
@@ -191,7 +191,7 @@ def cmd_plot(args: argparse.Namespace) -> int:
 
     sweep = _checked(_load(args.csv), strict=False)
     if args.diagnostic:
-        plot_vds_delta(sweep)
+        plot_vds_delta(sweep, r_ptc_ohm=args.r_ptc)
     else:
         plot_family(sweep)
 
@@ -249,6 +249,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--sensitivity", action="store_true",
                    help="print the full V_th fit-range table")
     p.add_argument("--diagnostics", action="store_true")
+    p.add_argument("--r-ptc", type=float, default=None, metavar="OHM",
+                   help="measured PTC resistance for the delta diagnostic; "
+                        "overrides cal_r_ptc_ohm (re-measure after a trip)")
     p.add_argument("--allow-mismatch", action="store_true",
                    help="warn instead of failing on calibration disagreement")
     p.set_defaults(func=cmd_extract)
@@ -267,6 +270,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--show", action="store_true")
     p.add_argument("--diagnostic", action="store_true",
                    help="plot the vds_set - vds_meas series-drop check")
+    p.add_argument("--r-ptc", type=float, default=None, metavar="OHM",
+                   help="measured PTC resistance for --diagnostic; "
+                        "overrides cal_r_ptc_ohm (re-measure after a trip)")
     p.set_defaults(func=cmd_plot)
 
     p = sub.add_parser("ports", help="list serial ports")

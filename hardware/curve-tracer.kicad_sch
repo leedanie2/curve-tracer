@@ -8937,6 +8937,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 561.34 165.1 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "ada03468-1a31-5165-9843-91eaf1ef56f9")
 		)
@@ -9132,6 +9144,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r10"
+			(at 109.22 182.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 109.22 182.88 0)
 			(hide yes)
 			(show_name no)
@@ -9352,6 +9376,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 299.72 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "f0d6c8dd-6519-522b-9989-74593c366eb8")
 		)
@@ -9484,6 +9520,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 485.14 165.1 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "c5923de0-76ff-528e-90f4-f1cf6623cd29")
 		)
@@ -9602,6 +9650,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r9"
+			(at 88.9 182.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 88.9 182.88 0)
 			(hide yes)
 			(show_name no)
@@ -9745,6 +9805,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 25.4 121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "9a607458-37a2-58f3-9a60-c7b41a8fde28")
 		)
@@ -9866,6 +9938,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r1"
+			(at 88.9 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 88.9 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -10077,6 +10161,17 @@
 				)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 269.24 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "e58273c0-1b1a-58d1-9ee2-44a580ad07d6")
 		)
@@ -10278,6 +10373,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r3"
+			(at 25.4 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 25.4 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -10641,6 +10748,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#tp"
+			(at 434.34 198.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 434.34 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -11089,6 +11208,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 434.34 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "5a535ef3-220e-552b-ab0a-3e02b5e05968")
 		)
@@ -11286,6 +11417,17 @@
 				)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 50.8 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "d25abcee-45a1-5010-9ee8-75523f33dcf3")
 		)
@@ -11296,19 +11438,19 @@
 			(uuid "56b0b9c5-5611-5d88-8b53-067b08df1d75")
 		)
 		(pin "5"
-			(uuid "0b7971df-2129-4ab3-8585-6c68d2429317")
+			(uuid "766a5a87-7131-4e41-ac21-8be3a7b6a614")
 		)
 		(pin "6"
-			(uuid "63534124-6129-4d63-aca7-6d345dda14e0")
+			(uuid "0eb68eef-d596-4601-b849-270dc99c9fae")
 		)
 		(pin "7"
-			(uuid "378addae-8bec-4fd9-b5d7-b4962cd038f0")
+			(uuid "f9064e8a-72cb-4fe4-8ec7-4ac218ac4d83")
 		)
 		(pin "4"
-			(uuid "2f5f3aab-5e12-4977-96f4-dbe782f098e0")
+			(uuid "b8a3eb0e-e293-4cbc-8d31-1dd7b19ca910")
 		)
 		(pin "8"
-			(uuid "f78461b2-f2a6-4e93-b34d-8625313eb5af")
+			(uuid "5948a314-d588-4659-8663-37260acff996")
 		)
 		(instances
 			(project "curve-tracer"
@@ -11425,6 +11567,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#tp"
+			(at 510.54 198.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 510.54 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -11554,6 +11708,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r23"
+			(at 152.4 121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "DNP"
 			(at 152.4 121.92 0)
 			(hide yes)
 			(show_name no)
@@ -11697,6 +11863,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 510.54 231.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "ab3d5cb2-5f6c-5513-afa3-92d00dcf42fd")
 		)
@@ -11826,6 +12004,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 485.14 198.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "a0e222fe-801c-5025-ab5d-6f027cea9a67")
 		)
@@ -11936,6 +12126,17 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#j1"
+			(at 25.4 243.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 25.4 243.84 0)
 			(hide yes)
 			(show_name no)
@@ -12137,7 +12338,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "10k 0.1%"
+		(property "Value" "100k 0.1%"
 			(at 251.46 219.71 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -12148,7 +12349,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 248.92 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -12184,7 +12385,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "RT0805BRD0710KL"
+		(property "MPN" "RT0603BRD07100KL"
 			(at 248.92 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -12208,7 +12409,7 @@
 				(justify left)
 			)
 		)
-		(property "LCSC" "C110775"
+		(property "LCSC" "C122538"
 			(at 248.92 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -12221,6 +12422,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r21"
+			(at 248.92 218.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 248.92 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -12364,6 +12577,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 561.34 231.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "e61b4494-159e-5f7f-a7fa-5af31d977de0")
 		)
@@ -12484,6 +12709,17 @@
 				)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 248.92 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "1a23d097-e016-5f96-8311-c35651c3ac8a")
 		)
@@ -12494,19 +12730,19 @@
 			(uuid "167aee83-2671-5736-a0dc-3fa974c1e3f7")
 		)
 		(pin "5"
-			(uuid "f72ea26a-c346-428d-a3cc-10bce9dc1ee6")
+			(uuid "28ef2422-1024-447c-9e74-b507a9d646ad")
 		)
 		(pin "6"
-			(uuid "eabb8c22-aa9d-4dad-ba2c-56f4d8400fd4")
+			(uuid "ac63bfc1-187e-4c6c-9106-565125027abb")
 		)
 		(pin "7"
-			(uuid "d123d507-5e31-497a-92d7-85056333bf64")
+			(uuid "96d628e8-19cb-49b2-b36c-42c5d1a059b5")
 		)
 		(pin "4"
-			(uuid "a84edd19-0976-4842-8fa3-b057c2e5a3ae")
+			(uuid "1b49cd2b-551e-4a5b-81c2-4923a66a6598")
 		)
 		(pin "8"
-			(uuid "161923e6-cdbf-47c4-9ba0-0720b362edcf")
+			(uuid "19b4a986-ac15-405f-8b56-dbead26cfdc0")
 		)
 		(instances
 			(project "curve-tracer"
@@ -12711,6 +12947,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 170.18 243.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "a6081ac5-4b9b-5856-81c4-651e4a7148b2")
 		)
@@ -12825,7 +13073,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "30k 0.1%"
+		(property "Value" "300k 0.1%"
 			(at 231.14 219.71 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -12836,7 +13084,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 228.6 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -12860,7 +13108,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" "Divider top"
+		(property "Description" "Divider top; 400k total loads the DUT node (§3.4)"
 			(at 228.6 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -12872,7 +13120,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "RT0805BRD0730KL"
+		(property "MPN" "RT0603BRD07300KL"
 			(at 228.6 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -12896,7 +13144,7 @@
 				(justify left)
 			)
 		)
-		(property "LCSC" "C728649"
+		(property "LCSC" "C705762"
 			(at 228.6 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -12909,6 +13157,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r20"
+			(at 228.6 218.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 228.6 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -13052,6 +13312,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 132.08 182.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "a638eafe-1654-525c-bf13-06b783224c6b")
 		)
@@ -13173,6 +13445,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#tp"
+			(at 434.34 165.1 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 434.34 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -13313,6 +13597,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 284.48 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "a7de4527-3e7b-5286-af9c-174fa6dd2001")
 		)
@@ -13434,6 +13730,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#f1"
+			(at 228.6 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 228.6 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -13654,6 +13962,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 485.14 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "10a0c582-f479-5c08-b5f1-8b9ddb36c034")
 		)
@@ -13764,6 +14084,17 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#j8"
+			(at 127 322.58 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 127 322.58 0)
 			(hide yes)
 			(show_name no)
@@ -14014,6 +14345,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 561.34 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "e3d54dfa-09ab-5fdf-a185-6413a25293f7")
 		)
@@ -14132,6 +14475,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r24"
+			(at 190.5 182.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "DNP"
 			(at 190.5 182.88 0)
 			(hide yes)
 			(show_name no)
@@ -14352,6 +14707,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 312.42 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "15d2d978-5ec8-5bc1-847b-0e643656f5cc")
 		)
@@ -14550,6 +14917,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#c6"
+			(at 114.3 243.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 114.3 243.84 0)
 			(hide yes)
 			(show_name no)
@@ -14924,6 +15303,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 299.72 167.64 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "3b2c051d-d4f4-54fa-98de-4a3dd311497c")
 		)
@@ -15047,6 +15438,17 @@
 				)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 157.48 243.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "4"
 			(uuid "ee331b4a-1809-55bd-a06c-725dfd99df8e")
 		)
@@ -15054,22 +15456,22 @@
 			(uuid "3fd9e0ef-874d-5cd2-a325-c7b326b37df1")
 		)
 		(pin "1"
-			(uuid "5c4e29e0-606d-4e36-9528-272f8f9ba702")
+			(uuid "e9d4b08e-a53b-4160-9625-bc537ca1d438")
 		)
 		(pin "2"
-			(uuid "6d916b3a-ba69-4327-b34b-e4df8bb41898")
+			(uuid "fa5f6d76-7bdd-4e9a-831a-e849613f8649")
 		)
 		(pin "3"
-			(uuid "7e378c15-f54d-4f9b-a92c-1071c5ddac92")
+			(uuid "c8b44a33-ac1a-43ac-8f24-ffa098e8b1db")
 		)
 		(pin "5"
-			(uuid "60c99710-e424-454f-a26e-01fedeaad422")
+			(uuid "cca37bf0-7035-4040-8c31-fa27d617b2b8")
 		)
 		(pin "6"
-			(uuid "6c1ae2ac-448a-46f8-99e9-8be115f34568")
+			(uuid "a7beda1a-2fde-4fc3-a1bd-bd39b2d37fd1")
 		)
 		(pin "7"
-			(uuid "696e5624-a8f9-4027-9bd4-fa4713160411")
+			(uuid "b3bd67fe-b1c4-465f-b312-4f63273a3a5a")
 		)
 		(instances
 			(project "curve-tracer"
@@ -15342,6 +15744,17 @@
 				)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 259.08 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "32fdbbdd-06a8-5a91-93e0-c56c9bec4540")
 		)
@@ -15477,6 +15890,17 @@
 				)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 50.8 182.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "5"
 			(uuid "cc466e1c-71d8-5b6c-9082-c320d72dab26")
 		)
@@ -15487,19 +15911,19 @@
 			(uuid "1f67f0dd-9095-59cd-9bf7-5f1a3c47289c")
 		)
 		(pin "1"
-			(uuid "f068c104-a51c-47d1-998e-278cb0f8fe9f")
+			(uuid "ad6f7d81-3b9e-4cf8-99c8-bf4ce9e233aa")
 		)
 		(pin "2"
-			(uuid "69a5e6cf-e8ae-4a95-a3ae-f53a8f122626")
+			(uuid "69f5b351-b642-45ce-8830-7d1c4068dd31")
 		)
 		(pin "3"
-			(uuid "12495109-ae96-40f2-aee1-1c0d7605b8b0")
+			(uuid "1c272769-50e5-470b-b1a6-60a6a833ade4")
 		)
 		(pin "4"
-			(uuid "679dd882-bcb9-4383-bf13-773cfe21ad6a")
+			(uuid "7b934f86-1aba-4bdb-8c96-ee4203dc9641")
 		)
 		(pin "8"
-			(uuid "d29c209f-630a-45a5-b4d3-f1be6c17c80a")
+			(uuid "d9ab1c97-2b20-4cf0-b900-429a1bd7357f")
 		)
 		(instances
 			(project "curve-tracer"
@@ -15685,6 +16109,17 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#j7"
+			(at 50.8 322.58 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 50.8 322.58 0)
 			(hide yes)
 			(show_name no)
@@ -15924,6 +16359,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#tp"
+			(at 459.74 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 459.74 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -16207,6 +16654,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#tp"
+			(at 561.34 198.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 561.34 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -16578,6 +17037,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 485.14 264.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "1a0711bf-9d62-5d4d-81b5-c75ec7f831c3")
 		)
@@ -16784,6 +17255,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 459.74 264.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "b8bdb04a-d10a-5fd5-976b-ba0c3882f2f6")
 		)
@@ -16904,6 +17387,17 @@
 				)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 101.6 243.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "4"
 			(uuid "f95beea8-e282-522c-acc8-4b06b9c79711")
 		)
@@ -16911,22 +17405,22 @@
 			(uuid "d81c28e6-fe35-54bb-93b9-e34db86dd781")
 		)
 		(pin "1"
-			(uuid "9202a604-9010-4d2e-905b-e45d93b564bb")
+			(uuid "e3b499e5-8413-49ec-9f88-1c4d7a1ace27")
 		)
 		(pin "2"
-			(uuid "272991b0-6604-4c24-ae4b-359f97d07195")
+			(uuid "c0a72cb5-3086-403b-be57-290196423056")
 		)
 		(pin "3"
-			(uuid "92d65bb5-3de5-489b-a415-5e97bf25565e")
+			(uuid "9e124445-3d6a-492f-b71e-a0b304c9a545")
 		)
 		(pin "5"
-			(uuid "32b40a03-8e0b-416f-9a07-bc15bc2dcea8")
+			(uuid "db2fbb08-73ca-444f-b372-8d608ed41070")
 		)
 		(pin "6"
-			(uuid "6a3bdd86-b227-4b80-86da-c6c56fdf1f3b")
+			(uuid "bb055af7-6e95-468e-9d87-a74eae82dcc5")
 		)
 		(pin "7"
-			(uuid "815fefae-6687-4c7b-8b6d-7cc839a99871")
+			(uuid "66047742-8b81-49d1-ae35-1646981daf50")
 		)
 		(instances
 			(project "curve-tracer"
@@ -17035,6 +17529,17 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#j4"
+			(at 363.22 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 363.22 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -17411,6 +17916,17 @@
 				)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 248.92 167.64 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "5"
 			(uuid "0bffa0ec-e32c-530b-9d97-fac7f538efed")
 		)
@@ -17421,19 +17937,19 @@
 			(uuid "2eb58337-fa65-5fba-a3f8-4593b2015235")
 		)
 		(pin "8"
-			(uuid "8148c86b-2990-42f6-b5d3-6994a8ce3cc9")
+			(uuid "aa1bc38b-7d9f-48ae-970f-4b689c3f66af")
 		)
 		(pin "4"
-			(uuid "2e434dcc-529c-4f9e-90d2-168d86def210")
+			(uuid "5a7b28d8-ac08-4b8b-bee8-cd88666e901d")
 		)
 		(pin "3"
-			(uuid "46a568f3-564b-497c-bc65-b0f9364f0c53")
+			(uuid "775c90ca-3c2b-47c9-93d1-d91528ab0160")
 		)
 		(pin "2"
-			(uuid "5517907f-f5c3-4df3-bcb3-53daf58fd521")
+			(uuid "e6f2b732-9ad9-4667-ad26-62a80507ab53")
 		)
 		(pin "1"
-			(uuid "65506fd9-d8ea-4158-8778-22a2608d43c6")
+			(uuid "bec1b338-5e9e-47e1-9564-1539edd95656")
 		)
 		(instances
 			(project "curve-tracer"
@@ -17550,6 +18066,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#tp"
+			(at 459.74 165.1 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 459.74 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -17791,7 +18319,7 @@
 				)
 			)
 		)
-		(property "MPN" "BAT54SLT1G"
+		(property "MPN" "BAT54S"
 			(at 368.3 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -17802,7 +18330,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "onsemi"
+		(property "Manufacturer" "R+O"
 			(at 368.3 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -17813,7 +18341,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C19726"
+		(property "LCSC" "C7420333"
 			(at 368.3 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -17825,6 +18353,17 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#d5"
+			(at 368.3 218.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 368.3 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -18047,6 +18586,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "DNP"
+			(at 114.3 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "977fd95a-5fcc-58ed-95c6-8b848bc06ea4")
 		)
@@ -18203,7 +18754,7 @@
 				)
 			)
 		)
-		(property "MPN" "BAT54SLT1G"
+		(property "MPN" "BAT54S"
 			(at 411.48 152.4 0)
 			(hide yes)
 			(show_name no)
@@ -18214,7 +18765,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "onsemi"
+		(property "Manufacturer" "R+O"
 			(at 411.48 152.4 0)
 			(hide yes)
 			(show_name no)
@@ -18225,7 +18776,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C19726"
+		(property "LCSC" "C7420333"
 			(at 411.48 152.4 0)
 			(hide yes)
 			(show_name no)
@@ -18237,6 +18788,17 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#d4"
+			(at 411.48 152.4 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 411.48 152.4 0)
 			(hide yes)
 			(show_name no)
@@ -18527,6 +19089,17 @@
 				)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 284.48 218.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "5"
 			(uuid "a653333e-ed46-55bf-9ba8-a210efe74f04")
 		)
@@ -18537,19 +19110,19 @@
 			(uuid "1f8f4799-600f-5a54-9d4e-5f15400bd31c")
 		)
 		(pin "1"
-			(uuid "ec321b11-e0ab-4f70-b757-4c756d57a61f")
+			(uuid "14aba42f-882a-406b-98fd-274a055a11f8")
 		)
 		(pin "2"
-			(uuid "110a2393-4815-4d7d-8b70-54aba33c8f48")
+			(uuid "f505358e-8fd6-4f22-a90d-e915b2ffa292")
 		)
 		(pin "3"
-			(uuid "be11f4bd-248e-4294-bb3f-41db628036b7")
+			(uuid "d1bfea84-af08-4b82-9ff2-f4abad6f45d7")
 		)
 		(pin "4"
-			(uuid "67632ccb-b849-409b-b536-138d3bbc1c71")
+			(uuid "3e5be776-e690-47a5-8bd7-09322bc3ddf0")
 		)
 		(pin "8"
-			(uuid "63b769c1-1538-4c9c-acdc-9460fca1c41b")
+			(uuid "b8933861-b34b-4a0e-973d-82e45ae22dd6")
 		)
 		(instances
 			(project "curve-tracer"
@@ -18666,6 +19239,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r4"
+			(at 48.26 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "DNP"
 			(at 48.26 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -18886,6 +19471,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 294.64 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "a33a27dc-82fd-5a3e-ae6e-b72b8f474d99")
 		)
@@ -19009,6 +19606,17 @@
 				)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 330.2 152.4 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "6f2ffcf3-5e2c-520e-896e-a0c0542c7334")
 		)
@@ -19019,19 +19627,19 @@
 			(uuid "d2d54c3b-e761-5c43-b1fa-90cf9771b327")
 		)
 		(pin "5"
-			(uuid "bd6cdc9d-093d-4cb3-a8b2-a9fb2b503c79")
+			(uuid "488c9355-f6a8-4832-bc6f-6883864bd718")
 		)
 		(pin "6"
-			(uuid "5befc058-4612-48db-b51f-8f4e5ede605a")
+			(uuid "0f906880-0744-49a7-b608-376aa04cfc42")
 		)
 		(pin "7"
-			(uuid "d738d00f-57d5-43ba-884a-892b0a9e3ff1")
+			(uuid "6c074a51-35d6-4f2e-861b-a650452066bc")
 		)
 		(pin "4"
-			(uuid "882acb98-28eb-433c-b66c-ce18ae2d894e")
+			(uuid "0221d59c-cd8d-40c9-a3d7-6ec5c3a65171")
 		)
 		(pin "8"
-			(uuid "16aa27c8-fcc1-41d2-850f-c4edb88ac68e")
+			(uuid "37713540-dd54-449b-8ddc-4ba0b49817d8")
 		)
 		(instances
 			(project "curve-tracer"
@@ -19064,7 +19672,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "51 1%"
+		(property "Value" "1k 1%"
 			(at 317.5 219.71 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -19111,7 +19719,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "0603WAF510JT5E"
+		(property "MPN" "0603WAF1001T5E"
 			(at 314.96 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -19135,7 +19743,7 @@
 				(justify left)
 			)
 		)
-		(property "LCSC" "C23197"
+		(property "LCSC" "C21190"
 			(at 314.96 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -19148,6 +19756,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r22"
+			(at 314.96 218.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 314.96 218.44 0)
 			(hide yes)
 			(show_name no)
@@ -19291,6 +19911,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 535.94 231.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "efbd1cbe-d2ea-5406-961e-0f505497f64d")
 		)
@@ -19420,6 +20052,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 81.28 243.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "222cfb4c-8afc-5bcd-b545-273dbc2a8c85")
 		)
@@ -19457,7 +20101,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "51 1%"
+		(property "Value" "1k 1%"
 			(at 360.68 153.67 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -19504,7 +20148,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "0603WAF510JT5E"
+		(property "MPN" "0603WAF1001T5E"
 			(at 358.14 152.4 0)
 			(hide yes)
 			(show_name no)
@@ -19528,7 +20172,7 @@
 				(justify left)
 			)
 		)
-		(property "LCSC" "C23197"
+		(property "LCSC" "C21190"
 			(at 358.14 152.4 0)
 			(hide yes)
 			(show_name no)
@@ -19541,6 +20185,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r19"
+			(at 358.14 152.4 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 358.14 152.4 0)
 			(hide yes)
 			(show_name no)
@@ -19684,6 +20340,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 434.34 231.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "5c90151b-8aae-5f41-8aab-9a6b95bc66f4")
 		)
@@ -19794,6 +20462,17 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#d3"
+			(at 304.8 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "DNP"
 			(at 304.8 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -19927,6 +20606,17 @@
 				)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 119.38 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "ab637f45-786c-5106-b646-c31b9b3d5280")
 		)
@@ -20048,6 +20738,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#q1"
+			(at 81.28 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 81.28 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -20194,6 +20896,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 337.82 218.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "cfbe7bf7-c790-586b-ad90-fa0b005786f8")
 		)
@@ -20307,6 +21021,17 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#nt2"
+			(at 55.88 269.24 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 55.88 269.24 0)
 			(hide yes)
 			(show_name no)
@@ -20515,6 +21240,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r6"
+			(at 50.8 121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "DNP"
 			(at 50.8 121.92 0)
 			(hide yes)
 			(show_name no)
@@ -20735,6 +21472,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "DNP"
+			(at 101.6 121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "c562beaa-b117-53a3-b039-481f3f8b8c0f")
 		)
@@ -20856,6 +21605,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#tp"
+			(at 485.14 231.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 485.14 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -20996,6 +21757,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 434.34 264.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "104dd43e-0c6b-595f-b9c4-401799bd42c0")
 		)
@@ -21077,7 +21850,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "MMBT3904LT1G"
+		(property "MPN" "MMBT3904"
 			(at 154.94 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -21089,7 +21862,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "onsemi"
+		(property "Manufacturer" "JSCJ"
 			(at 154.94 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -21101,7 +21874,7 @@
 				(justify left)
 			)
 		)
-		(property "LCSC" "C81464"
+		(property "LCSC" "C20526"
 			(at 154.94 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -21114,6 +21887,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#q2"
+			(at 154.94 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 154.94 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -21260,6 +22045,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 127 121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "8dfa2334-918a-53f6-adeb-aa9810595a62")
 		)
@@ -21381,6 +22178,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r2"
+			(at 139.7 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 139.7 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -21678,6 +22487,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 330.2 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "6a91ded3-107b-5d60-b0eb-8f4f32bc0062")
 		)
@@ -21810,6 +22631,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 535.94 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "8a2b200b-485d-5d67-8230-6b631c213893")
 		)
@@ -21920,6 +22753,17 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#j5"
+			(at 345.44 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 345.44 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -22130,6 +22974,17 @@
 				)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 129.54 243.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "4"
 			(uuid "066ff8ac-98d3-560b-9012-4469baae122e")
 		)
@@ -22137,22 +22992,22 @@
 			(uuid "110a76e3-5823-51a9-9e5a-d03b6acf4b0c")
 		)
 		(pin "1"
-			(uuid "eab00ca9-d1a4-4a9c-8d6b-c635879652e7")
+			(uuid "1600da6b-704e-46e0-8b5d-8dc9bc8afb28")
 		)
 		(pin "2"
-			(uuid "4aa7bc17-46d2-46d6-921f-1c0d4a6a2ca4")
+			(uuid "49458265-322a-47bd-bc97-ef0a7b6079a9")
 		)
 		(pin "3"
-			(uuid "406454c1-c514-459a-9ab0-7b1bba5ff5fb")
+			(uuid "d16aca32-ae55-4db7-b471-33782a20d088")
 		)
 		(pin "5"
-			(uuid "47fd71cb-f059-4f48-a7ea-e5fbad2af8fd")
+			(uuid "c82ffac6-c00d-497e-ae2f-fbf9b2f56dc3")
 		)
 		(pin "6"
-			(uuid "e2ee5794-2561-42f2-8cf0-bcea4438ff0f")
+			(uuid "7f4f9939-fa6c-4e64-8af3-377042289a47")
 		)
 		(pin "7"
-			(uuid "60a65ec6-2fed-42f7-9857-4fa89a5e60c4")
+			(uuid "cbd5c4ce-430a-4123-a573-2a21a9c9abb9")
 		)
 		(instances
 			(project "curve-tracer"
@@ -22269,6 +23124,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#tp"
+			(at 459.74 231.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 459.74 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -22631,6 +23498,17 @@
 				)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 162.56 182.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "33d3688e-7530-568f-94e7-c6101ae5beb1")
 		)
@@ -22840,6 +23718,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 459.74 198.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "dac8f150-4909-54cf-827e-8bcef70334a7")
 		)
@@ -22950,6 +23840,17 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#nt1"
+			(at 228.6 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 228.6 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -23081,6 +23982,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#tp"
+			(at 535.94 165.1 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 535.94 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -23289,6 +24202,17 @@
 				)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 55.88 243.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "eec5e770-9a54-5269-88ba-2abc5626f613")
 		)
@@ -23421,6 +24345,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 510.54 165.1 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "51bebde4-5f32-5cac-a762-48e869b190aa")
 		)
@@ -23539,6 +24475,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#tp"
+			(at 535.94 198.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "hand"
 			(at 535.94 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -23833,6 +24781,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "hand"
+			(at 510.54 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "578d7611-277b-5fbc-a60a-715a51f10765")
 		)
@@ -23951,6 +24911,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r7"
+			(at 76.2 121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 76.2 121.92 0)
 			(hide yes)
 			(show_name no)
@@ -24083,6 +25055,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#c7"
+			(at 142.24 243.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 142.24 243.84 0)
 			(hide yes)
 			(show_name no)
@@ -24380,6 +25364,18 @@
 				(justify left)
 			)
 		)
+		(property "Assembly" "PCBA"
+			(at 381 152.4 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
 		(pin "1"
 			(uuid "2c7bd461-25b8-5780-9f3f-321b4646eeba")
 		)
@@ -24501,6 +25497,18 @@
 			)
 		)
 		(property "Provenance" "hardware/DECISIONS.md#r17"
+			(at 284.48 167.64 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Assembly" "PCBA"
 			(at 284.48 167.64 0)
 			(hide yes)
 			(show_name no)

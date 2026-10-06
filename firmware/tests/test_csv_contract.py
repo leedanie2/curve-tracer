@@ -80,8 +80,14 @@ def test_metadata_fields_present():
 
     for key in ("schema", "fw", "board", "device", "date", "date_src",
                 "range", "mode", "temp_c", "temp_src", "settle_us", "n",
-                "oversample_n", "i_limit_ma", "vds_max", "vgs_list", "end"):
+                "oversample_n", "i_limit_ma", "vds_max", "vgs_list", "end",
+                "cal_rdiv_ohm", "cal_r_iso_ohm", "cal_r_ptc_ohm"):
         assert key in meta, f"missing metadata: {key}"
+
+    # Schema 2: i_meas_ma is DUT current, the Kelvin divider's share removed.
+    assert meta["schema"] == "2"
+    # Never measured on any board yet, so it must not look like a number.
+    assert meta["cal_r_ptc_ohm"] == "unset"
 
     assert meta["device"] == "2N7000"
     assert meta["date"] == "2026-09-28T14:03:11Z"
@@ -190,9 +196,20 @@ def test_vds_delta_is_the_series_drop_not_noise():
 
 
 def test_diode_model_is_monotonic():
-    _, _, rows = parse(run("SET n 30\nSET vds_max 1.0\nSWEEP\n", "--dut", "diode"))
+    """Monotonic to within one LSB.
+
+    Below an LSB the shunt reading quantises to zero, and the firmware still
+    subtracts the Kelvin divider's exact V_DS / 400k (schema 2, blueprint
+    §3.4), so a diode that has not turned on reads a few uA *negative* in a
+    noise-free simulation. On the board ADC noise dithers that away on
+    average. It is never more than one LSB (~40 uA on range 1).
+    """
+    meta, _, rows = parse(run("SET n 30\nSET vds_max 1.0\nSWEEP\n", "--dut", "diode"))
+    lsb_ma = (float(meta["cal_vref"]) / float(meta["cal_adc_full_scale"])
+              / (float(meta["cal_diffamp_gain"]) * float(meta["cal_shunt_ohm"])) * 1000.0)
     currents = [float(r["i_meas_ma"]) for r in rows]
-    assert currents == sorted(currents)
+    assert all(b >= a - lsb_ma for a, b in zip(currents, currents[1:]))
+    assert min(currents) > -lsb_ma
     assert currents[-1] > currents[0]
 
 

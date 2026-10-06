@@ -163,7 +163,7 @@ def family_of(sweep: Sweep) -> Family:
 
 @dataclass(frozen=True)
 class DeltaReport:
-    """``vds_set_v - vds_meas_v`` against the expected I x 23 ohm.
+    """``vds_set_v - vds_meas_v`` against the expected I x (R_iso + shunt + R_PTC).
 
     firmware/README.md tabulates what departures mean: a delta near zero at
     high current points at Kelvin leads shorted to the force leads, a
@@ -178,6 +178,20 @@ class DeltaReport:
     expected_r_ohm: float
     max_residual_v: float
     monotonic: bool
+    #: ``None`` when the board's PTC has not been measured. ``expected_r_ohm``
+    #: is then R_iso + shunt only, a lower bound rather than a prediction.
+    r_ptc_ohm: float | None = None
+
+    #: nSMD010 datasheet: 1.6 ohm minimum, 15 ohm maximum one hour after
+    #: reflow or a trip (hardware/DECISIONS.md, S-1).
+    R_PTC_BAND_OHM = (1.6, 15.0)
+
+    @property
+    def implied_r_ptc_ohm(self) -> float | None:
+        """What the fit says the PTC is, if R_PTC was not supplied."""
+        if self.fitted_r_ohm is None or self.r_ptc_ohm is not None:
+            return None
+        return self.fitted_r_ohm - self.expected_r_ohm
 
     @property
     def verdict(self) -> str:
@@ -185,6 +199,20 @@ class DeltaReport:
             return "no rows above the noise floor; nothing to check"
         if self.fitted_r_ohm is None:
             return "too few points to fit a series resistance"
+        # Gross faults first: they do not depend on knowing the PTC.
+        if self.fitted_r_ohm < 0.5 * self.expected_r_ohm:
+            return ("delta far too small -- Kelvin leads may be shorted to the "
+                    "force leads, or sensing the wrong node")
+        if self.r_ptc_ohm is None:
+            lo, hi = self.R_PTC_BAND_OHM
+            if self.fitted_r_ohm > 1.5 * (self.expected_r_ohm + hi):
+                return ("delta far too large -- extra series resistance in a lead, "
+                        "socket or contact, beyond even a worst-case PTC")
+            implied = self.implied_r_ptc_ohm
+            where = ("inside" if lo <= implied <= hi else "OUTSIDE")
+            return (f"R_PTC unset -- measure R_PTC at bring-up (TP5 -> TP17 drop "
+                    f"at a known current) and set cal_r_ptc_ohm; the fit implies "
+                    f"{implied:.1f} ohm, {where} the {lo:g}-{hi:g} ohm datasheet band")
         err = (self.fitted_r_ohm - self.expected_r_ohm) / self.expected_r_ohm
         if abs(err) < 0.10 and self.max_residual_v < 0.05:
             return "as designed"
@@ -207,28 +235,42 @@ class DeltaReport:
             f"  mean delta        : {self.mean_delta_v:.4f} V "
             f"(expected {self.expected_mean_v:.4f} V at these currents)\n"
             f"  implied series R  : {fitted} "
-            f"(expected {self.expected_r_ohm:.2f} ohm = R_iso + shunt)\n"
+            f"(expected {self.expected_r_ohm:.2f} ohm = R_iso + shunt"
+            f"{'' if self.r_ptc_ohm is None else f' + R_PTC {self.r_ptc_ohm:.2f}'}"
+            f"{'; R_PTC unset' if self.r_ptc_ohm is None else ''})\n"
             f"  max residual      : {self.max_residual_v:.4f} V\n"
             f"  verdict           : {self.verdict}"
         )
 
 
-def vds_delta_report(sweep: Sweep, *, r_iso_ohm: float = 22.0,
+def vds_delta_report(sweep: Sweep, *, r_iso_ohm: float | None = None,
+                     r_ptc_ohm: float | None = None,
                      i_floor_ma: float = 1.0) -> DeltaReport:
-    """Check the commanded-minus-measured delta against I x (R_iso + shunt).
+    """Check the commanded-minus-measured delta against I x (R_iso + shunt + R_PTC).
+
+    The expected resistance comes from the sweep's ``cal_*`` header, not a
+    literal: ``cal_r_iso_ohm``, ``cal_shunt_ohm`` and the board's measured
+    ``cal_r_ptc_ohm``. Either can be overridden here -- ``r_ptc_ohm`` in
+    particular, because the PTC moves after every trip and re-measuring it
+    should not need a reflash. With no R_PTC from either place the verdict
+    says to measure it, and reports what the fit implies.
 
     Rows below ``i_floor_ma`` are excluded: at low current the delta is a
     fraction of an ADC count and the ratio is meaningless.
     """
     from .recompute import Calibration
 
-    shunt = Calibration.from_sweep(sweep).shunt_ohm if "cal_shunt_ohm" in sweep.meta \
-        else 1.0
-    expected_r = r_iso_ohm + shunt
+    cal = Calibration.from_sweep(sweep) if "cal_shunt_ohm" in sweep.meta else None
+    shunt = cal.shunt_ohm if cal else 1.0
+    if r_iso_ohm is None:
+        r_iso_ohm = cal.r_iso_ohm if cal and cal.r_iso_ohm is not None else 22.0
+    if r_ptc_ohm is None and cal is not None:
+        r_ptc_ohm = cal.r_ptc_ohm
+    expected_r = r_iso_ohm + shunt + (r_ptc_ohm or 0.0)
 
     rows = [r for r in sweep.valid_rows if r.i_ma > i_floor_ma]
     if not rows:
-        return DeltaReport(0, 0.0, 0.0, None, expected_r, 0.0, True)
+        return DeltaReport(0, 0.0, 0.0, None, expected_r, 0.0, True, r_ptc_ohm)
 
     i_a = np.array([r.i_ma for r in rows]) / 1000.0
     delta = np.array([r.vds_set_v - r.v_dut for r in rows])
@@ -252,4 +294,5 @@ def vds_delta_report(sweep: Sweep, *, r_iso_ohm: float = 22.0,
         expected_r_ohm=expected_r,
         max_residual_v=residual,
         monotonic=monotonic,
+        r_ptc_ohm=r_ptc_ohm,
     )

@@ -235,11 +235,15 @@ static void test_header_metadata_present(void)
     CT_CHECK(strstr(g_buf, "# mode: dc") != NULL);
     CT_CHECK(strstr(g_buf, "# temp_c: 31.4") != NULL);
     CT_CHECK(strstr(g_buf, "# temp_src: mcu_die") != NULL);
-    CT_CHECK(strstr(g_buf, "# schema: 1") != NULL);
+    CT_CHECK(strstr(g_buf, "# schema: 2") != NULL);
     CT_CHECK(strstr(g_buf, "# cal_gain_sweep: 3.320") != NULL);
     CT_CHECK(strstr(g_buf, "# cal_shunt_ohm: 1.000") != NULL);
     CT_CHECK(strstr(g_buf, "# cal_diffamp_gain: 20.00") != NULL);
     CT_CHECK(strstr(g_buf, "# cal_vdiv: 4.000") != NULL);
+    CT_CHECK(strstr(g_buf, "# cal_rdiv_ohm: 400000") != NULL);
+    CT_CHECK(strstr(g_buf, "# cal_r_iso_ohm: 22.000") != NULL);
+    /* Not measured on any board yet: it must say so, not print a number. */
+    CT_CHECK(strstr(g_buf, "# cal_r_ptc_ohm: unset") != NULL);
     CT_CHECK(strstr(g_buf, "# i_limit_ma: 60.00") != NULL);
 }
 

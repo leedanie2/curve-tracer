@@ -70,8 +70,11 @@ void ct_sweep_run(const ct_device_t *dev, const ct_params_t *p,
             uint32_t i_acc = read_acc(dev->read_current_acc, dev->ctx, p->oversample_n);
             uint32_t v_acc = read_acc(dev->read_voltage_acc, dev->ctx, p->oversample_n);
 
-            float i_ma  = ct_acc_to_current_ma(i_acc, p->oversample_n);
+            /* The shunt carries the Kelvin divider's current as well as the
+             * DUT's; report and limit on the DUT's alone (§3.4). */
             float v_dut = ct_acc_to_voltage_v(v_acc, p->oversample_n);
+            float i_ma  = ct_dut_current_ma(
+                              ct_acc_to_current_ma(i_acc, p->oversample_n), v_dut);
 
             ct_csv_row_t row;
             row.point      = point;

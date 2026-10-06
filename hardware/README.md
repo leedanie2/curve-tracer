@@ -119,7 +119,7 @@ Ordered by how much damage a bad route does.
 | 3 | `BD139_B` — op-amp output → `R_B` → BD139 base | `R_B · C_jc` is a ~13 MHz pole inside the loop (§3.1), and this net also carries the clamp-diode discharge, **21.9 mA peak** (sim 09) | Short. Keep `R_B` and the 1N4148 B-E clamp physically at the transistor, not at the op-amp |
 | 4 | `BD139_E` → `R_sense` → `R_iso` → `LOAD` | High-current path: **75.2 mA** at the limiter, **107 mA** into a hard short (§3.1) | Wide. Its return goes to the star point on **dedicated copper** — never shared with a sense return (§14.5(4)). `R_sense` and `R_iso` in series, in that order, with the §14.5(5) tap between them |
 | 5 | `SHUNT_HI` / `SHUNT_LO` → difference-amp inputs | Worst-case CMRR is **74.4 dB** from resistor tolerance alone (§13); asymmetric routing degrades it and **cannot be trimmed back** | Matched differential pair: equal length, equal width, routed together, same layer. Kelvin-connect at the shunt pads themselves |
-| 6 | `KELVIN_HI` / `KELVIN_LO` → ÷4 divider → buffer | The four-wire measurement is what makes `R_iso`'s uncorrected 1.1 V drop harmless (§3.1, §3.4). If this pair is compromised the stability fix is too | Matched pair from the DUT socket terminals. Sensed **at the socket**, not at the nearest convenient copper |
+| 6 | `KELVIN_HI` / `KELVIN_LO` → ÷4 divider → buffer | The four-wire measurement is what makes `R_iso`'s uncorrected 1.1 V drop harmless (§3.1, §3.4). If this pair is compromised the stability fix is too | Matched pair from the DUT socket terminals. Sensed **at the socket**, not at the nearest convenient copper. Past the divider, `VDIV` is a 75 kΩ node (300k ‖ 100k): keep it short and away from `BD139_C` |
 | 7 | `BD139_C` and every op-amp `V+` | Decoupling placement, §14.5(3) | 100 nF within **~5 mm of the pin, measured along the trace**, cap body to pin. Bulk 10 µF on the rail. The collector net is also the 0.89 W node — and the TO-126 **tab is the collector, live at +15 V** (§8): clearance to every adjacent net, no contact with a grounded enclosure |
 | 8 | `GND_STAR` and all sense returns | §14.5(4) | One reference point. A shared milliohm at 107 mA is millivolts into a sense path whose range-3 full scale is 100 mV |
 | 9 | `DAC_SWEEP` (PA6), `DAC_GATE` (PA4), `ADC1_I`, `ADC2_V` | Low-level analog into 12-bit converters; §3.5 wants the 10 nF at each ADC pin and BAT54S clamps to rails | Keep clear of `BD139_C` and `BD139_E`. 10 nF and clamps at the pin. **PA5 is not usable as a DAC output — it drives LD2** (§3.5) |
@@ -157,6 +157,10 @@ order; there is none between arrival and the Nov 16 freeze.
       ST's pin numbers, which run the other way (`DECISIONS.md` L-1)
 - [ ] Two 2.54 mm jumper shunts for J3/J4 on the parts order; they are not
       on the PCBA BOM
+- [ ] Hand-solder parts ordered from LCSC alongside the PCBA: every BOM line
+      with `Assembly` = `hand` (J1–J8, Q1) plus 27 Keystone 5001 test loops,
+      which LCSC does not stock (`DECISIONS.md`, Assembly)
+- [ ] PCBA BOM sent to JLCPCB contains only `Assembly` = `PCBA` lines
 - [ ] `tools/check_topology.py --self-test` passes on the frozen schematic
 - [ ] BAT54S ADC clamps and gate Zener placed; output-clamp footprint at the
       DUT socket for §3.6's +48% short-recovery overshoot, unstuffed is fine
@@ -170,3 +174,33 @@ order; there is none between arrival and the Nov 16 freeze.
       and it is a **GO** — taken on a ≥8 MHz DIP-8 part, with the substitute
       and its rails recorded (§14.3)
 - [ ] **Express shipping selected** on the fab order
+
+---
+
+## H4 bring-up measurements
+
+What the board has to be measured for before its numbers are trusted. The
+H4 *gate* is blueprint §9; this is the list of measurements behind it, each
+traced to the `DECISIONS.md` row that asked for it. Log results in
+`docs/characterization.md`.
+
+- [ ] Rails and star ground: +15 V at TP7, +3V3 at TP8, 0 V between TP9
+      (GND_STAR) and TP27 (GNDPWR) with no load
+- [ ] **ADC zero offsets**, both channels: ADC1 at zero DUT current and ADC2
+      at V_DS = 0. The 1 kΩ isolation resistors turn BAT54S leakage into up
+      to 2 mV (8 mV at the DUT on ADC2, §3.5). Record them as calibration,
+      then re-check at full scale, since the leakage moves with signal level
+      and temperature
+- [ ] **+3V3 with a clamp conducting**: unplug the Kelvin leads so U3B rails,
+      and read TP8. Up to ~11 mA flows in through the BAT54S; the rail must
+      stay in spec (`DECISIONS.md` F-2)
+- [ ] **R_PTC**: the TP5 → TP17 drop at a known current. Set `CT_R_PTC_OHM`
+      in `firmware/core/ct_config.h`; re-measure after any trip
+- [ ] Zener knee: TP16 against TP18 at full-scale gate code; any difference is
+      D2 current × 1 kΩ (`DECISIONS.md` D2)
+- [ ] Limiter trip at ~75.2 mA, cold and again warm (§3.1)
+- [ ] §3.1 stability gate: ≤ 25% overshoot into 100 nF and 1% within 5 µs,
+      with `C_f` fitted *and swept* both ways
+- [ ] Op-amp current in a held short, from the drop across R_B: out of its
+      own limit (§3.1)
+- [ ] Short-recovery overshoot at the DUT socket against sim 10's +48% (§3.6)

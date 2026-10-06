@@ -207,3 +207,13 @@ float ct_acc_to_voltage_v(uint32_t acc, uint32_t n)
     float volts = (mean_counts / (float)CT_ADC_FULL_SCALE) * CT_VREF;
     return volts * CT_VDIV;
 }
+
+float ct_divider_current_ma(float v_dut)
+{
+    return (v_dut / CT_RDIV_OHM) * 1000.0f;
+}
+
+float ct_dut_current_ma(float i_shunt_ma, float v_dut)
+{
+    return i_shunt_ma - ct_divider_current_ma(v_dut);
+}

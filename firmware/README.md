@@ -36,7 +36,7 @@ Lines end **CRLF**, so a raw serial terminal stays readable.
 
 ```
 # curve-tracer csv
-# schema: 1
+# schema: 2
 # fw: 0.1.0
 # board: nucleo-f303re
 # device: 2N7000
@@ -57,6 +57,9 @@ Lines end **CRLF**, so a raw serial terminal stays readable.
 # cal_shunt_ohm: 1.000
 # cal_diffamp_gain: 20.00
 # cal_vdiv: 4.000
+# cal_rdiv_ohm: 400000
+# cal_r_iso_ohm: 22.000
+# cal_r_ptc_ohm: unset
 # cal_vref: 3.300
 # cal_adc_full_scale: 4095
 # cal_dac_full_scale: 4095
@@ -76,7 +79,7 @@ point,vgs_set_v,vds_set_v,vds_meas_v,i_meas_ma,i_acc,v_acc,range,flags
 | `vgs_set_v` | V | gate voltage **commanded**, after DAC quantisation |
 | `vds_set_v` | V | drain voltage **commanded**, after DAC quantisation |
 | `vds_meas_v` | V | drain voltage **measured** by ADC2, Kelvin-sensed at the DUT |
-| `i_meas_ma` | mA | current through the shunt |
+| `i_meas_ma` | mA | **DUT** current: the shunt current less the Kelvin divider's `V_DS / cal_rdiv_ohm` (schema 2; see below) |
 | `i_acc` | counts | **sum** of `oversample_n` raw current conversions |
 | `v_acc` | counts | **sum** of `oversample_n` raw voltage conversions |
 | `range` | — | always `1` in this build |
@@ -123,9 +126,14 @@ smoothly and monotonically with current, which makes it a useful diagnostic:
 | delta scattered / non-monotonic | noise on ADC2, or a bad Kelvin connection — **or a PTC still recovering from a trip**, whose resistance drifts during the sweep |
 | delta much larger than I × (23 Ω + R_PTC) | extra series resistance — lead, socket or contact. Rule out a recent trip first |
 
-The host's `vds_delta_report` (`host/ct_host/dataset.py`) still checks
-against `R_iso + shunt` = 23 Ω only. Above about 11.5 Ω of `R_PTC` it will
-report "extra series resistance" on a healthy board.
+The expected resistance travels in the header as calibration constants,
+not as a literal: `cal_r_iso_ohm` (22 Ω, the fitted part) and
+`cal_r_ptc_ohm`, which is **`unset`** until the board's PTC has been measured.
+Set `CT_R_PTC_OHM` in `core/ct_config.h` after bring-up. Because a trip moves
+it, the host also takes an override without a reflash:
+`vds_delta_report(sweep, r_ptc_ohm=...)` or `python -m ct_host extract
+--diagnostics --r-ptc OHM`. While it is unset, the report says to measure it
+and prints the R_PTC the fit implies, against the nSMD010's 1.6–15 Ω band.
 
 **Plot `vds_meas_v`, never `vds_set_v`.** The whole reason the instrument has
 a four-wire sense is that the commanded value is wrong by over a volt at full
@@ -147,11 +155,25 @@ premium against that.
 To re-derive:
 
 ```python
-mean   = i_acc / oversample_n
-volts  = mean / cal_adc_full_scale * cal_vref
-i_ma   = volts / (cal_diffamp_gain * cal_shunt_ohm) * 1000
-v_dut  = v_acc / oversample_n / cal_adc_full_scale * cal_vref * cal_vdiv
+mean     = i_acc / oversample_n
+volts    = mean / cal_adc_full_scale * cal_vref
+i_shunt  = volts / (cal_diffamp_gain * cal_shunt_ohm) * 1000     # mA
+v_dut    = v_acc / oversample_n / cal_adc_full_scale * cal_vref * cal_vdiv
+i_ma     = i_shunt - v_dut / cal_rdiv_ohm * 1000                 # schema 2
 ```
+
+**Why the subtraction (schema 2).** The ÷4 Kelvin divider (300k/100k,
+blueprint §3.4) hangs across the DUT, on the DUT side of the shunt, so the
+shunt carries `I_DUT + V_DS / 400 kΩ`: 2.5 µA per volt. The firmware reports
+and current-limits on the DUT's share alone. A **schema-1** capture has no
+`cal_rdiv_ohm` and its `i_meas_ma` is the shunt current; re-derive it without
+the last line, which is what the host does.
+
+On range 1 the divider's 25 µA at 10 V is 0.6 of an LSB. The subtraction is
+exact while the shunt reading is quantised, so a device that is off reads
+within one LSB of zero on either side — **slightly negative is expected**,
+and averages out once ADC noise dithers the oversampled mean. The correction
+matters most on ranges 2 and 3, where 25 µA is most of full scale.
 
 ### The `flags` column and the current limit
 

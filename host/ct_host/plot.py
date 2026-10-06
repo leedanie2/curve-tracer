@@ -208,11 +208,14 @@ def plot_family(sweep: Sweep, *, ax: Any = None, show_flagged: bool = True,
 
 
 def plot_vds_delta(sweep: Sweep, *, ax: Any = None,
-                   r_iso_ohm: float = 22.0) -> Any:
+                   r_iso_ohm: float | None = None,
+                   r_ptc_ohm: float | None = None) -> Any:
     """The commanded-minus-measured diagnostic against the expected line.
 
     This is the one plot where ``vds_set_v`` appears, and only as part of the
-    difference. A healthy instrument puts every point on the I x 23 ohm line.
+    difference. A healthy instrument puts every point on the
+    I x (R_iso + shunt + R_PTC) line; with R_PTC unmeasured the line drawn is
+    R_iso + shunt only, a lower bound. See ``vds_delta_report``.
     """
     import matplotlib.pyplot as plt
     import numpy as np
@@ -224,7 +227,7 @@ def plot_vds_delta(sweep: Sweep, *, ax: Any = None,
     i_ma = np.array([r.i_ma for r in rows])
     delta = np.array([r.vds_set_v - r.v_dut for r in rows])
 
-    report = vds_delta_report(sweep, r_iso_ohm=r_iso_ohm)
+    report = vds_delta_report(sweep, r_iso_ohm=r_iso_ohm, r_ptc_ohm=r_ptc_ohm)
     ax.plot(i_ma, delta, linestyle="none", marker=".", markersize=4,
             label="measured delta")
     if i_ma.size:

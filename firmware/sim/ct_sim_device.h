@@ -47,6 +47,8 @@ typedef struct {
 
     /* Front end */
     float r_iso;            /* blueprint §3.1, 22 ohm */
+    float r_ptc;            /* drain-path PTC, ohm; 0 = not modelled */
+    float r_div;            /* Kelvin divider across the DUT, ohm; 0 = absent */
     float shunt_ohm;
     float noise_counts;     /* peak uniform ADC noise, in counts */
 

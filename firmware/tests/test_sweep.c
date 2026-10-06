@@ -338,6 +338,45 @@ static void test_vds_delta_matches_series_drop(void)
     CT_CHECK_MSG(delta > 0.0f, "delta=%.3f should be positive", delta);
 }
 
+/* The Kelvin divider (400k across the DUT) draws its current through the
+ * shunt. The firmware must take exactly V_DS / 400k back out, and the reading
+ * it would report without doing so must be measurably wrong. A 40k load makes
+ * the divider's share 10% of the shunt current, well clear of quantisation:
+ * 1024 dithered samples resolve ~1 uA against a 25 uA effect. §3.4. */
+static void test_divider_current_is_subtracted(void)
+{
+    ct_sim_t sim; ct_device_t dev; ct_params_t p;
+    setup(&sim, &dev, &p, CT_SIM_RESISTOR);
+    sim.r_load = 40000.0f;
+    sim.noise_counts = 1.0f;
+    sim.sweep_code = ct_volts_to_sweep_code(10.0f);
+
+    uint32_t i_acc = dev.read_current_acc(dev.ctx, 1024u);
+    uint32_t v_acc = dev.read_voltage_acc(dev.ctx, 1024u);
+    float v     = ct_acc_to_voltage_v(v_acc, 1024u);
+    float shunt = ct_acc_to_current_ma(i_acc, 1024u);
+    float dut   = ct_dut_current_ma(shunt, v);
+
+    float want_dut = v / sim.r_load * 1000.0f;   /* ~0.25 mA */
+    float want_div = v / CT_RDIV_OHM * 1000.0f;  /* ~0.025 mA */
+
+    CT_CHECK_NEAR(shunt - dut, want_div, 1e-6);
+    CT_CHECK_NEAR(dut, want_dut, 0.004);
+    CT_CHECK_MSG(shunt - want_dut > 0.015f,
+                 "uncorrected %.4f mA should exceed the DUT's %.4f by ~0.025",
+                 shunt, want_dut);
+}
+
+/* With no divider modelled the correction must not invent current: the
+ * reported value is then low by exactly the divider term, and that is the
+ * signature of a constant that no longer matches the board. */
+static void test_divider_term_scales_with_vds(void)
+{
+    CT_CHECK_NEAR(ct_divider_current_ma(0.0f), 0.0, 1e-9);
+    CT_CHECK_NEAR(ct_divider_current_ma(10.0f), 0.025, 1e-6);
+    CT_CHECK_NEAR(ct_divider_current_ma(4.0f), 0.010, 1e-6);
+}
+
 CT_MAIN_BEGIN("sweep")
     CT_RUN(test_clean_sweep_row_count);
     CT_RUN(test_header_precedes_data);
@@ -349,4 +388,6 @@ CT_MAIN_BEGIN("sweep")
     CT_RUN(test_ramp_endpoints);
     CT_RUN(test_accumulator_is_a_sum);
     CT_RUN(test_vds_delta_matches_series_drop);
+    CT_RUN(test_divider_current_is_subtracted);
+    CT_RUN(test_divider_term_scales_with_vds);
 CT_MAIN_END()

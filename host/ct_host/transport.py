@@ -75,6 +75,8 @@ class SimTransport:
         n_diode: float | None = None,
         rs: float | None = None,
         rload: float | None = None,
+        rptc: float | None = None,
+        rdiv: float | None = None,
     ) -> None:
         self._path = Path(path) if path is not None else default_sim_path()
         if not self._path.exists():
@@ -87,7 +89,7 @@ class SimTransport:
         for flag, value in (
             ("--noise", noise), ("--vth", vth), ("--k", k), ("--lambda", lam),
             ("--is", is_), ("--n-diode", n_diode), ("--rs", rs),
-            ("--rload", rload),
+            ("--rload", rload), ("--rptc", rptc), ("--rdiv", rdiv),
         ):
             if value is not None:
                 argv += [flag, repr(float(value))]

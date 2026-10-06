@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 #define CT_FW_VERSION   "0.1.0"
-#define CT_CSV_SCHEMA   1
+#define CT_CSV_SCHEMA   2   /* 2: i_meas_ma is DUT current, divider subtracted */
 #define CT_BOARD        "nucleo-f303re"
 
 /* --- Analogue chain (blueprint §3.1, §3.3, §3.4) ------------------------- */
@@ -26,8 +26,22 @@
 #define CT_SHUNT_OHM        1.000f
 #define CT_DIFFAMP_GAIN     20.0f
 
-/* Kelvin sense divider, 30k/10k into a unity buffer. Blueprint §3.4. */
+/* Kelvin sense divider, 300k/100k into a unity buffer. Blueprint §3.4. */
 #define CT_VDIV             4.0f
+
+/* Total resistance of that divider, KELVIN_HI to KELVIN_LO. It hangs on the
+ * DUT side of the shunt, so the shunt carries I_DUT + V_DS / CT_RDIV_OHM and
+ * the firmware subtracts the second term (2.5 uA per volt). Blueprint §3.4. */
+#define CT_RDIV_OHM         400000.0f
+
+/* Series resistance between the feedback node and the DUT, outside the loop:
+ * the vds_set_v - vds_meas_v delta is I x (R_iso + shunt + R_PTC). These are
+ * for the host's delta diagnostic only; no measurement uses them.
+ * CT_R_PTC_OHM is per board and moves after every trip (1.6-15 ohm for the
+ * nSMD010). Negative means not yet measured: measure the TP5 -> TP17 drop at
+ * a known current at bring-up and set it here. Blueprint §3.1, §3.6. */
+#define CT_R_ISO_OHM        22.0f
+#define CT_R_PTC_OHM        (-1.0f)
 
 /* DAC and ADC references. Both sit on the board's 3.3 V rail. */
 #define CT_VREF             3.3f
@@ -36,7 +50,7 @@
 
 /* --- Derived full-scale figures (documentation, not used in maths) -------
  * Sweep DAC full scale  : 3.3 * 3.32       = 10.96 V at the feedback node
- * DUT at 50 mA          : 10.96 - 1.15     =  9.81 V   (R_iso + shunt drop)
+ * DUT at 50 mA          : 9.06 - 9.73 V    (R_iso + shunt + PTC 1.6-15 ohm)
  * Current full scale    : 3.3 / (20 * 1)   = 165 mA at the ADC ceiling
  * Voltage full scale    : 3.3 * 4          = 13.2 V
  */

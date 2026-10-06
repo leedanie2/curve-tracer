@@ -6,7 +6,9 @@ it is the circuit the blueprint describes. This script does. It exports the
 netlist with kicad-cli (so it reads what KiCad sees, not what anyone meant to
 draw) and checks every connection §3 depends on: each op-amp pin, the gains,
 the feedback tap position, the limiter, the clamp polarities, the Nucleo pin
-map, the star ground, and test-point coverage.
+map, the star ground, and test-point coverage. It also reads the constants
+firmware/core/ct_config.h converts with and requires them to describe this
+board, so changing a resistor without changing the firmware fails here.
 
 Run it after every hand edit to the schematic:
 
@@ -33,6 +35,7 @@ import tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_SCH = os.path.join(HERE, '..', 'curve-tracer.kicad_sch')
 MAC_CLI = '/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli'
+CT_CONFIG = os.path.join(HERE, '..', '..', 'firmware', 'core', 'ct_config.h')
 
 
 # --------------------------------------------------------------- netlist
@@ -88,6 +91,10 @@ class Netlist:
     def on(self, ref, pin):
         return self.pin.get((ref, str(pin)))
 
+    def set_value(self, ref, value):
+        """Change one part's value (used by --self-test)."""
+        self.comps[ref]['value'] = value
+
     def move(self, ref, pin, net):
         """Re-home one pin onto another net (used by --self-test)."""
         old = self.on(ref, pin)
@@ -110,6 +117,15 @@ def export_netlist(sch):
         text = f.read()
     os.unlink(out)
     return text
+
+
+def firmware_constants(path=CT_CONFIG):
+    """The analogue-chain constants the firmware converts with."""
+    consts = {}
+    with open(path) as f:
+        for m in re.finditer(r'#define\s+(CT_\w+)\s+\(?(-?[\d.]+)f?\)?', f.read()):
+            consts[m.group(1)] = float(m.group(2))
+    return consts
 
 
 # --------------------------------------------------------------- checks
@@ -137,7 +153,7 @@ OPAMP_PINS = {
 TP_EXEMPT = {'DA_P', 'DA_N', 'GATE_IN-', 'SH1_TOP', 'SH2_TOP', 'SH3_TOP'}
 
 
-def run_checks(nl, report):
+def run_checks(nl, report, fw=None):
     on = nl.on
 
     def between(ref, a, b):
@@ -217,15 +233,18 @@ def run_checks(nl, report):
 
     # §3.4 Kelvin
     dv = (val('R20') + val('R21')) / val('R21')
+    rdiv = val('R20') + val('R21')
     chk(f'Kelvin divider across KELVIN_HI/KELVIN_LO = /{dv:g} (§3.4: /4)',
         between('R20', 'KELVIN_HI', 'VDIV') and between('R21', 'VDIV', 'KELVIN_LO') and dv == 4)
+    chk(f'Kelvin divider total {rdiv / 1e3:g}k (§3.4: 400k, 2.5 uA/V of DUT-node loading)',
+        rdiv == 400e3)
     chk('Kelvin header J5: 1=KELVIN_HI 2=KELVIN_LO', on('J5', 1) == 'KELVIN_HI' and on('J5', 2) == 'KELVIN_LO')
 
     # §3.5 ADC pins, §3.7 isolation
     for adc, src, r, c, d, pin in (('ADC1_I', 'DA_OUT', 'R19', 'C3', 'D4', '28'),
                                    ('ADC2_V', 'KBUF_OUT', 'R22', 'C4', 'D5', '38')):
-        chk(f'{adc}: {src} through {r} = 51 Ω (§3.7) to CN7-{pin}, 10 nF and BAT54S at the pin',
-            between(r, src, adc) and val(r) == 51 and ('J7', pin) in nl.nets.get(adc, [])
+        chk(f'{adc}: {src} through {r} = 1 kΩ (§3.5, §3.7) to CN7-{pin}, 10 nF and BAT54S at the pin',
+            between(r, src, adc) and val(r) == 1000 and ('J7', pin) in nl.nets.get(adc, [])
             and between(c, adc, 'GND') and on(d, 3) == adc and on(d, 1) == 'GND' and on(d, 2) == '+3V3')
 
     # power and ground
@@ -236,6 +255,22 @@ def run_checks(nl, report):
         'GND' in nl.nets and 'GNDPWR' in nl.nets and between('NT2', 'GNDPWR', 'GND'))
     chk('+15 V never reaches the Nucleo', not any(r in ('J7', 'J8') for r, _ in nl.nets['+15V']))
     chk('PA5 (CN10-11, drives LD2) unconnected', (on('J8', 11) or 'unconnected').startswith('unconnected'))
+
+    # the firmware converts with constants that must describe this board
+    if fw is not None:
+        board = {
+            'CT_GAIN_SWEEP': 1 + val('R1') / val('R2'),
+            'CT_GAIN_GATE': 1 + val('R9') / val('R10'),
+            'CT_SHUNT_OHM': val('R12'),
+            'CT_DIFFAMP_GAIN': val('R18') / val('R17'),
+            'CT_VDIV': (val('R20') + val('R21')) / val('R21'),
+            'CT_RDIV_OHM': val('R20') + val('R21'),
+            'CT_R_ISO_OHM': val('R7'),
+        }
+        for name, want in board.items():
+            have = fw.get(name)
+            chk(f'firmware {name} = {have} matches the board ({want:g})',
+                have is not None and abs(have - want) <= 1e-4 * abs(want))
 
     # test points
     tps = {nl.on(r, 1) for r in nl.comps if r.startswith('TP')}
@@ -252,6 +287,8 @@ FAULTS = [
     ('difference amp inputs swapped', [('U3', 3, 'DA_N'), ('U3', 2, 'DA_P')]),
     ('Kelvin sense jumper wired to the wrong shunt', [('J4', 2, 'SH2_TOP')]),
     ('ADC1 wired to PA1 instead of PA0', [('J7', 28, 'unconnected-x'), ('J7', 30, 'ADC1_I')]),
+    ('Kelvin divider back to 30k/10k: firmware rdiv no longer matches', [('R20', None, '30k 0.1%'), ('R21', None, '10k 0.1%')]),
+    ('ADC isolation back to 51 ohm', [('R19', None, '51 1%')]),
 ]
 
 
@@ -263,8 +300,11 @@ def main():
     args = ap.parse_args()
 
     text = open(args.netlist).read() if args.netlist else export_netlist(args.schematic)
+    fw = firmware_constants() if os.path.exists(CT_CONFIG) else None
     report = []
-    run_checks(Netlist(text), report)
+    run_checks(Netlist(text), report, fw)
+    if fw is None:
+        report.append((False, f'firmware constants not found at {CT_CONFIG}'))
     for ok, desc in report:
         print(('PASS  ' if ok else 'FAIL  ') + desc)
     fails = sum(not ok for ok, _ in report)
@@ -276,9 +316,12 @@ def main():
         for name, moves in FAULTS:
             nl = Netlist(text)
             for ref, pin, net in moves:
-                nl.move(ref, pin, net)
+                if pin is None:
+                    nl.set_value(ref, net)
+                else:
+                    nl.move(ref, pin, net)
             planted = []
-            run_checks(nl, planted)
+            run_checks(nl, planted, fw)
             caught = [d for ok, d in planted if not ok]
             print(('caught  ' if caught else 'MISSED  ') + name + (f'  <- {caught[0]}' if caught else ''))
             if not caught:

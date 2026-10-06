@@ -106,14 +106,15 @@ def test_flagged_rows_are_excluded_from_the_family(ilimit_sweep):
 # --------------------------------------------------------------------------
 
 def test_vds_delta_recovers_23_ohms(mosfet):
-    report = vds_delta_report(mosfet)
+    # The default simulator models no PTC, so R_PTC is genuinely zero here.
+    report = vds_delta_report(mosfet, r_ptc_ohm=0.0)
     assert report.fitted_r_ohm == pytest.approx(23.0, rel=0.02)
     assert report.verdict == "as designed"
     assert report.monotonic
 
 
 def test_vds_delta_describes_itself(mosfet):
-    text = vds_delta_report(mosfet).describe()
+    text = vds_delta_report(mosfet, r_ptc_ohm=0.0).describe()
     assert "implied series R" in text
     assert "23.00 ohm" in text
 

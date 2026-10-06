@@ -28,6 +28,8 @@ void ct_sim_init(ct_sim_t *s, ct_sim_kind_t kind)
     s->r_load  = 200.0f;
 
     s->r_iso     = 22.0f;       /* blueprint §3.1 */
+    s->r_ptc     = 0.0f;        /* no PTC unless asked: delta is then I x 23 */
+    s->r_div     = CT_RDIV_OHM; /* the divider is always on the board */
     s->shunt_ohm = CT_SHUNT_OHM;
 
     s->noise_counts = 0.0f;     /* deterministic by default */
@@ -112,14 +114,22 @@ float ct_sim_dut_current_a(const ct_sim_t *s, float vgs, float vds)
     }
 }
 
+/* Current through the Kelvin divider, which sits across the DUT and draws
+ * through the shunt like the DUT does (blueprint §3.4). */
+static float divider_current_a(const ct_sim_t *s, float v_dut)
+{
+    return (s->r_div > 0.0f) ? v_dut / s->r_div : 0.0f;
+}
+
 /* Solve for the operating point. The commanded voltage appears at the
- * amplifier's feedback node; R_iso and the shunt sit between it and the DUT,
- * so V_dut = V_node - I*(R_iso + R_shunt) and I depends on V_dut. Bisection:
- * the I-V curves here are monotonic in V_dut, and 60 iterations is ample. */
+ * amplifier's feedback node; R_iso, the PTC and the shunt sit between it and
+ * the DUT, and carry the DUT's current plus the divider's, so
+ * V_dut = V_node - (I_dut + I_div)*(R_iso + R_PTC + R_shunt). Bisection: the
+ * I-V curves here are monotonic in V_dut, and 60 iterations is ample. */
 static void solve_operating_point(const ct_sim_t *s, float v_node, float vgs,
                                   float *v_dut_out, float *i_a_out)
 {
-    const float r_series = s->r_iso + s->shunt_ohm;
+    const float r_series = s->r_iso + s->r_ptc + s->shunt_ohm;
 
     if (v_node <= 0.0f) {
         *v_dut_out = 0.0f;
@@ -130,7 +140,7 @@ static void solve_operating_point(const ct_sim_t *s, float v_node, float vgs,
     float lo = 0.0f, hi = v_node;
     for (int it = 0; it < 60; it++) {
         float mid = 0.5f * (lo + hi);
-        float i   = ct_sim_dut_current_a(s, vgs, mid);
+        float i   = ct_sim_dut_current_a(s, vgs, mid) + divider_current_a(s, mid);
         float residual = mid + (i * r_series) - v_node;
         if (residual > 0.0f) {
             hi = mid;
@@ -209,8 +219,10 @@ static uint32_t sim_read_current(void *ctx, uint16_t n)
     float v_dut, i_a;
     sim_operating_point(s, &v_dut, &i_a);
 
-    /* Shunt burden through the difference amp, back to ADC counts. */
-    float v_adc  = i_a * s->shunt_ohm * CT_DIFFAMP_GAIN;
+    /* Shunt burden through the difference amp, back to ADC counts. The shunt
+     * carries the divider's current too; the firmware takes it back out. */
+    float i_shunt = i_a + divider_current_a(s, v_dut);
+    float v_adc  = i_shunt * s->shunt_ohm * CT_DIFFAMP_GAIN;
     float counts = (v_adc / CT_VREF) * (float)CT_ADC_FULL_SCALE;
     return counts_to_acc(s, counts, n);
 }

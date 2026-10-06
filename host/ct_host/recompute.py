@@ -57,11 +57,22 @@ class Calibration:
     oversample_n: int
     gain_sweep: float
     gain_gate: float
+    #: Kelvin divider resistance, KELVIN_HI to KELVIN_LO (blueprint §3.4).
+    #: ``None`` for schema-1 captures, whose firmware did not correct for it,
+    #: so recomputing them must not either.
+    rdiv_ohm: float | None = None
+    #: Series resistance outside the loop, for the delta diagnostic only.
+    #: ``r_ptc_ohm`` is ``None`` until it has been measured on the board.
+    r_iso_ohm: float | None = None
+    r_ptc_ohm: float | None = None
 
     @classmethod
     def from_sweep(cls, sweep: Sweep) -> Calibration:
         m = sweep.meta
         return cls(
+            rdiv_ohm=m.float_or_none("cal_rdiv_ohm"),
+            r_iso_ohm=m.float_or_none("cal_r_iso_ohm"),
+            r_ptc_ohm=m.float_or_none("cal_r_ptc_ohm"),
             vref=m.cal("vref"),
             adc_full_scale=m.cal("adc_full_scale"),
             diffamp_gain=m.cal("diffamp_gain"),
@@ -86,10 +97,24 @@ class Calibration:
     def i_full_scale_ma(self) -> float:
         return self.vref / (self.diffamp_gain * self.shunt_ohm) * 1000.0
 
-    def current_ma(self, i_acc: int) -> float:
+    def shunt_current_ma(self, i_acc: int) -> float:
+        """Everything through the shunt: the DUT *and* the Kelvin divider."""
         mean = i_acc / self.oversample_n
         volts = mean / self.adc_full_scale * self.vref
         return volts / (self.diffamp_gain * self.shunt_ohm) * 1000.0
+
+    def divider_current_ma(self, v_dut: float) -> float:
+        """The Kelvin divider's share of the shunt current at ``v_dut``."""
+        return 0.0 if self.rdiv_ohm is None else v_dut / self.rdiv_ohm * 1000.0
+
+    def current_ma(self, i_acc: int, v_acc: int) -> float:
+        """DUT current: the shunt current less the divider's (§3.4).
+
+        Needs ``v_acc`` because the divider draws ``V_DS / rdiv``. Mirrors
+        ``ct_dut_current_ma`` in the firmware, so the agreement check below
+        compares like with like.
+        """
+        return self.shunt_current_ma(i_acc) - self.divider_current_ma(self.voltage_v(v_acc))
 
     def voltage_v(self, v_acc: int) -> float:
         mean = v_acc / self.oversample_n
@@ -108,7 +133,7 @@ def recompute(sweep: Sweep, *, check: bool = True,
     cal = Calibration.from_sweep(sweep)
     rows = [
         replace(row,
-                i_recomp_ma=cal.current_ma(row.i_acc),
+                i_recomp_ma=cal.current_ma(row.i_acc, row.v_acc),
                 v_recomp_v=cal.voltage_v(row.v_acc))
         for row in sweep.rows
     ]

@@ -211,12 +211,20 @@ def test_subthreshold_reason_quotes_the_actual_lsb(subthreshold_sweep):
 
 
 def test_sub_threshold_gate_steps_really_do_read_zero(subthreshold_sweep):
-    """The premise of the test above, checked directly."""
-    family = family_of(recompute(subthreshold_sweep))
+    """The premise of the test above, checked directly.
+
+    Below V_th the DUT draws nothing range 1 can resolve. The shunt is not
+    idle -- it carries the Kelvin divider's V_DS / 400k, up to 25 uA, 0.6 of
+    an LSB (blueprint §3.4) -- but the firmware subtracts that, so the
+    reported DUT current sits within one LSB of zero.
+    """
+    sweep = recompute(subthreshold_sweep)
+    lsb_ma = Calibration.from_sweep(sweep).i_lsb_ma
+    family = family_of(sweep)
     below = [c for c in family if c.vgs < KNOWN_MOSFET["vth"]]
     assert below, "the fixture must include gate steps below V_th"
     for curve in below:
-        assert max(r.i_acc for r in curve.rows) == 0
+        assert max(abs(r.i_ma) for r in curve.rows) <= lsb_ma
 
 
 # --------------------------------------------------------------------------

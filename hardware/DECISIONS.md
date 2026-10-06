@@ -44,7 +44,7 @@ entry). Read every Sim figure below with that in mind.
 | <a id="r4"></a>R4 | R_B alt | **DNP**, THT axial parallel to R3 | Blueprint §14.4 | 330 Ω was chosen over 680 Ω on a sim-only overshoot difference that no bench measurement has checked. The footprint takes the 0207/0309 axial parts already on hand (§8: 330 Ω ×5) without SMD rework | Fit only if H4 overshoot disagrees with sim 08 |
 | <a id="q1"></a>Q1 | BD139 (ST) | — | Blueprint §3.1, §8. Substitution S-2 | Pass transistor, TO-126. Tab = collector = +15 V. Worst-case dissipation **0.89 W** (sim 11, hard short). **Layout-time check (H2):** ST and onsemi number this part's pins in opposite directions — see [L-1](#layout-time-checks) | H4: thermal under a sustained short |
 | <a id="d1"></a>D1 | 1N4148W | — | Blueprint §3.1. Sim 09. Substitution S-3 | B-E clamp, anode at emitter. Unclamped, V_BE reaches −6.3 V (100 pF open) and −9.0 V (100 nF open) against `V_EBO` = 5 V (sim 08). Clamped: −0.58 / −0.74 V (sim 09, 2026-09-18) | H4: falling edge into 100 pF open, against sim 09's 1.7 µs |
-| <a id="q2"></a>Q2 | MMBT3904 | — | Sims 10, 11 (§3.1 names only "a second transistor"). Substitution S-4 | Sims use the 2N3904. The fitted Rohm SST3904 model (SOT-23) agrees within 2% (sim 10). V_BE ≈ 752 mV at R_B = 330 Ω (sim 11). Dissipates 53 mW in a held short (sim 10) | H4: trip point, re-measured warm (−2 mV/°C) |
+| <a id="q2"></a>Q2 | MMBT3904 (JSCJ, C20526, Basic) | — | Sims 10, 11 (§3.1 names only "a second transistor"). Substitution S-4 | Sims use the 2N3904. The fitted Rohm SST3904 model (SOT-23) agrees within 2% (sim 10). V_BE ≈ 752 mV at R_B = 330 Ω (sim 11). Dissipates 53 mW in a held short (sim 10) | H4: trip point, re-measured warm (−2 mV/°C) |
 | <a id="r5"></a>R5 | R_sense | **10 Ω** 1%, 1206 0.75 W | Blueprint §3.1. Sim 11. Package: Capture C-3 | Threshold `V_BE / R_sense` = **75.2 mA** (sim 11, 2026-09-18), 50% over the 50 mA spec. 15 Ω is rejected because its threshold of 48.8–50.2 mA sits inside the sweep spec. 12 Ω is rejected on thermal margin: −2 mV/°C over a 20 °C rise takes it to ~57.6 mA, 15% clear (analysis, §3.1). Dissipation 57 mW at the threshold | **H4: trip threshold, cold and warm.** §3.1 calls the drift "the figure most likely to disagree with simulation" |
 | <a id="r6"></a>R6 | R_sense alt | **DNP**, THT axial parallel to R5 | Blueprint §14.4 | As R4. §8 has 10 Ω ×5 on hand | Fit if H4 trip point disagrees with 75.2 mA |
 | <a id="r7"></a>R7 | R_iso | **22 Ω** 1%, 2512 1 W | Blueprint §3.1. Phase 0 sim 03 (§12, item 4). Package: Capture C-3 | With 22 Ω, the loop is clean at the emitter and the output from 100 pF to 100 nF. Bare, it is stable only to ~1 nF and oscillates by 2.2 nF. Drop of 1.10 V at 50 mA is uncorrected and made harmless by Kelvin sensing (§3.4). Dissipation 252 mW in a hard short (107 mA, sim 10) | **H4.** Never confirmed on hardware: stage 8 was never reached |
@@ -86,20 +86,20 @@ entry). Read every Sim figure below with that in mind.
 | <a id="u3"></a>U3 (A) | OPA2197IDR, difference stage | — | Blueprint §3.3 | — | — |
 | <a id="r15"></a>R15, <a id="r17"></a>R17 | R3, R1 | **1 kΩ 0.1%** | Blueprint §3.3. Sims 04, 05 | Gain `R2/R1` = 20. CMRR comes from resistor matching: **74.4 dB** worst-case corner at 0.1% (sim 04). Monte Carlo median **88.26 dB** (sim 05, n = 500, 2026-09-18) | **H4 / Phase 2**: measured CMRR against the 74.4 dB floor |
 | <a id="r16"></a>R16, <a id="r18"></a>R18 | R4, R2 | **20 kΩ 0.1%** | Blueprint §3.3. Sims 04, 05 | As above. All four resistors are the same Yageo RT0805 25 ppm family, for matching | As above |
-| <a id="r19"></a>R19 | Isolation, ADC1 | **51 Ω 1%** 0603 (C23197, Basic) | Datasheet: OPA2197 §7.3.5 and Table 3. **Decision, 2026-10-06.** Blueprint §3.5, §3.7 | U3A drives 10 nF at the ADC pin. Table 3: 20 Ω gives 45° phase margin, 51 Ω gives 60°. Daniel chose 60°: "a DC-accuracy path with no bench time budgeted for debugging a marginal buffer." DC cost: ≤ 2 µA BAT54S leakage × 51 Ω = **0.10 mV**, about 0.13 LSB | — |
+| <a id="r19"></a>R19 | Isolation, ADC1 | **1 kΩ 1%** 0603 (C21190, Basic) | Datasheet: OPA2197 §7.3.5 and Table 3 (floor). **Decision, 2026-10-06**, made twice: 51 Ω (60° phase margin), then raised to 1 kΩ to close F-2. Blueprint §3.5, §3.7 | U3A drives 10 nF at the ADC pin. Table 3: 20 Ω gives 45° and 51 Ω gives 60°; more resistance only adds margin. 1 kΩ bounds the clamp current into +3V3 at (15 − 3.3 − 0.4) V / 1 kΩ ≈ **11 mA**. Costs: up to **2 mV** leakage offset (BAT54S ≤ 2 µA × 1 kΩ), which varies with signal and temperature, and τ = 10 µs against `settle_us` = 20 µs — the 64-sample mean carries 0.16% of each step (§3.5) | **H4:** ADC1 reading at zero current → offset calibration; re-check at full scale |
 | <a id="c3"></a>C3 | ADC1 cap | **10 nF** | Blueprint §3.5 | "10 nF cap at each ADC pin" | — |
-| <a id="d4"></a>D4 | ADC1 clamp | BAT54S | Blueprint §3.5, §3.6 | Clamped to GND and +3V3 | — |
+| <a id="d4"></a>D4 | ADC1 clamp | BAT54S (R+O, C7420333, Preferred) | Blueprint §3.5, §3.6 | Clamped to GND and +3V3. Pinout 1 = A, 2 = K, 3 = common, matching onsemi STYLE 11; I_R ≤ 2.0 µA at 25 V, as onsemi | **H4:** +3V3 at TP8 with the clamp conducting (unplug the Kelvin leads) |
 
 ## Voltage sense — blueprint §3.4
 
 | Ref | Part | Value | Source | Evidence | Bench |
 |---|---|---|---|---|---|
-| <a id="r20"></a>R20 | Divider top | **30 kΩ 0.1%** | Blueprint §3.4 | ÷4: 10 V → 2.5 V at ADC2 | **Phase 3**: Kelvin V_DS tracks a DMM within 0.5% |
-| <a id="r21"></a>R21 | Divider bottom | **10 kΩ 0.1%** | Blueprint §3.4 | Returned to **KELVIN_LO**, not GND, because the README's routing table runs KELVIN_HI/LO as a pair into the divider. ADC2 is ground-referenced, so it reads `V_LO + V_DS/4`. The source-lead drop therefore enters at ¾ weight rather than full weight. That is a §3.4 limitation, not a capture error | As R20 |
+| <a id="r20"></a>R20 | Divider top | **300 kΩ 0.1%** 0603 25 ppm (Yageo RT0603BRD07300KL, C705762) | Blueprint §3.4 (ratio). **Decision, 2026-10-06** (value), closing F-1 | ÷4: 10 V → 2.5 V at ADC2. Was 30 kΩ: the divider's current is counted as DUT current, and 400 kΩ total cuts it from 25 to **2.5 µA per volt**. The firmware subtracts the remainder (`cal_rdiv_ohm`). Same family, size and TCR as R21, so the ratio tracks with temperature. VDIV is now a 75 kΩ node: keep it short at layout | **Phase 3**: Kelvin V_DS tracks a DMM within 0.5% |
+| <a id="r21"></a>R21 | Divider bottom | **100 kΩ 0.1%** 0603 25 ppm (Yageo RT0603BRD07100KL, C122538) | Blueprint §3.4. **Decision, 2026-10-06**, with R20 | No longer shares a reel with R14 (10 kΩ shunt), so it adds one extended line (+$3).  Returned to **KELVIN_LO**, not GND, because the README's routing table runs KELVIN_HI/LO as a pair into the divider. ADC2 is ground-referenced, so it reads `V_LO + V_DS/4`. The source-lead drop therefore enters at ¾ weight rather than full weight. That is a §3.4 limitation, not a capture error | As R20 |
 | U3 (B) | Kelvin buffer | — | Blueprint §3.4 | Unity gain | — |
-| <a id="r22"></a>R22 | Isolation, ADC2 | **51 Ω 1%** 0603 (C23197, Basic) | As R19 | U3B is a **unity-gain** buffer, the configuration the datasheet rates to only 1 nF of direct drive | — |
+| <a id="r22"></a>R22 | Isolation, ADC2 | **1 kΩ 1%** 0603 (C21190, Basic) | As R19 | U3B is a **unity-gain** buffer, the configuration the datasheet rates to only 1 nF of direct drive. It is also the buffer that rails when the Kelvin leads are unplugged, which is F-2's commonest route. Its leakage offset is ×4 at the DUT: up to 8 mV | **H4:** ADC2 reading at V_DS = 0 → offset calibration |
 | <a id="c4"></a>C4 | ADC2 cap | **10 nF** | Blueprint §3.5 | — | — |
-| <a id="d5"></a>D5 | ADC2 clamp | BAT54S | Blueprint §3.5, §3.6 | — | — |
+| <a id="d5"></a>D5 | ADC2 clamp | BAT54S (R+O, C7420333, Preferred) | As D4 | — | As D4 |
 
 ## Power, ground, MCU
 
@@ -193,7 +193,7 @@ footprints cost nothing. **The value is open**, and they ship unstuffed.
 | **S-1** | Littelfuse **RXEF010** (radial, THT) | **TECHFUSE nSMD010** (1206, C70065) | RXEF010 is not in JLCPCB's assembly library. LCSC lists RXEF010S (C1562110) at **0 stock** | See the comparison below |
 | S-2 | BD139**-16** | ST **BD139** (C27866) | No -16 stocked at JLCPCB. Same ST die and SOT-32 package; the ST model is the one Phase 0 used (§12) | h_FE bin only. §3.1 relies on the follower being inside the loop, not on gain |
 | S-3 | 1N4148 (DO-35) | 1N4148W (SOD-123, C81598, Basic) | SMD for PCBA | Same junction. Sim 09 used the generic `standard.dio` model, not a package-specific one |
-| S-4 | 2N3904 (sim part) | onsemi MMBT3904LT1G (SOT-23) | SMD for PCBA | Same die. The SST3904 cross-check in sim 10 was already a SOT-23 part |
+| S-4 | 2N3904 (sim part) | JSCJ MMBT3904 (SOT-23, C20526, Basic) | SMD for PCBA; a Basic part since 2026-10-06 (was onsemi MMBT3904LT1G, extended) | Same die. The SST3904 cross-check in sim 10 was already a SOT-23 part. JSCJ pinout 1 = B, 2 = E, 3 = C, matching the symbol; 200 mW against 53 mW in a held short. Vendor V_BE spread enters the limiter threshold, within the ~2% §3.1 already carries between models |
 | S-5 | Yageo MFP-25 0.1% THT (§3.1, §8) | Yageo RT thin-film 0.1% SMD | PCBA. R1/R9 23.2 kΩ is RT0603**BRE** (50 ppm, the only 0603 23.2 kΩ 0.1% stocked) | Ratio drift at most 75 ppm/°C between R_f and R_g: negligible against the 0.1% tolerance |
 
 **S-1 datasheet comparison** — RXEF010 figures from the Littelfuse RXEF
@@ -271,25 +271,67 @@ Checking by number will find a "mismatch" that isn't one, or miss a real
 one. At H2, put the physical part on the printed footprint and confirm
 emitter, collector and base land on the BD139_E, +15V and BD139_B pads.
 
-## Open findings (design, not values)
+## Findings resolved 2026-10-06
 
-Found while making the 2026-10-06 changes. Not acted on.
+**F-1 — The Kelvin divider's current was measured as DUT current.**
+*Resolved both ways.* R20 + R21 hang from KELVIN_HI, the DUT drain, on the
+DUT side of the shunt, so the shunt carries `I_DUT + V_DS / (R20 + R21)`. At
+30k/10k that was **25 µA per volt**, uncorrected anywhere: 2.5% on a 10 mA
+reading, which would fail Phase 2's 1% gate on its own. Now:
 
-**F-1 — The Kelvin divider's current is measured as DUT current.** R20 + R21
-(40 kΩ) hang from KELVIN_HI, which is the DUT drain: on the DUT side of the
-shunt. So the shunt carries `I_DUT + V_DS / 40 kΩ`, which is **25 µA per
-volt**, 250 µA at 10 V. Nothing in `firmware/` or `host/` subtracts it. On
-range 1 that is 0.5% of full scale at 10 V, and 2.5% when measuring 10 mA,
-which fails Phase 2's "known resistor within 1%". On ranges 2–3 it swamps the
-reading. §3.4's stated reason for the buffer, "so the divider doesn't load
-the DUT", is not what the buffer does: it stops the ADC loading the divider.
-This is the same mechanism as §13's phantom current: a sense network drawing
-its current through the shunt.
+- **300k/100k**: 2.5 µA per volt, ratio unchanged (R20, R21).
+- **Firmware subtracts it** (CSV schema 2): `i_meas_ma = I_shunt − V_DS /
+  cal_rdiv_ohm`. The host's recomputation does the same and checks it
+  agrees. `host/tests/test_divider_correction.py` shows the correction fires,
+  and that an uncorrected sweep of a 40 kΩ load reads 36.4 kΩ (40k ‖ 400k),
+  9% low. `hardware/tools/check_topology.py` now also requires the board's
+  divider to match `CT_RDIV_OHM`.
 
-**F-2 — An op-amp at its rail back-feeds the Nucleo's 3.3 V rail through the
-ADC clamp.** The BAT54S high-side diode conducts into +3V3 whenever an ADC
-buffer output exceeds ~3.6 V. 51 Ω does not limit that current; the
-OPA2197's own ~65 mA output limit does. The Nucleo's 3.3 V LDO cannot sink
-current. Two routes there: an over-range on ranges 2–3 (above 1.65 mA on
-range 2, the difference amp wants more than 3.3 V), and **unplugged Kelvin
-leads on any range**, which leave the U3B input floating.
+**The same mechanism as §13's phantom current, reached by a different
+path.** In §13 the unbuffered difference-amp bridge drew 475.6 µA through
+the shunt with no DUT connected, and the input buffers were the fix. Here
+the sense divider does the same from the other side of the DUT. The buffers
+fixed the first and could not touch the second, because the divider sits
+upstream of its own buffer. The general rule is now blueprint §3.4: **any
+resistive divider on the DUT node is counted as DUT current**. For any new
+network, check where its current returns.
+
+**F-2 — An op-amp at its rail back-fed the Nucleo's 3.3 V rail through the
+ADC clamp.** *Resolved by R19, R22 = 1 kΩ.* The BAT54S high-side diode
+conducts into +3V3 whenever an ADC buffer output passes ~3.6 V. At 51 Ω only
+the OPA2197's own ~65 mA limit bounded it. At 1 kΩ it is ≈ 11 mA per
+channel, which the 3.3 V rail absorbs as long as the Nucleo draws more than
+it is fed. **That condition is not verified**: it is an H4 measurement (TP8,
+Kelvin leads unplugged). The routes are unchanged: unplugged Kelvin leads on
+any range, and over-range on ranges 2–3.
+
+## Assembly — what JLCPCB places and what is hand-soldered
+
+Decided 2026-10-06. Each symbol's `Assembly` field is `PCBA`, `hand` or
+`DNP`, and the BOM carries the column.
+
+**Hand-soldered (through-hole, not on the PCBA order):** J1 barrel jack, J2
+and J5 1×2 headers, J3 and J4 2×3 headers, J6 screw terminal, J7 and J8
+morpho sockets, Q1 BD139, and the TP1–TP27 test loops. Through-hole
+soldering is within reach; SOIC is what §14.3 ruled out. This removes six
+extended-part fees and JLCPCB's through-hole assembly charge.
+
+**Moved to fee-free tiers, no design consequence:** Q2 to JSCJ MMBT3904
+(Basic, S-4) and D4/D5 to R+O BAT54S (Preferred: no loading fee on Economic
+PCBA — confirm on the quote).
+
+**Kept as extended, Daniel's call (2026-10-06):**
+
+- R5 R_sense: the Basic part's 400 ppm/°C feeds the limiter threshold.
+- R11 gate 1 kΩ: 213 mW in a 250 mW 1206 has no margin.
+- C5: the electrolytic damps the supply lead, and a ceramic will not.
+- D2: stays at 500 mW.
+
+**Net:** 23 PCBA lines — 5 Basic, 1 Preferred, **17 extended → $51** in
+loading fees, from 24 extended ($72) before. The planned eight moves would
+have saved $24. The F-1 divider gives $3 of it back: R21 no longer shares
+the 10 kΩ reel with R14. Part costs at JLCPCB/LCSC unit prices: **$3.42**
+placed by JLCPCB (the three OPA2197s are $2.48 of it) and **$1.79**
+hand-soldered from LCSC. Not priced: 27 Keystone 5001 test loops (not
+stocked at LCSC), two jumper shunts, the TO-126 heatsink. JLCPCB adds
+attrition and any minimum-quantity rounding at quote.

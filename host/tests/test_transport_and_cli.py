@@ -146,7 +146,7 @@ def test_static_plots_render(mosfet, tmp_path):
     assert "measured" in ax.get_xlabel()
     ax.figure.savefig(tmp_path / "family.png")
 
-    ax2 = plot_vds_delta(mosfet)
+    ax2 = plot_vds_delta(mosfet, r_ptc_ohm=0.0)   # the simulator models no PTC
     assert "as designed" in ax2.get_title()
     ax2.figure.savefig(tmp_path / "delta.png")
 

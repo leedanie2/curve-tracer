@@ -45,6 +45,7 @@ static void usage(void)
         "usage: ct_sim [--dut mosfet|diode|resistor] [--noise COUNTS]\n"
         "              [--vth V] [--k A/V^2] [--lambda 1/V]\n"
         "              [--is A] [--n-diode N] [--rs OHM] [--rload OHM]\n"
+        "              [--rptc OHM] [--rdiv OHM]\n"
         "\n"
         "Reads commands on stdin (ID GET SET SWEEP STOP HELP), writes CSV to\n"
         "stdout. See firmware/README.md for the wire format.\n");
@@ -90,6 +91,10 @@ int main(int argc, char **argv)
             sim.rs = strtof(v, NULL); i++;
         } else if (strcmp(a, "--rload") == 0 && v != NULL) {
             sim.r_load = strtof(v, NULL); i++;
+        } else if (strcmp(a, "--rptc") == 0 && v != NULL) {
+            sim.r_ptc = strtof(v, NULL); i++;
+        } else if (strcmp(a, "--rdiv") == 0 && v != NULL) {
+            sim.r_div = strtof(v, NULL); i++;
         } else {
             fprintf(stderr, "ct_sim: unknown option '%s'\n", a);
             usage();

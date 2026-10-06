@@ -233,7 +233,16 @@ Shunt in the drain path, high-side, measured by a discrete difference amplifier 
 
 Because shunt burden voltage can reach 100 mV, the voltage across the DUT is **not** the sweep source output. Sense `V_DS` directly at the DUT terminals with separate wires.
 
-Divider `÷4` (30 kΩ / 10 kΩ, 0.1%) into a unity-gain buffer (high input Z so the divider doesn't load the DUT) into ADC2.
+Divider `÷4` (**300 kΩ / 100 kΩ**, 0.1%) into a unity-gain buffer into ADC2. The buffer stops the *ADC* loading the divider; it does nothing about the divider loading the DUT. An earlier draft claimed otherwise, and fitted 30 kΩ / 10 kΩ.
+
+**Any resistive divider on the DUT node is counted as DUT current.** The divider hangs from `KELVIN_HI`, which is the DUT's drain, so it sits on the DUT side of the shunt. Its current, `V_DS / (R_top + R_bottom)`, flows through the shunt with the DUT's, and the difference amp cannot tell them apart. At 30k/10k that was 25 µA per volt, 250 µA at 10 V. Nothing in firmware or host corrected it, and a 1 kΩ resistor read at 10 V came out 2.5% high, which fails Phase 2's 1% gate on its own. Two fixes, both applied (Oct 6, 2026):
+
+- **Raise the divider tenfold**, 300k/100k: **2.5 µA per volt**, 25 µA at 10 V, with the ÷4 ratio unchanged. The buffer's input bias (pA, §13) is still negligible against a 75 kΩ source.
+- **Subtract it in firmware.** `I_DUT = I_shunt − V_DS / 400 kΩ`, with the measured `V_DS`. The divider resistance travels in the CSV header as `cal_rdiv_ohm`, so any archived capture can be re-derived (`firmware/README.md`, schema 2).
+
+On range 1, 25 µA is 0.6 of an LSB, so the correction is a sub-LSB term there, and a device that is off reads within an LSB of zero on either side. On ranges 2 and 3 it is most of full scale, and the correction is what makes them usable at all.
+
+This is the same mechanism as §13's phantom current, reached by a different path. There, the unbuffered difference-amp bridge drew 475.6 µA through the shunt with no DUT connected; here the sense divider does. **For any network added to the board, check where its current returns: anything connected between the shunt and the DUT's source is measured as DUT current.**
 
 This is a genuine four-wire measurement, and explaining why it's necessary is a strong README paragraph.
 
@@ -249,7 +258,12 @@ So extracting anything at a fixed `V_DS` — `V_th` and `β` from a `√I_D` fit
 
 **The cost of that choice:** DAC1 and DAC2 are separate peripherals, so they cannot perform a **synchronised dual-channel update** the way DAC1's two channels could (`DUALTRIG` / a shared trigger). The sweep engine (§4) sets gate and then drain sequentially, so this costs nothing in DC mode. **It would matter if pulsed mode is ever restored**, where gate and drain ideally step together on one trigger to keep the measurement window tight; that would need either both channels on DAC1 — reworking around LD2, e.g. by lifting solder bridge SB21 — or accepting the skew between two software writes. Record the constraint now rather than rediscovering it when pulsed mode is built.
 
-**ADC config:** 12-bit, longest sampling time, VREF from the board's 3.3 V rail. Add a `10 nF` cap at each ADC pin and clamp diodes (BAT54S) to rails for protection. Each pin is driven from its op-amp through **51 Ω**, because 10 nF is ten times what an OPA2197 at unity gain is rated to drive directly — §3.7.
+**ADC config:** 12-bit, longest sampling time, VREF from the board's 3.3 V rail. Add a `10 nF` cap at each ADC pin and clamp diodes (BAT54S) to rails for protection. Each pin is driven from its op-amp through **1 kΩ**. 10 nF is ten times what an OPA2197 at unity gain is rated to drive directly (§3.7), and 1 kΩ also bounds what an op-amp at its rail can push through the BAT54S into the Nucleo's 3.3 V rail: (15 − 3.3 − 0.4) V / 1 kΩ ≈ **11 mA** per channel. Before, the op-amp's own ~65 mA limit was the only bound. It happens on unplugged Kelvin leads, which leave the buffer input floating, and on any over-range on ranges 2–3.
+
+**What 1 kΩ costs.**
+
+- **A DC offset from leakage at the pin.** The BAT54S is the dominant term: ≤ 2 µA at 25 °C (datasheet maximum, at `V_R` = 25 V), so up to **2 mV**, ~1 mV typical, about 2.5 LSB. It is not perfectly fixed. Schottky leakage depends on the reverse voltage across each diode, which moves with the signal, and it rises steeply with temperature. So **calibrate it at zero current at bring-up** (H4, `hardware/README.md`), then re-check at full scale. At ADC2 it is multiplied by 4 at the DUT, up to 8 mV, against the §7 target of 0.5% of reading.
+- **A 10 µs time constant** (1 kΩ × 10 nF) against the default `settle_us` of 20 µs. The voltage channel is unaffected: it is sampled after all 64 current conversions, ~550 µs later. The current channel is not. At 20 µs the first conversion still carries 5.9% of the step since the last point, and the 64-sample mean carries 0.16% of it. In practice that is ~80 µA on the first point of each gate step on range 1, where the current falls from up to 50 mA to zero, plus a 0.16% lag on every point-to-point change. `settle_us` ≥ 50 µs makes it 0.008%; 83 µs is ln(4096)·τ, 1 LSB on the first sample. **The default has not been changed.**
 
 **Oversampling:** average 64 samples per point → ~3 extra effective bits (~15-bit) at the cost of ~1 ms per point. Standard `√N` noise averaging; state the measured improvement in the README rather than assuming it.
 
@@ -294,11 +308,11 @@ It appears twice in this design, found independently each time:
 | Where | Resistor | Capacitance it isolates | How the value was set |
 |---|---|---|---|
 | Sweep source, emitter → `LOAD` (§3.1) | **`R_iso` = 22 Ω** | The DUT and its leads, 100 pF – 100 nF | **Phase 0 simulation** (§12): bare, the loop is stable to ~1 nF and oscillating by 2.2 nF; with 22 Ω it is clean from 100 pF to 100 nF. Feedback is tapped at `FB_SENSE`, ahead of `R_iso` (§14.5(5)) |
-| ADC buffer outputs → ADC pins (§3.5) | **51 Ω** each (`R19`, `R22` on the board) | The 10 nF §3.5 places at each ADC pin | **OPA2197 datasheet**: unity-gain direct drive is rated to 1 nF (§7.3.5); Table 3 gives 20 Ω for 45° and **51 Ω for 60°** phase margin at 10 nF. 60° was chosen because this is a DC-accuracy path with no bench time budgeted for debugging a marginal buffer |
+| ADC buffer outputs → ADC pins (§3.5) | **1 kΩ** each (`R19`, `R22` on the board) | The 10 nF §3.5 places at each ADC pin | **The OPA2197 datasheet** sets the floor: unity-gain direct drive is rated to 1 nF (§7.3.5), and Table 3 gives 20 Ω for 45° and 51 Ω for 60° phase margin at 10 nF. 51 Ω was fitted first, then raised to **1 kΩ** to bound the clamp current into the 3.3 V rail (§3.5). More resistance only adds phase margin |
 
 **The "don't compensate" half is measured, not advice.** Phase 0 tried the obvious alternative first — a cap across `R_f` (`C_comp`) — and every value from 1 pF to 100 pF oscillated, monotonically worse as the capacitance grew (§12, sim 02). §3.1 explains the mechanism: in a non-inverting stage, a feedback cap raises `β` exactly where the load pole's phase lag sits.
 
-**Why the 51 Ω costs no accuracy.** An ADC input draws no DC current, so the only drop across the resistor is from leakage at the pin. The BAT54S clamp is the larger term: ≤ 2 µA at 25 °C (onsemi BAT54SLT1G, `V_R` = 25 V). 2 µA × 51 Ω = 0.10 mV, about 0.13 LSB of a 12-bit, 3.3 V converter. Schottky leakage rises with temperature, so recheck this if the board runs hot.
+**What the larger resistor costs.** 51 Ω cost nothing measurable (2 µA × 51 Ω = 0.10 mV). 1 kΩ costs up to 2 mV of leakage offset and a 10 µs settling constant; §3.5 quantifies both and says how each is handled.
 
 **`R_B` looks like a third instance and is not one.** `R_B` (330 Ω, §3.1) also sits between an op-amp output and a capacitance — the BD139's `C_jc` — but the feedback is taken *after* it, at the emitter. So `R_B · C_jc` is a pole *inside* the loop, and it costs phase as `R_B` grows. That is exactly why 680 Ω was rejected (sim 08: 10.3% overshoot at 330 Ω against 21.4% at 680 Ω). `R_B`'s value is set by fault current (sim 10), not by isolation. **The tell is where the feedback is taken relative to the resistor.** Before the resistor, the resistor isolates. After it, the resistor adds a pole.
 
@@ -438,7 +452,7 @@ If the numbers agree within a few percent, you have demonstrated the entire chip
 | OPA2197 (dual, 36 V, precision) — six channels, three duals (§13) | 3 | $18 |
 | SOIC-8 to DIP adapter — the OPA2197 is SOIC-only (see below) | 4 | ~$6 |
 | BD139-16 + TO-126 heatsink (see package note) | 3 | $6 |
-| 0.1% resistor assortment (1 k, 10 k, 20 k, 30 k, 100 Ω, 10 k shunt) | — | $15 |
+| 0.1% resistor assortment (1 k, 10 k, 20 k, 100 k, 300 k, 100 Ω, 10 k shunt) | — | $15 |
 | 23.2 kΩ 0.1% — `R_f`, sweep **and** gate (E96, see note) | 5 | ~$3 |
 | 1 Ω 1% 1 W shunt | 2 | $2 |
 | 15 V / 1 A wall adapter + barrel jack | 1 | $10 |

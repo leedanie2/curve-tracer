@@ -290,7 +290,12 @@ def _sqrt_fit(points: list[tuple[float, float]],
               fit_range: FitRange | None = None) -> LinearFit:
     """Least squares on sqrt(I_D) against V_GS. Current in mA, I in A."""
     vgs = np.array([p[0] for p in points], dtype=float)
-    root_i = np.sqrt(np.array([p[1] for p in points], dtype=float) / 1000.0)
+    # Since CSV schema 2 the Kelvin divider's current is subtracted from the
+    # shunt reading (blueprint §3.4), so a device that is off reads within an
+    # LSB of zero on either side. sqrt of a slightly negative reading is
+    # noise, not a current: clamp it to zero.
+    i_a = np.clip(np.array([p[1] for p in points], dtype=float), 0.0, None) / 1000.0
+    root_i = np.sqrt(i_a)
     return fit_line(vgs, root_i, fit_range=fit_range,
                     x_unit="V", y_unit="sqrt(A)")
 

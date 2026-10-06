@@ -137,6 +137,13 @@ void ct_csv_write_header(const ct_device_t *dev, const ct_params_t *p,
     info_f(dev, "cal_shunt_ohm",    CT_SHUNT_OHM,    3u);
     info_f(dev, "cal_diffamp_gain", CT_DIFFAMP_GAIN, 2u);
     info_f(dev, "cal_vdiv",         CT_VDIV,         3u);
+    info_f(dev, "cal_rdiv_ohm",     CT_RDIV_OHM,     0u);
+    info_f(dev, "cal_r_iso_ohm",    CT_R_ISO_OHM,    3u);
+    if (CT_R_PTC_OHM < 0.0f) {
+        ct_csv_write_info(dev, "cal_r_ptc_ohm", "unset");
+    } else {
+        info_f(dev, "cal_r_ptc_ohm", CT_R_PTC_OHM, 3u);
+    }
     info_f(dev, "cal_vref",         CT_VREF,         3u);
     info_u32(dev, "cal_adc_full_scale", (uint32_t)CT_ADC_FULL_SCALE);
     info_u32(dev, "cal_dac_full_scale", (uint32_t)CT_DAC_FULL_SCALE);

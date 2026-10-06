@@ -124,6 +124,21 @@ class Metadata:
         except ValueError:
             raise ContractError(f"metadata {key}={raw!r} is not a number") from None
 
+    def float_or_none(self, key: str) -> float | None:
+        """A numeric field that may be absent or explicitly ``unset``.
+
+        Older schemas lack some ``cal_*`` keys, and a constant that has not
+        been measured yet is emitted as ``unset`` rather than as a number that
+        looks real. Both come back as ``None``; anything else must parse.
+        """
+        raw = self._d.get(key)
+        if raw is None or raw == "unset":
+            return None
+        try:
+            return _float(raw)
+        except ValueError:
+            raise ContractError(f"metadata {key}={raw!r} is not a number") from None
+
     def int(self, key: str) -> int:
         raw = self.require(key)
         try:
@@ -232,7 +247,7 @@ class Row:
 
     @property
     def vds_delta(self) -> float:
-        """``vds_set_v - vds_meas_v``; should be I x 23 ohm. See §3.4."""
+        """``vds_set_v - vds_meas_v``; should be I x (23 ohm + R_PTC). See §3.1."""
         return self.vds_set_v - self.vds_meas_v
 
 
