@@ -46,7 +46,7 @@ Lines end **CRLF**, so a raw serial terminal stays readable.
 # mode: dc
 # temp_c: 31.4
 # temp_src: mcu_die
-# settle_us: 20
+# settle_us: 50
 # n: 200
 # oversample_n: 64
 # i_limit_ma: 60.00
@@ -254,7 +254,7 @@ terminated by CR, LF or CRLF.
 
 | Name | Default | Range | Notes |
 |---|---|---|---|
-| `settle_us` | 20 | 1 – 1000000 | blueprint §4; DUT settling dominates, not the amplifier |
+| `settle_us` | 50 | 1 – 1000000 | blueprint §4; the 1 kΩ × 10 nF ADC1 filter (τ = 10 µs) binds, not the amplifier. DUT settling may need more |
 | `n` | 200 | 2 – 4096 | points per gate step |
 | `oversample_n` | 64 | 1 – 1024 | samples summed per reading |
 | `i_limit_ma` | 60 | 0.001 – 165 | **DUT protection ceiling** |

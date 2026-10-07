@@ -59,7 +59,12 @@
 
 #define CT_SETTLE_US_MIN        1u
 #define CT_SETTLE_US_MAX        1000000u
-#define CT_SETTLE_US_DEFAULT    20u
+/* 50 us, not the 20 us the sweep source alone would allow (it settles in
+ * ~1.3 us). The binding constraint is the 1k x 10nF filter at the ADC1 pin
+ * (tau = 10 us, blueprint §3.5): at 20 us the 64-sample mean still carries
+ * 0.16% of the step from the previous point, a systematic lag rather than
+ * noise; at 50 us, 0.008%. Costs 48 ms across a 1600-point family. */
+#define CT_SETTLE_US_DEFAULT    50u
 
 #define CT_N_MIN                2u
 #define CT_N_MAX                4096u

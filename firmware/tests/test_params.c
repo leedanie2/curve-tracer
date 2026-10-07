@@ -18,7 +18,7 @@ static void test_defaults_match_blueprint(void)
     ct_params_t p;
     ct_params_defaults(&p);
 
-    CT_CHECK(p.settle_us == 20u);
+    CT_CHECK(p.settle_us == 50u);
     CT_CHECK(p.n == 200u);
     CT_CHECK(p.oversample_n == 64u);
     CT_CHECK_NEAR(p.i_limit_ma, 60.0f, 1e-6);

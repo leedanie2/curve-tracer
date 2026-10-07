@@ -263,7 +263,7 @@ So extracting anything at a fixed `V_DS` — `V_th` and `β` from a `√I_D` fit
 **What 1 kΩ costs.**
 
 - **A DC offset from leakage at the pin.** The BAT54S is the dominant term: ≤ 2 µA at 25 °C (datasheet maximum, at `V_R` = 25 V), so up to **2 mV**, ~1 mV typical, about 2.5 LSB. It is not perfectly fixed. Schottky leakage depends on the reverse voltage across each diode, which moves with the signal, and it rises steeply with temperature. So **calibrate it at zero current at bring-up** (H4, `hardware/README.md`), then re-check at full scale. At ADC2 it is multiplied by 4 at the DUT, up to 8 mV, against the §7 target of 0.5% of reading.
-- **A 10 µs time constant** (1 kΩ × 10 nF) against the default `settle_us` of 20 µs. The voltage channel is unaffected: it is sampled after all 64 current conversions, ~550 µs later. The current channel is not. At 20 µs the first conversion still carries 5.9% of the step since the last point, and the 64-sample mean carries 0.16% of it. In practice that is ~80 µA on the first point of each gate step on range 1, where the current falls from up to 50 mA to zero, plus a 0.16% lag on every point-to-point change. `settle_us` ≥ 50 µs makes it 0.008%; 83 µs is ln(4096)·τ, 1 LSB on the first sample. **The default has not been changed.**
+- **A 10 µs time constant** (1 kΩ × 10 nF) against the default `settle_us` of 20 µs. The voltage channel is unaffected: it is sampled after all 64 current conversions, ~550 µs later. The current channel is not. At 20 µs the first conversion still carries 5.9% of the step since the last point, and the 64-sample mean carries 0.16% of it. In practice that is ~80 µA on the first point of each gate step on range 1, where the current falls from up to 50 mA to zero, plus a 0.16% lag on every point-to-point change. `settle_us` ≥ 50 µs makes it 0.008%; 83 µs is ln(4096)·τ, 1 LSB on the first sample. **The default is now 50 µs** (§4).
 
 **Oversampling:** average 64 samples per point → ~3 extra effective bits (~15-bit) at the cost of ~1 ms per point. Standard `√N` noise averaging; state the measured improvement in the README rather than assuming it.
 
@@ -347,7 +347,7 @@ for each V_GS in step_list:
 
 | Parameter | Starting value | Why it matters |
 |---|---|---|
-| `settle_us` | 20 µs | Sweep source settles in ~1.3 µs (Phase 0); the binding constraint is DUT settling and thermal response, not the amplifier |
+| `settle_us` | **50 µs** | The binding constraint is the **ADC front end**, not the DUT: the 1 kΩ × 10 nF filter at the ADC1 pin (τ = 10 µs, §3.5). At 20 µs the 64-sample mean still carries **0.16%** of the point-to-point step. That is a systematic lag toward the previous point, not noise, so a rising sweep reads consistently low (and the first point of each gate step, which falls to zero, reads high). At 50 µs it is **0.008%**. Cost: 30 µs × 1600 points = **48 ms** per family, against ~5.5 ms per row of serial transmission. *This supersedes the original rationale* — "sweep source settles in ~1.3 µs (Phase 0); the binding constraint is DUT settling and thermal response" — which stopped being true on the current channel when the 1 kΩ went in (Oct 6, 2026). A slow DUT can still need more |
 | `N` (points/sweep) | 200 | Tradeoff: resolution vs. total sweep time vs. heating |
 | `duty_off_us` | 10 ms | Pulsed mode: lets the DUT cool between points |
 | `oversample_n` | 64 | Noise floor vs. speed |
