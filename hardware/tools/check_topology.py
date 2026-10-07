@@ -148,9 +148,10 @@ OPAMP_PINS = {
 }
 
 # Named nets deliberately without a test point: op-amp input nodes (a probe
-# there perturbs the loop) and per-shunt pads (SHUNT_HI reaches the selected
-# one through J4).
-TP_EXEMPT = {'DA_P', 'DA_N', 'GATE_IN-', 'SH1_TOP', 'SH2_TOP', 'SH3_TOP'}
+# there perturbs the loop), per-shunt pads (SHUNT_HI reaches the selected
+# one through J4), and Q3's gate (TP28 and TP7 either side of Q3 say whether
+# it is on).
+TP_EXEMPT = {'DA_P', 'DA_N', 'GATE_IN-', 'SH1_TOP', 'SH2_TOP', 'SH3_TOP', 'RP_GATE'}
 
 
 def run_checks(nl, report, fw=None):
@@ -250,6 +251,16 @@ def run_checks(nl, report, fw=None):
             and between(c, adc, 'GND') and on(d, 3) == adc and on(d, 1) == 'GND' and on(d, 2) == '+3V3')
 
     # power and ground
+    # J1 reverse-polarity protection (DECISIONS.md Q3). Drain and source swapped
+    # still powers the board, through the channel, and protects nothing: the
+    # body diode then conducts a reversed supply straight onto the rail.
+    chk('Q3 P-FET: D=VIN (J1), S=+15V, G=RP_GATE; J1 pin 1 on VIN only',
+        on('Q3', 3) == 'VIN' and on('Q3', 2) == '+15V' and on('Q3', 1) == 'RP_GATE'
+        and on('J1', 1) == 'VIN' and on('J1', 2) == 'GNDPWR'
+        and {r for r, _ in nl.nets.get('VIN', [])} == {'J1', 'Q3', 'TP28'})
+    chk('Q3 gate: D6 12 V Zener cathode at source, anode at gate; R25 gate to GNDPWR',
+        on('D6', 1) == '+15V' and on('D6', 2) == 'RP_GATE' and 'C12' in nl.comps['D6']['value']
+        and between('R25', 'RP_GATE', 'GNDPWR'))
     for u, c in (('U1', 'C6'), ('U2', 'C7'), ('U3', 'C8')):
         chk(f'{u} decoupled by {c}', between(c, '+15V', 'GND'))
     chk('BD139 collector decoupling C2', between('C2', '+15V', 'GNDPWR'))
@@ -292,6 +303,8 @@ FAULTS = [
     ('Kelvin divider back to 30k/10k: firmware rdiv no longer matches', [('R20', None, '30k 0.1%'), ('R21', None, '10k 0.1%')]),
     ('ADC isolation back to 51 ohm', [('R19', None, '51 1%')]),
     ('stock (mirrored) socket footprint on the Nucleo', [('J7', 'fp', 'Connector_PinSocket_2.54mm:PinSocket_2x19_P2.54mm_Vertical')]),
+    ('reverse-polarity FET drain and source swapped', [('Q3', 3, '+15V'), ('Q3', 2, 'VIN')]),
+    ('Q3 gate Zener reversed', [('D6', 1, 'RP_GATE'), ('D6', 2, '+15V')]),
 ]
 
 

@@ -105,13 +105,16 @@ entry). Read every Sim figure below with that in mind.
 
 | Ref | Part | Value | Source | Evidence | Bench |
 |---|---|---|---|---|---|
-| <a id="j1"></a>J1 | Barrel jack | DC-005, 2.0 mm pin | Blueprint §8 (15 V / 1 A adapter + barrel jack) | Check the adapter's plug before ordering: a 2.0 mm pin takes 5.5×2.1 plugs, not 5.5×2.5 | — |
-| <a id="j2"></a>J2 | Supply header | 1×2 | Blueprint §14.4 ("headers, not soldered connections, for the supply") | In parallel with J1. No reverse-polarity protection — §3 specifies none | — |
+| <a id="j1"></a>J1 | Barrel jack | DC-005, 2.0 mm pin | Blueprint §8 (15 V / 1 A adapter + barrel jack) | Check the adapter's plug before ordering: a 2.0 mm pin takes 5.5×2.1 plugs, not 5.5×2.5. The centre pin is net VIN, behind Q3 ([P-11](#layout-decisions-h2-pass-2-2026-10-06)) | — |
+| <a id="j2"></a>J2 | Supply header | 1×2 | Blueprint §14.4 ("headers, not soldered connections, for the supply") | On the +15V rail, **not** behind Q3: the reverse-polarity decision named J1 ([P-11](#layout-decisions-h2-pass-2-2026-10-06)). A bench supply reversed here is unprotected | — |
 | <a id="c5"></a>C5 | Bulk | **10 µF**, 50 V aluminium electrolytic | Blueprint §8 (≥25 V), §14.5(3) | 50 V is what is stocked in 5×5.4 mm, above the ≥25 V floor | — |
+| <a id="q3"></a>Q3 | J1 reverse-polarity FET | **HL2303** P-channel, SOT-23 (R+O, C7420345, Preferred) | **Decision, 2026-10-06**: Daniel ("P-channel MOSFET in the high side, not a Schottky"). Part: P-11 | −30 V V_DS, **±20 V V_GS**, R_DS(on) ≤ 190 mΩ at −10 V → ≤ 28.5 mV at 150 mA (≤ 50 mV asked). Drain = VIN (J1), source = +15V | **H4:** TP28 − TP7 at a known current; reversed supply on J1 |
+| <a id="d6"></a>D6 | Q3 gate clamp | **12 V**, BZT52C12, SOD-123 (C173429, D2's line) | P-11 | Cathode at source (+15V), anode at gate: holds V_GS at −12 V against hot-plug ringing past the 20 V rating | — |
+| <a id="r25"></a>R25 | Q3 gate pull-down | **10 kΩ** 1% 0603 (C25804, Basic) | P-11 | Gate to GNDPWR. D6 current (15 − 12) V / 10 kΩ = 0.3 mA | — |
 | <a id="c6"></a>C6, <a id="c7"></a>C7, <a id="c8"></a>C8 | Op-amp decoupling | **100 nF** X7R 50 V | Blueprint §8, §14.5(3) | One per OPA2197 V+, within ~5 mm | — |
 | <a id="nt2"></a>NT2 | Star point | — | **Capture C-2** | §14.5(4) | — |
 | <a id="j7"></a>J7, <a id="j8"></a>J8 | Nucleo CN7 / CN10 | 2×19 sockets | Blueprint §14.4. `firmware/README.md` pin table | PA0 = CN7-28 (ADC1_IN1), PA4 = CN7-32 (DAC1_OUT1), PC0 = CN7-38 (ADC2_IN6, default solder bridges), PA6 = CN10-13 (DAC2_OUT1). Verified against **UM1724 Rev 14 Table 26**. PA5 unused (LD2, §3.5). Nucleo is USB-powered: +15 V exceeds VIN max | — |
-| <a id="tp"></a>TP1–TP27 | Test points | Keystone 5001 loops; TP6 a bare pad | Blueprint §14.4. TP6: Capture C-4 | Every node §14.4 lists, plus every other named net except the op-amp input nodes DA_P, DA_N, GATE_IN- and the per-shunt pads SH1–3_TOP, which SHUNT_HI reaches when selected | — |
+| <a id="tp"></a>TP1–TP28 | Test points | Keystone 5001 loops; TP6 and TP28 bare pads | Blueprint §14.4. TP6: Capture C-4. TP28 (VIN): a 1 mm pad because a loop does not fit by J1 (P-11) | Every node §14.4 lists, plus every other named net except Q3's gate (RP_GATE), the op-amp input nodes DA_P, DA_N, GATE_IN- and the per-shunt pads SH1–3_TOP, which SHUNT_HI reaches when selected | — |
 
 `BD139_C` from the README routing table is not a separate net: the collector
 is tied directly to +15 V (§3.1), so it is net `+15V`, probed at TP7.
@@ -339,12 +342,19 @@ crossing with real current at 3 MHz. Its ~110 nH (~2 Ω) is in series with
 R_B = 330 Ω: 0.6%, with an L/R corner near 500 MHz, far above the ~13 MHz
 R_B·C_jc pole.
 
-**Not done: moving NT2 up to y ≈ 28.** That would cut the FB and base
-detours to a few mm, and lengthen the Kelvin, shunt and DUT_G detours to
-20–57 mm. It would also move the star away from the DUT socket returns,
-which is where §14.5(4) wants it. There is also no room at y ≈ 28 without
-re-clearing GNDPWR around BD139_B and OPA_SWEEP_OUT by R3/TP1. The numbers
-above say it buys nothing. Daniel's call if he wants it anyway.
+**NT2 stays where it is (Daniel, 2026-10-06), on these numbers.** Moving it
+up to y ≈ 28 would cut the FB and base detours to a few mm. It would also
+lengthen the Kelvin, shunt and DUT_G detours to 20–57 mm, and pull the star
+away from the DUT socket returns, which is where §14.5(4) wants it.
+
+Neither crossing that sees 3 MHz is a stability term where it is now:
+
+- feedback tap: 5 × 10⁻⁵ of the R_f + R_g string, a few thousandths of a
+  degree at crossover;
+- base drive: 0.6% of R_B, with its L/R corner near 500 MHz.
+
+So the move buys nothing. There is also no room for the tie at y ≈ 28
+without re-clearing GNDPWR around BD139_B and OPA_SWEEP_OUT by R3/TP1.
 
 **P-2 — Shunt Kelvin sense on the back.** Each SHx_TOP sense line leaves its
 shunt pad through a via and runs on the back to J4. The pad is the only point
@@ -421,13 +431,24 @@ temperature in the §3.1 sustained short, 0.89 W, from ST's figures
 - ~20 °C/W clip-on heatsink plus ~1 °C/W interface: 25 + 0.89 × 31 ≈
   **53 °C**.
 
-So the board survives a held short without a heatsink, with 21 °C of
-margin at 40 °C. The keep-out (x 17.5–35, y 1–15.5) is there for the
-heatsink, and the tab is +15 V (§8). The thermal analyzer skipped Q1, so
-these are hand numbers; H4 measures it.
+**The heatsink is required for the short test** (Daniel, 2026-10-06).
+Without it, 129 °C at 40 °C ambient leaves 21 °C of margin. That is a hand
+calculation, on the part the H4 short tests stress deliberately (limiter
+trip, held short, short recovery), and it is not enough to rely on. So:
 
-**P-9 — Silkscreen references hidden where there is no room**: J3, Q2, R5
-and TP1. They are still on the fab layer and in the renders.
+- `README.md` states the rule.
+- H4 makes the heatsink a verified item, not a BOM line: tab isolation, and
+  the case temperature in the first held short.
+- The silkscreen inside the keep-out reads "FIT Q1 HEATSINK / BEFORE SHORT
+  TEST / TAB = +15 V". It sits where the heatsink goes, so it is legible
+  exactly when the heatsink is missing.
+
+The keep-out (x 17.5–35, y 1–15.5) is there for the heatsink, and the tab is
++15 V (§8). The thermal analyzer skipped Q1, so these are hand numbers.
+
+**P-9 — Silkscreen references hidden where there is no room**: J3, Q2, R5,
+TP1, and (P-11) Q3, D6, R25, TP28 and H1. They are still on the fab layer
+and in the renders. J1's reference moved below the jack, beside C5.
 
 **P-10 — CPL rotations.** `tools/export_fab.py` adds −90° to SOT-23 (Q2,
 D4, D5) and 270° to SOIC (U1–U3), from the community table that
@@ -437,12 +458,77 @@ in that table, and every listed CP_Elec size is 180°, so C5 gets 180°.
 These are not JLCPCB's numbers. JLCPCB's placement preview is where each
 polarised part gets checked (README, footprint orientation).
 
+**P-11 — J1 reverse-polarity protection: high-side P-FET Q3** (Daniel,
+2026-10-06). Q3's drain is on J1's centre pin (net VIN) and its source on
++15V. Forward, the body diode conducts first, then the gate, pulled to
+GNDPWR through R25, turns the channel on. Reversed, the gate sits at the
+source, the body diode is reverse-biased, and nothing flows.
+
+- **Part: HL2303 (R+O, C7420345).** JLCPCB Preferred, so no loading fee;
+  408k in stock. −30 V V_DS, ±20 V V_GS, R_DS(on) ≤ 190 mΩ at V_GS = −10 V.
+  At 150 mA that is **≤ 28.5 mV**, or ~43 mV allowing 1.5× for
+  temperature, against the ≤ 50 mV asked for. V_GS(th) is −1 to −3 V,
+  against a −12 V drive. 150 mA is a sound ceiling: ~107 mA into a held
+  short, plus ~8 mA of op-amp and divider current.
+- **Rejected:** AO3401A (Basic, 47 mΩ) and HL3401A (Preferred) both have
+  **±12 V** gates, and a 15 V input puts −15 V across them. AO3407A (±20 V,
+  48 mΩ) would work, but it is extended (+$3) for margin the HL2303 already
+  has.
+- **D6 and R25.** D6 is a 12 V Zener from gate to source; R25 is 10 kΩ from
+  gate to GNDPWR. A barrel jack hot-plugged into a 10 µF bulk cap rings,
+  and the overshoot can pass the 20 V gate rating. D6 holds V_GS at −12 V,
+  and R25 sets its current at (15 − 12) V / 10 kΩ = 0.3 mA in normal
+  running. D6 reuses D2's BZT52C12 line and R25 is Basic, so neither adds a
+  loading fee.
+- **The stated reason for a P-FET over a Schottky does not hold.** The
+  request was "not a Schottky — headroom is already at 9.06 V". The 9.06 V
+  does not depend on the supply. It is the 10.96 V feedback-node full scale
+  less R_iso, the shunt and the PTC, all downstream of the loop (§3.1).
+  - What the supply sets is the op-amp's room above the base drive. At full
+    scale the op-amp output needs 10.96 + 0.5 (R_sense) + 0.75 (V_BE) +
+    0.17 (R_B × I_B at h_FE 100) ≈ **12.4 V**. It reaches ~14.6 V even
+    sourcing 32 mA (§3.1): ~2.2 V of margin.
+  - A Schottky's ~0.4 V would leave ~1.8 V and the 9.06 V untouched.
+  - The P-FET is still the better part: ≤ 28.5 mV and ≤ 4 mW, against
+    ~0.4 V and ~60 mW for a Schottky.
+- **J2 is not behind Q3.** The decision named J1, so a bench supply reversed
+  on J2 still reaches the rail. Open, Daniel's call.
+- **Layout.** The parts sit in the free patch above J1 (x 7.5–17.5,
+  y 0–7). The +15V pour's left edge moved from x = 12 to x = 17, so J1's
+  centre pin and the new parts sit outside it. The pour went from 379 to
+  299 mm² and is still one region. One +15V stub keeps the J1-side feed to
+  C5 on the pour. A diff against the board before the change shows 11 items
+  added and **0 removed or moved**; no Pass 1 copper is involved.
+- **Checks.** `check_topology.py` asserts Q3's pins and D6/R25, and plants
+  two new faults, both caught. One swaps drain and source: the board still
+  powers up through the channel, and nothing is protected. The other
+  reverses D6. H4 measures the drop (TP28 to TP7) and the reversed-supply
+  case.
+
+**P-12 — No EMI filter at the supply input** (Daniel, 2026-10-06; it closes
+IO-001 on J1):
+
+- The input is DC, from a bench supply or a 15 V adapter, and nothing on
+  this board switches. The Nucleo, the only clocked circuitry, is
+  USB-powered and never sees +15 V (`check_topology.py` asserts that).
+- The rail is already decoupled where it is used: C5 (10 µF) at the entry,
+  C2 (100 nF) at Q1's collector, and 100 nF at each op-amp.
+- A ferrite or inductor would sit in series with the pass transistor's
+  collector supply, which carries the load current. With C5 and C2 it adds
+  an LC that the §3.1 stability work never included.
+- No emissions or immunity standard applies to a one-off bench instrument.
+
+**P-13 — No fiducials** (Daniel, 2026-10-06; it closes FD-001). JLCPCB does
+not require board fiducials for Economic PCBA, and the finest pitch here is
+the SOIC-8's 1.27 mm.
+
 ## Layout review (H2, 2026-10-06)
 
 `kicad-happy` v2.3.0 on the routed board: schematic, PCB `--full`, cross,
 EMC, thermal, SPICE, gerbers. Raw output is in `analysis/` (gitignored).
 DRC (`--severity-all --schematic-parity`), ERC and `check_topology.py
---self-test` are clean: 53/53, with every planted fault caught.
+--self-test` are clean: 55/55, with all 11 planted faults caught. Re-run
+after P-11: no new findings except RS-001 below.
 
 | Finding | Where | Verdict |
 |---|---|---|
@@ -452,8 +538,9 @@ DRC (`--severity-all --schematic-parity`), ERC and `check_topology.py
 | PS-002 (cross) | "+15V split into 3 islands" | False positive. One 379 mm² fill outline, 0 unconnected items in DRC |
 | RP-001 ×8 | Layer change without a stitching via | Not applicable. Two layers with one reference plane (B.Cu) |
 | IO-001 (error) J6 | No filtering at the DUT socket | Intended. The DUT terminals must not be filtered |
-| IO-001 (error) J1 | No filtering at the supply input | **Open, Daniel's call.** Bench supply, F1 PTC and C5 bulk at the entry; no common-mode filter. Out of the H1 scope as drawn |
-| FD-001 | No fiducials | **Open, Daniel's call.** JLCPCB does not require board fiducials for Economic PCBA. Three 1 mm fiducials would cost nothing but space |
+| IO-001 (error) J1 | No filtering at the supply input | Decided: no filter (P-12). Reverse-polarity protection added instead (P-11) |
+| FD-001 | No fiducials | Decided: none (P-13) |
+| RS-001 (schematic) | "VIN has no declared source" | False positive. VIN is sourced by J1, a connector; ERC is clean |
 | PM-002 | J5 0.73 mm from the edge | Intended: Kelvin leads exit at the edge |
 | TE-001 | Test points on 23 of 93 nets | Informational. §14.4's list is covered; `check_topology.py` asserts it |
 | CG-AUD ×2 | J3/J4 have no ground pin | False positive: range-select headers |
@@ -534,7 +621,10 @@ PCBA — confirm on the quote).
 **Net:** 23 PCBA lines — 5 Basic, 1 Preferred, **17 extended → $51** in
 loading fees, from 24 extended ($72) before. The planned eight moves would
 have saved $24. The F-1 divider gives $3 of it back: R21 no longer shares
-the 10 kΩ reel with R14. Part costs at JLCPCB/LCSC unit prices: **$3.42**
+the 10 kΩ reel with R14. P-11 adds two lines, Q3 (Preferred) and R25
+(Basic), and D6 joins D2's line: **25 lines, 6 Basic, 2 Preferred, 17
+extended, still $51**, and the placed parts go to $3.47. Part costs at
+JLCPCB/LCSC unit prices, before P-11: **$3.42**
 placed by JLCPCB (the three OPA2197s are $2.48 of it) and **$1.79**
 hand-soldered from LCSC. Not priced: 26 Keystone 5001 test loops (not
 stocked at LCSC; TP6 is a bare pad, C-4), two jumper shunts, the TO-126 heatsink. JLCPCB adds

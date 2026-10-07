@@ -1,15 +1,17 @@
 Pass 2 — routed board, 2026-10-06 (hardware/curve-tracer.kicad_pcb)
+Updated 2026-10-06 for J1 reverse-polarity protection (Q3, D6, R25, TP28; DECISIONS.md P-11)
 
 Board            135.0 x 92.0 mm, 2 layers, 1.6 mm (was 160 x 92 at Pass 1)
-Footprints       84 (incl. H1-H4, NT1, NT2, 7 DNP)
-Copper           F.Cu 1192.3 mm in 351 segments; B.Cu 61.5 mm in 20 segments
-Vias             30
-Track widths     0.19 mm 47 | 0.20 17 | 0.25 847 | 0.30 5 | 0.40 65 | 0.50 156 | 0.60 2 | 0.80 115 (mm of track)
-Zones            +15V F.Cu 379 mm2, one region, solid connection (Q1 collector)
+Footprints       88 (incl. H1-H4, NT1, NT2, 7 DNP)
+Copper           F.Cu 1222.9 mm in 361 segments; B.Cu 61.5 mm in 20 segments
+Vias             31
+Track widths     0.19 mm 47 | 0.20 17 | 0.25 852 | 0.30 5 | 0.40 70 | 0.50 158 | 0.60 21 | 0.80 115 (mm of track)
+Zones            +15V F.Cu 299 mm2, one region, solid connection (Q1 collector); left edge moved x 12 -> 17 for Q3
                  GNDPWR B.Cu 2402 mm2, one region (x < 30.25)
                  GND B.Cu 8899 mm2: one main region + 11 pockets of 2.5-3 mm2 between socket pins
 Autorouter       Freerouting v2.5.0 (headless), Pass 1 and pre-routes locked;
-                 added ~615 mm F.Cu, ~12 mm B.Cu
+                 added ~615 mm F.Cu, ~12 mm B.Cu. Q3's 11 items routed by hand afterwards;
+                 0 existing segments removed or moved
 
 Nets crossing the split (x = 30.25), distance to NT2 (30.25, 76.5) along it:
   BD139_B    F.Cu 0.50 mm  y 20.68   55.8 mm
@@ -22,7 +24,7 @@ Nets crossing the split (x = 30.25), distance to NT2 (30.25, 76.5) along it:
   KELVIN_HI  F.Cu 0.25 mm  y 85.00    8.5 mm
 
 Checks           DRC --severity-all --schematic-parity: 0 violations, 0 unconnected, 0 parity, 0 footprint errors
-                 ERC: 0 violations; check_topology.py --self-test: 53/53, every planted fault caught
+                 ERC: 0 violations; check_topology.py --self-test: 55/55, all 11 planted faults caught
 
 Renders          p2_top.png, p2_bottom.png, p2_3d.png  kicad-cli pcb render, high quality
                  p2_orientation.png                    crops of p2_top.png for the footprint-orientation checklist

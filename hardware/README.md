@@ -46,7 +46,7 @@ python3 hardware/tools/check_topology.py --self-test
 `check_topology.py` exports the netlist through kicad-cli and asserts every
 connection §3 depends on: each op-amp pin, the three gains and the ÷4, the
 §14.5(5) tap position, limiter and clamp polarity, the Nucleo pin map, star
-ground, and test-point coverage. `--self-test` also plants nine faults that
+ground, and test-point coverage. `--self-test` also plants eleven faults that
 ERC passes, and fails if any goes uncaught. Change a value on purpose →
 change the matching assertion in the same commit.
 
@@ -152,8 +152,8 @@ It refuses to write the JLCPCB files if the BOM and CPL disagree.
 | File | What it is for |
 |---|---|
 | `fab/jlc/curve-tracer_gerbers.zip` | The quote page upload: Gerbers (Protel names) and Excellon PTH/NPTH, in JLCPCB's documented KiCad settings |
-| `fab/jlc/curve-tracer_bom_jlc.csv` | PCBA BOM upload. 23 PCBA lines with LCSC numbers. Seven more are marked **HAND-SOLDER** and have no LCSC number, so they cannot be matched |
-| `fab/jlc/curve-tracer_cpl_jlc.csv` | PCBA placement upload: 35 rows, PCBA parts only, rotations corrected per `DECISIONS.md` P-10 |
+| `fab/jlc/curve-tracer_bom_jlc.csv` | PCBA BOM upload. 25 PCBA lines with LCSC numbers. Seven more are marked **HAND-SOLDER** and have no LCSC number, so they cannot be matched |
+| `fab/jlc/curve-tracer_cpl_jlc.csv` | PCBA placement upload: 38 rows, PCBA parts only, rotations corrected per `DECISIONS.md` P-10 |
 | `fab/curve-tracer_bom.csv` | Engineering BOM: every line including DNP. The LCSC hand-solder order is its `hand` lines |
 | `fab/gerbers/` | The same Gerbers unzipped, for review |
 
@@ -185,7 +185,7 @@ order; there is none between arrival and the Nov 16 freeze.
 - [ ] Hand-solder parts ordered from LCSC alongside the PCBA: every BOM line
       with `Assembly` = `hand` (J1–J8, Q1) plus 26 Keystone 5001 test loops,
       which LCSC does not stock (TP6 is a bare pad; `DECISIONS.md`, Assembly)
-- [ ] In JLCPCB's BOM step, only the 23 `PCBA` lines match parts. The seven
+- [ ] In JLCPCB's BOM step, only the 25 `PCBA` lines match parts. The seven
       HAND-SOLDER lines show as unmatched / not placed: no LCSC number, no
       CPL row
 - [ ] `tools/check_topology.py --self-test` passes on the frozen schematic
@@ -232,6 +232,13 @@ from the top-left corner.
       drive at ~0.7 V
 - [ ] **D1 1N4148W (SOD-123).** The band is at +x, on Q1's base (BD139_B),
       and the anode is on BD139_E
+- [ ] **Q3 HL2303 (SOT-23), above J1.** Pin 3 (drain, VIN) is the lone pad
+      on −x, toward TP28 and J1's centre pin. Pin 1 (gate) is bottom-right
+      and pin 2 (source, +15V) top-right. With drain and source swapped
+      the board still powers up and is not protected, so power-on cannot
+      show this one
+- [ ] **D6 BZT52C12 (SOD-123), beside Q3.** The band is at −y, on the
+      +15V source trace; the anode goes to Q3's gate
 - [ ] **C5 10 µF electrolytic.** "+" (pad 1, +15 V) is at −x; the can's dark
       stripe is at +x (GNDPWR)
 - [ ] **U1–U3 OPA2197 (SOIC-8).** The pin-1 dot is top-left on all three
@@ -239,7 +246,7 @@ from the top-left corner.
       entries face the left board edge
 
 **Then again in JLCPCB's placement preview**, for the PCBA parts in that
-list: C5, D1, D2, D4, D5, Q2, U1–U3. The CPL rotations are community data
+list: C5, D1, D2, D4, D5, D6, Q2, Q3, U1–U3. The CPL rotations are community data
 (`DECISIONS.md` P-10), not JLCPCB's. A rotation that is wrong there is the
 PCBA version of L-2: every file checks out and the board does not. Fix any
 rotation in the preview, then copy the fix into `CORRECTIONS` in
@@ -253,6 +260,13 @@ What the board has to be measured for before its numbers are trusted. The
 H4 *gate* is blueprint §9; this is the list of measurements behind it, each
 traced to the `DECISIONS.md` row that asked for it. Log results in
 `docs/characterization.md`.
+
+**Do not run a short test without the TO-126 heatsink fitted on Q1.** That
+covers every held short below: limiter trip, op-amp current in a held short,
+short recovery. In a held short Q1 dissipates 0.89 W. Bare, that is 129 °C
+at 40 °C ambient against a 150 °C limit: 21 °C of hand-calculated margin, on
+the part those tests stress on purpose (`DECISIONS.md` P-8). The silkscreen
+where the heatsink goes says the same.
 
 - [ ] Rails and star ground: +15 V at TP7, +3V3 at TP8, 0 V between TP9
       (GND_STAR) and TP27 (GNDPWR) with no load
@@ -268,6 +282,21 @@ traced to the `DECISIONS.md` row that asked for it. Log results in
       in `firmware/core/ct_config.h`; re-measure after any trip
 - [ ] Zener knee: TP16 against TP18 at full-scale gate code; any difference is
       D2 current × 1 kΩ (`DECISIONS.md` D2)
+- [ ] **Q3 drop**: TP28 (VIN) to TP7 (+15V) at a known supply current.
+      Datasheet bound ≤ 28.5 mV at 150 mA (`DECISIONS.md` P-11)
+- [ ] **Reverse polarity at J1**: bench supply reversed onto J1, current
+      limit ~20 mA. TP7 must stay at 0 V and the supply should draw ~0 mA.
+      J2 is not protected; never reverse it
+- [ ] **Q1 heatsink fitted and verified, before any short test.** This is a
+      check on the board, not a BOM line:
+      - The heatsink sits flat on the TO-126 tab, with an insulating pad if
+        it can touch anything grounded. The tab is +15 V.
+      - Meter: heatsink to GNDPWR reads open.
+      - In the first held short, log Q1's case temperature after a minute.
+        Expect about 45 °C at 25 °C ambient: 0.89 W into ~21 °C/W, P-8.
+      - Above 70 °C the heatsink is not doing its job: stop. That threshold
+        is a judgement, between the ~45 °C expected and the ~105 °C case
+        temperature of a bare part.
 - [ ] Limiter trip at ~75.2 mA, cold and again warm (§3.1)
 - [ ] §3.1 stability gate: ≤ 25% overshoot into 100 nF and 1% within 5 µs,
       with `C_f` fitted *and swept* both ways
