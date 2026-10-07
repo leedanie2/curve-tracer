@@ -1,0 +1,29 @@
+FB tap length mm                                        12.33
+FB tap gap to collector (+15V) mm                       7.86
+FB tap gap to LOAD mm                                   7.62
+FB tap gap to OPA_SWEEP_OUT mm                          1.4
+IN- track length mm                                     7.59
+IN- copper area mm2 (tracks + pads)                     1.64 + 4.33 = 5.97
+IN- pads                                                ['U1.2', 'TP6.1', 'C1.2', 'R1.2', 'R2.1']
+IN- gap to OPA_SWEEP_OUT mm                             0.67
+IN- gap to DAC_SWEEP (+IN) mm                           0.67
+C2 -> Q1 pin 2: centre distance / trace mm              (2.82, 2.82)
+C6 -> U1 pin 8: centre distance / trace mm              (2.05, 2.05)
+C7 -> U2 pin 8: centre distance / trace mm              (2.05, 2.05)
+C8 -> U3 pin 8: centre distance / trace mm              (2.05, 2.05)
+FB tap gap to BD139 collector copper (Q1.2, C2) mm      9.59
+Kelvin/VDIV gap to BD139 collector copper mm            51.35
+Kelvin/VDIV gap to OPA_SWEEP_OUT mm                     38.38
+Kelvin/VDIV gap to +15V mm                              3.21
+Kelvin/VDIV gap to BD139_E mm                           44.05
+Kelvin/VDIV gap to BD139_B mm                           42.22
+Kelvin/VDIV gap to LOAD mm                              26.33
+Kelvin/VDIV gap to DUT_D mm                             4.68
+Kelvin/VDIV gap to GATE_AMP mm                          26.46
+Kelvin/VDIV gap to DAC_SWEEP mm                         26.8
+VDIV track length mm                                    9.28
+KELVIN_HI / KELVIN_LO length mm                         (52.6, 50.5)
+SH1_TOP: force (F.Cu, 0.8) / sense (B.Cu) length mm     (3.7, 8.0)
+SH2_TOP: force (F.Cu, 0.8) / sense (B.Cu) length mm     (6.1, 8.5)
+SH3_TOP: force (F.Cu, 0.8) / sense (B.Cu) length mm     (7.4, 8.4)
+SHUNT_HI / SHUNT_LO length mm                           (58.1, 46.6)

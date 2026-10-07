@@ -220,6 +220,8 @@ def run_checks(nl, report, fw=None):
     chk('J3 and J4 carry the range-select silkscreen footprint',
         all('RangeSelect' in nl.comps[j]['footprint'] for j in ('J3', 'J4')))
     chk('SHUNT_LO Kelvin tap through NT1 onto DUT_D', between('NT1', 'SHUNT_LO', 'DUT_D'))
+    chk('J7/J8 use the mirrored-numbering Nucleo carrier socket (DECISIONS.md L-2), not the stock socket',
+        all('NucleoCarrier' in nl.comps[j]['footprint'] for j in ('J7', 'J8')))
     chk('DUT socket J6: 1=G 2=D 3=S', on('J6', 1) == 'DUT_G' and on('J6', 2) == 'DUT_D' and on('J6', 3) == 'GNDPWR')
 
     # §3.3 instrumentation amp
@@ -289,6 +291,7 @@ FAULTS = [
     ('ADC1 wired to PA1 instead of PA0', [('J7', 28, 'unconnected-x'), ('J7', 30, 'ADC1_I')]),
     ('Kelvin divider back to 30k/10k: firmware rdiv no longer matches', [('R20', None, '30k 0.1%'), ('R21', None, '10k 0.1%')]),
     ('ADC isolation back to 51 ohm', [('R19', None, '51 1%')]),
+    ('stock (mirrored) socket footprint on the Nucleo', [('J7', 'fp', 'Connector_PinSocket_2.54mm:PinSocket_2x19_P2.54mm_Vertical')]),
 ]
 
 
@@ -316,7 +319,9 @@ def main():
         for name, moves in FAULTS:
             nl = Netlist(text)
             for ref, pin, net in moves:
-                if pin is None:
+                if pin == 'fp':
+                    nl.comps[ref]['footprint'] = net
+                elif pin is None:
                     nl.set_value(ref, net)
                 else:
                     nl.move(ref, pin, net)

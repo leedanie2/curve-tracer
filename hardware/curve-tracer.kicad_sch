@@ -4131,6 +4131,105 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Mechanical:MountingHole"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "H"
+				(at 0 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "MountingHole"
+				(at 0 3.175 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Mounting Hole without connection"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "mounting hole"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "MountingHole*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "MountingHole_0_1"
+				(circle
+					(center 0 0)
+					(radius 1.27)
+					(stroke
+						(width 1.27)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Transistor_BJT:BD139"
 			(pin_names
 				(offset 0)
@@ -5380,12 +5479,13 @@
 		)
 		(uuid "56d4102b-1fd1-5b56-bcf9-fdc07e4bd5e4")
 	)
-	(text "TP6 is a bare SMD pad: OPA_SWEEP_IN- is the 2-3 MHz pole node (§14.5(2)). A loop adds copper; a probe adds 10+ pF."
+	(text "TEST POINTS — every node §3 names (§14.4)"
 		(exclude_from_sim no)
-		(at 434.34 121.92 0)
+		(at 434.34 116.84 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 2 2)
+				(bold yes)
 			)
 			(justify left bottom)
 		)
@@ -5415,9 +5515,9 @@
 		)
 		(uuid "9d2bd7e4-6478-5768-8a0d-3da798824ce5")
 	)
-	(text "TEST POINTS — every node §3 names (§14.4)"
+	(text "MECHANICAL — M3 mounting holes (not in BOM)"
 		(exclude_from_sim no)
-		(at 434.34 116.84 0)
+		(at 25.4 337.82 0)
 		(effects
 			(font
 				(size 2 2)
@@ -5430,6 +5530,17 @@
 	(text "PWR_FLAG: +15V and GNDPWR enter on J1/J2; +3V3 and GND enter from the Nucleo."
 		(exclude_from_sim no)
 		(at 152.4 271.78 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "a5ecdd8a-31b4-5d3f-a8aa-2b57df6f7afb")
+	)
+	(text "TP6 is a bare SMD pad: OPA_SWEEP_IN- is the 2-3 MHz pole node (§14.5(2)). A loop adds copper; a probe adds 10+ pF."
+		(exclude_from_sim no)
+		(at 434.34 121.92 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -11438,19 +11549,19 @@
 			(uuid "56b0b9c5-5611-5d88-8b53-067b08df1d75")
 		)
 		(pin "5"
-			(uuid "766a5a87-7131-4e41-ac21-8be3a7b6a614")
+			(uuid "f01d9cc4-dbca-4f52-bd74-189d85059288")
 		)
 		(pin "6"
-			(uuid "0eb68eef-d596-4601-b849-270dc99c9fae")
+			(uuid "617a689a-91a1-42cd-b7a5-d43c83bea538")
 		)
 		(pin "7"
-			(uuid "f9064e8a-72cb-4fe4-8ec7-4ac218ac4d83")
+			(uuid "133cf0ce-faf8-4dc9-936a-1daaa207caa9")
 		)
 		(pin "4"
-			(uuid "b8a3eb0e-e293-4cbc-8d31-1dd7b19ca910")
+			(uuid "f8fc4db6-0ee6-494d-b11f-6543145a0b7b")
 		)
 		(pin "8"
-			(uuid "5948a314-d588-4659-8663-37260acff996")
+			(uuid "270d4b45-55f7-4014-8077-fad072d24140")
 		)
 		(instances
 			(project "curve-tracer"
@@ -12730,19 +12841,19 @@
 			(uuid "167aee83-2671-5736-a0dc-3fa974c1e3f7")
 		)
 		(pin "5"
-			(uuid "28ef2422-1024-447c-9e74-b507a9d646ad")
+			(uuid "ccf87288-d917-4e07-8b83-a25bfeba2aac")
 		)
 		(pin "6"
-			(uuid "ac63bfc1-187e-4c6c-9106-565125027abb")
+			(uuid "4a87443f-bf36-4509-bb0c-563fc4f2cca1")
 		)
 		(pin "7"
-			(uuid "96d628e8-19cb-49b2-b36c-42c5d1a059b5")
+			(uuid "3dc66761-91db-4d45-86ed-26ba38dfe4d5")
 		)
 		(pin "4"
-			(uuid "1b49cd2b-551e-4a5b-81c2-4923a66a6598")
+			(uuid "17bb0363-2765-44c0-af4e-84419e2b93a4")
 		)
 		(pin "8"
-			(uuid "19b4a986-ac15-405f-8b56-dbead26cfdc0")
+			(uuid "f72486fc-a37a-4e19-8e88-fa1569d58b5b")
 		)
 		(instances
 			(project "curve-tracer"
@@ -12969,6 +13080,134 @@
 			(project "curve-tracer"
 				(path "/e0596715-75b4-5600-a613-447428ff345e"
 					(reference "C8")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 86.36 345.44 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "48eb6fc7-535a-5f89-8790-f076381df307")
+		(property "Reference" "H4"
+			(at 86.36 337.82 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "M3"
+			(at 86.36 340.36 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
+			(at 86.36 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 86.36 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "M3 mounting hole; the board carries a Nucleo on sockets"
+			(at 86.36 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" ""
+			(at 86.36 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" ""
+			(at 86.36 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" ""
+			(at 86.36 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Provenance" "hardware/DECISIONS.md#h"
+			(at 86.36 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "none"
+			(at 86.36 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "curve-tracer"
+				(path "/e0596715-75b4-5600-a613-447428ff345e"
+					(reference "H4")
 					(unit 1)
 				)
 			)
@@ -14017,7 +14256,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_2x19_P2.54mm_Vertical"
+		(property "Footprint" "curve-tracer:PinSocket_2x19_P2.54mm_Vertical_NucleoCarrier"
 			(at 127 322.58 0)
 			(hide yes)
 			(show_name no)
@@ -14234,7 +14473,7 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
@@ -14345,7 +14584,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 561.34 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -15456,22 +15695,22 @@
 			(uuid "3fd9e0ef-874d-5cd2-a325-c7b326b37df1")
 		)
 		(pin "1"
-			(uuid "e9d4b08e-a53b-4160-9625-bc537ca1d438")
+			(uuid "477a7b1e-4700-4a11-9f74-4690e8f18e7a")
 		)
 		(pin "2"
-			(uuid "fa5f6d76-7bdd-4e9a-831a-e849613f8649")
+			(uuid "0d6cccdb-303b-408d-8986-d6e5433dc6d7")
 		)
 		(pin "3"
-			(uuid "c8b44a33-ac1a-43ac-8f24-ffa098e8b1db")
+			(uuid "f09e7e04-32cb-4343-9f1f-ed79d50ad905")
 		)
 		(pin "5"
-			(uuid "cca37bf0-7035-4040-8c31-fa27d617b2b8")
+			(uuid "5373f8a3-5bf5-4b5e-a898-6a7c9e76f187")
 		)
 		(pin "6"
-			(uuid "a7beda1a-2fde-4fc3-a1bd-bd39b2d37fd1")
+			(uuid "b4b58926-dade-4ddc-9dd1-ce9617264989")
 		)
 		(pin "7"
-			(uuid "b3bd67fe-b1c4-465f-b312-4f63273a3a5a")
+			(uuid "420f6e86-cfa1-494f-816b-a188f88e8118")
 		)
 		(instances
 			(project "curve-tracer"
@@ -15911,19 +16150,19 @@
 			(uuid "1f67f0dd-9095-59cd-9bf7-5f1a3c47289c")
 		)
 		(pin "1"
-			(uuid "ad6f7d81-3b9e-4cf8-99c8-bf4ce9e233aa")
+			(uuid "100c1fb9-979a-442c-a09a-243fec1a794d")
 		)
 		(pin "2"
-			(uuid "69f5b351-b642-45ce-8830-7d1c4068dd31")
+			(uuid "0969d01c-41bb-41a3-93b8-a24b5e008ee0")
 		)
 		(pin "3"
-			(uuid "1c272769-50e5-470b-b1a6-60a6a833ade4")
+			(uuid "337ae669-9f67-43c6-ad39-cd6364e55e9b")
 		)
 		(pin "4"
-			(uuid "7b934f86-1aba-4bdb-8c96-ee4203dc9641")
+			(uuid "e8ca34a3-c2ed-472f-91e7-3a1e07cf69c1")
 		)
 		(pin "8"
-			(uuid "d9ab1c97-2b20-4cf0-b900-429a1bd7357f")
+			(uuid "29f1ba8a-15e7-4113-ab58-5a19224ac190")
 		)
 		(instances
 			(project "curve-tracer"
@@ -16042,7 +16281,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_2x19_P2.54mm_Vertical"
+		(property "Footprint" "curve-tracer:PinSocket_2x19_P2.54mm_Vertical_NucleoCarrier"
 			(at 50.8 322.58 0)
 			(hide yes)
 			(show_name no)
@@ -17405,22 +17644,22 @@
 			(uuid "d81c28e6-fe35-54bb-93b9-e34db86dd781")
 		)
 		(pin "1"
-			(uuid "e3b499e5-8413-49ec-9f88-1c4d7a1ace27")
+			(uuid "444919b3-2311-4c0f-a6fb-d4b8032858d9")
 		)
 		(pin "2"
-			(uuid "c0a72cb5-3086-403b-be57-290196423056")
+			(uuid "3a3d990b-bb8c-4b48-aac7-3b57f03b6336")
 		)
 		(pin "3"
-			(uuid "9e124445-3d6a-492f-b71e-a0b304c9a545")
+			(uuid "9c4de6a9-9c37-4aa7-a8a6-b668f615f405")
 		)
 		(pin "5"
-			(uuid "db2fbb08-73ca-444f-b372-8d608ed41070")
+			(uuid "9710b57f-8f56-49c7-bcaf-27cff7a266fb")
 		)
 		(pin "6"
-			(uuid "bb055af7-6e95-468e-9d87-a74eae82dcc5")
+			(uuid "5414786e-ca2a-48e9-8aff-79674d763a39")
 		)
 		(pin "7"
-			(uuid "66047742-8b81-49d1-ae35-1646981daf50")
+			(uuid "3ef35976-65f2-4242-90bc-24e87874faec")
 		)
 		(instances
 			(project "curve-tracer"
@@ -17936,20 +18175,20 @@
 		(pin "7"
 			(uuid "2eb58337-fa65-5fba-a3f8-4593b2015235")
 		)
-		(pin "8"
-			(uuid "aa1bc38b-7d9f-48ae-970f-4b689c3f66af")
-		)
-		(pin "4"
-			(uuid "5a7b28d8-ac08-4b8b-bee8-cd88666e901d")
-		)
-		(pin "3"
-			(uuid "775c90ca-3c2b-47c9-93d1-d91528ab0160")
+		(pin "1"
+			(uuid "33e9cdb6-e1f5-4c31-aba8-18b0bf481e24")
 		)
 		(pin "2"
-			(uuid "e6f2b732-9ad9-4667-ad26-62a80507ab53")
+			(uuid "18e2d752-e946-448e-b909-602779041092")
 		)
-		(pin "1"
-			(uuid "bec1b338-5e9e-47e1-9564-1539edd95656")
+		(pin "3"
+			(uuid "fc4cf490-5a7f-4636-8ee6-58a2abe1dd22")
+		)
+		(pin "4"
+			(uuid "12b2d935-530b-4524-ab83-0c2376749168")
+		)
+		(pin "8"
+			(uuid "1578b1af-b8db-458d-9c1d-33390dc200b8")
 		)
 		(instances
 			(project "curve-tracer"
@@ -19110,19 +19349,19 @@
 			(uuid "1f8f4799-600f-5a54-9d4e-5f15400bd31c")
 		)
 		(pin "1"
-			(uuid "14aba42f-882a-406b-98fd-274a055a11f8")
+			(uuid "e4b4786f-832d-4d5e-909e-3c03d6c6558a")
 		)
 		(pin "2"
-			(uuid "f505358e-8fd6-4f22-a90d-e915b2ffa292")
+			(uuid "98400f2f-ae5e-48ff-91c3-1e09d09117cb")
 		)
 		(pin "3"
-			(uuid "d1bfea84-af08-4b82-9ff2-f4abad6f45d7")
+			(uuid "24bf7059-7b8d-4e88-b99b-67782af831c9")
 		)
 		(pin "4"
-			(uuid "3e5be776-e690-47a5-8bd7-09322bc3ddf0")
+			(uuid "3500c679-2ac1-4273-a08a-3f05fd4b5c5f")
 		)
 		(pin "8"
-			(uuid "b8933861-b34b-4a0e-973d-82e45ae22dd6")
+			(uuid "759534e4-7ae4-4494-9cb2-51c17dca9872")
 		)
 		(instances
 			(project "curve-tracer"
@@ -19627,19 +19866,19 @@
 			(uuid "d2d54c3b-e761-5c43-b1fa-90cf9771b327")
 		)
 		(pin "5"
-			(uuid "488c9355-f6a8-4832-bc6f-6883864bd718")
+			(uuid "dc7cc0a8-7eec-4685-8fba-5fa56a9d0d6e")
 		)
 		(pin "6"
-			(uuid "0f906880-0744-49a7-b608-376aa04cfc42")
+			(uuid "bfc5b929-44ca-4f75-9f04-1735f22300aa")
 		)
 		(pin "7"
-			(uuid "6c074a51-35d6-4f2e-861b-a650452066bc")
+			(uuid "33e55a7a-25a8-4807-883d-09364a6dfba1")
 		)
 		(pin "4"
-			(uuid "0221d59c-cd8d-40c9-a3d7-6ec5c3a65171")
+			(uuid "7e56b2c7-f271-4ca9-90a3-8911659932e8")
 		)
 		(pin "8"
-			(uuid "37713540-dd54-449b-8ddc-4ba0b49817d8")
+			(uuid "3e826371-fe9e-4eb3-8fdc-423919a7381d")
 		)
 		(instances
 			(project "curve-tracer"
@@ -20929,7 +21168,7 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
@@ -21031,7 +21270,7 @@
 				)
 			)
 		)
-		(property "Assembly" "PCBA"
+		(property "Assembly" "none"
 			(at 55.88 269.24 0)
 			(hide yes)
 			(show_name no)
@@ -22992,28 +23231,156 @@
 			(uuid "110a76e3-5823-51a9-9e5a-d03b6acf4b0c")
 		)
 		(pin "1"
-			(uuid "1600da6b-704e-46e0-8b5d-8dc9bc8afb28")
+			(uuid "3e040b84-a515-4667-8f1f-409bd1348e26")
 		)
 		(pin "2"
-			(uuid "49458265-322a-47bd-bc97-ef0a7b6079a9")
+			(uuid "acf9d82f-abb2-4966-a6f3-5c927621c625")
 		)
 		(pin "3"
-			(uuid "d16aca32-ae55-4db7-b471-33782a20d088")
+			(uuid "04268966-6cbd-459a-95b3-7cd0e5e160f7")
 		)
 		(pin "5"
-			(uuid "c82ffac6-c00d-497e-ae2f-fbf9b2f56dc3")
+			(uuid "fd55ac16-e0c1-4791-ab26-42e420d02467")
 		)
 		(pin "6"
-			(uuid "7f4f9939-fa6c-4e64-8af3-377042289a47")
+			(uuid "da810407-053e-436d-b384-d2250ce61a32")
 		)
 		(pin "7"
-			(uuid "cbd5c4ce-430a-4123-a573-2a21a9c9abb9")
+			(uuid "1d984b23-8b67-4214-97fd-5826faf724b9")
 		)
 		(instances
 			(project "curve-tracer"
 				(path "/e0596715-75b4-5600-a613-447428ff345e"
 					(reference "U2")
 					(unit 3)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 45.72 345.44 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "d6b5deef-f430-593e-b393-bfe0b199de19")
+		(property "Reference" "H2"
+			(at 45.72 337.82 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "M3"
+			(at 45.72 340.36 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
+			(at 45.72 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 45.72 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "M3 mounting hole; the board carries a Nucleo on sockets"
+			(at 45.72 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" ""
+			(at 45.72 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" ""
+			(at 45.72 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" ""
+			(at 45.72 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Provenance" "hardware/DECISIONS.md#h"
+			(at 45.72 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "none"
+			(at 45.72 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "curve-tracer"
+				(path "/e0596715-75b4-5600-a613-447428ff345e"
+					(reference "H2")
+					(unit 1)
 				)
 			)
 		)
@@ -23748,7 +24115,7 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
@@ -23850,7 +24217,7 @@
 				)
 			)
 		)
-		(property "Assembly" "PCBA"
+		(property "Assembly" "none"
 			(at 228.6 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -24505,6 +24872,134 @@
 			(project "curve-tracer"
 				(path "/e0596715-75b4-5600-a613-447428ff345e"
 					(reference "TP17")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 25.4 345.44 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "e87b3366-60f7-5b66-9f8b-01957d43a8e3")
+		(property "Reference" "H1"
+			(at 25.4 337.82 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "M3"
+			(at 25.4 340.36 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
+			(at 25.4 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 25.4 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "M3 mounting hole; the board carries a Nucleo on sockets"
+			(at 25.4 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" ""
+			(at 25.4 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" ""
+			(at 25.4 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" ""
+			(at 25.4 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Provenance" "hardware/DECISIONS.md#h"
+			(at 25.4 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "none"
+			(at 25.4 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "curve-tracer"
+				(path "/e0596715-75b4-5600-a613-447428ff345e"
+					(reference "H1")
 					(unit 1)
 				)
 			)
@@ -25607,6 +26102,134 @@
 			(project "curve-tracer"
 				(path "/e0596715-75b4-5600-a613-447428ff345e"
 					(reference "#PWR005")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 66.04 345.44 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "fc0e1c26-38e8-5144-92b7-c1398ccf7b41")
+		(property "Reference" "H3"
+			(at 66.04 337.82 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "M3"
+			(at 66.04 340.36 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_3.2mm_M3"
+			(at 66.04 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 66.04 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "M3 mounting hole; the board carries a Nucleo on sockets"
+			(at 66.04 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" ""
+			(at 66.04 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" ""
+			(at 66.04 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" ""
+			(at 66.04 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Provenance" "hardware/DECISIONS.md#h"
+			(at 66.04 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Assembly" "none"
+			(at 66.04 345.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "curve-tracer"
+				(path "/e0596715-75b4-5600-a613-447428ff345e"
+					(reference "H3")
 					(unit 1)
 				)
 			)

@@ -271,6 +271,210 @@ Checking by number will find a "mismatch" that isn't one, or miss a real
 one. At H2, put the physical part on the printed footprint and confirm
 emitter, collector and base land on the BD139_E, +15V and BD139_B pads.
 
+**L-1 resolved (2026-10-06) — the footprint is right.** Both
+manufacturers' front views agree on the physical order: onsemi pins 1-2-3
+left to right are E-C-B, and ST's 3-2-1 are E-C-B under ST's own numbering.
+KiCad's TO-126-3_Vertical 3D model shows the exposed metal tab on the −y
+face. So the front faces +y, and from the front the pads read 1-2-3, i.e.
+E-C-B, which is what the `BD139` symbol assumes. On the board the tab
+(collector, +15 V) faces −y, toward the heatsink keep-out.
+
+**L-2 — The Nucleo morpho sockets need mirrored pad numbering.** KiCad's
+stock `PinSocket_2x19` puts pin 2 at −2.54 mm from pin 1; its sockets are
+drawn as the mirror image of its headers. Seen from above, the Nucleo's
+CN7/CN10 pins have pin 2 at **+**2.54 mm (KiCad's own
+`STM32_Nucleo-64_Morpho` template, UM1724 Table 26), and so must any board
+the Nucleo plugs into. A stock socket on our top side would have put every
+morpho pin in the wrong column, and ERC/DRC would both pass. J7/J8 use
+`curve-tracer:PinSocket_2x19_P2.54mm_Vertical_NucleoCarrier`, the stock
+socket with its pads mirrored. `tools/check_topology.py` asserts it.
+
+The footprint reuses the stock socket's 3D model, shifted **+2.54 mm in x**.
+Unshifted, the model sat one column off the pads, and nothing automated
+noticed that either: it showed up in the Pass 2 render (2026-10-06) as a
+column of bare pads beside each socket body. The copper was right
+throughout. The pre-order footprint-orientation check (`README.md`) exists
+because of this class of error.
+
+## Layout decisions (H2, Pass 1, 2026-10-06)
+
+**P-1 — One back pour, two regions, one tie.** The back layer is poured
+everywhere. It is split along x = 30.25 mm into **GNDPWR**, under the force
+path (supply entry, Q1, R_sense, R_iso, PTC, shunts, DUT socket), and
+**GND**, under the op-amps, ADC lines and Nucleo. The two meet only through
+NT2 (blueprint §14.5(4)). Not a single GND pour with GNDPWR as top traces,
+because of the Q1 geometry: the collector is the middle lead, and D1 and Q2
+both bridge emitter and base on the front side, so C2's GNDPWR return cannot
+leave the collector pocket on the top layer without a via. With GNDPWR as a
+region it drops straight through, and the load current returns directly
+under its own force traces. Signals crossing the split are the feedback tap,
+the base drive, SHUNT_HI/LO, the Kelvin pair, DUT_G and a probe stub on
+LOAD. Kept after the Pass 1 review (Daniel, 2026-10-06): the alternative
+routes up to 107 mA of load return under the input node.
+
+**Where each net crosses, measured on the routed board.** A trace crossing
+the split has no copper under it at the gap. Its return goes along the gap
+to NT2 and back, so the detour is twice the distance below.
+
+| Net | Crosses at y | To NT2 (y = 76.5) | Current in it |
+|---|---|---|---|
+| BD139_B | 20.68 | **55.8 mm** | base drive, ≤ 21.9 mA peak (sim 09) |
+| **FB_SENSE** | 32.33 | **44.2 mm** | R_f + R_g string only: ≤ 0.5 mA |
+| DUT_G | 39.48 | 37.0 mm | gate charge |
+| LOAD | 46.20 | 30.3 mm | none: R8 → TP5 probe stub; the 107 mA path stays on GNDPWR |
+| SHUNT_LO | 47.77 | 28.7 mm | buffer input, pA |
+| SHUNT_HI | 52.87 | 23.6 mm | buffer input, pA |
+| KELVIN_LO | 84.20 | 7.7 mm | divider input, µA |
+| KELVIN_HI | 85.00 | 8.5 mm | divider input, µA |
+
+**The feedback tap at ~3 MHz.** The detour is ~88 mm of return along the
+0.6 mm gap (fills end at x = 29.95 and 30.55): of order 1 nH/mm, so ~90 nH, ~1.7 Ω at 3 MHz. It sits in series
+with the 33.2 kΩ R_f + R_g string. That is 5 × 10⁻⁵ of the divider and a
+few thousandths of a degree at crossover. Ten times the estimate would still
+be 0.03°. The 2–3 MHz pole is the capacitance at OPA_SWEEP_IN−, and that
+node does not cross: R1, R2, C1 and U1A sit together on the GND side, in the
+no-pour area. FB_SENSE is driven from the emitter side, a low-impedance
+source. **The crossing is not a stability term.** The base drive is the
+crossing with real current at 3 MHz. Its ~110 nH (~2 Ω) is in series with
+R_B = 330 Ω: 0.6%, with an L/R corner near 500 MHz, far above the ~13 MHz
+R_B·C_jc pole.
+
+**Not done: moving NT2 up to y ≈ 28.** That would cut the FB and base
+detours to a few mm, and lengthen the Kelvin, shunt and DUT_G detours to
+20–57 mm. It would also move the star away from the DUT socket returns,
+which is where §14.5(4) wants it. There is also no room at y ≈ 28 without
+re-clearing GNDPWR around BD139_B and OPA_SWEEP_OUT by R3/TP1. The numbers
+above say it buys nothing. Daniel's call if he wants it anyway.
+
+**P-2 — Shunt Kelvin sense on the back.** Each SHx_TOP sense line leaves its
+shunt pad through a via and runs on the back to J4. The pad is the only point
+it shares with the force current, which arrives on the front.
+
+**P-3 — Four M3 mounting holes** (H1–H4, schematic `Mechanical`, not in the
+BOM), because the board carries a Nucleo on 8.5 mm sockets.
+
+**P-4 — SHUNT_HI and SHUNT_LO are not length-matched** (58 vs 47 mm). They
+start in different places (J4's sense pins and NT1) and enter U2 from
+opposite sides, because pin 3 and pin 5 of a dual op-amp are on opposite
+sides of the package. Both drive unity-gain buffers drawing pA, so their
+resistance does not enter the measurement. What matching would buy is
+symmetric pickup. Both run over the same ground region at low frequency.
+Confirmed at the Pass 1 review (Daniel, 2026-10-06): DC signal, picoamp
+inputs, ignore.
+
+## Layout decisions (H2, Pass 2, 2026-10-06)
+
+**P-5 — Board 135 × 92 mm** (from 160 × 92 at Pass 1, Daniel's call). JLCPCB
+bare-board quotes, read from the public quote page on 2026-10-06. Settings:
+2 layers, FR-4, 1.6 mm, qty 5, green, HASL, 2-day build, no login. Prices
+in USD:
+
+| Size | Board | Engineering fee | Total |
+|---|---|---|---|
+| 160 × 92 | 7.10 | 4.00 | **11.10** |
+| 135 × 92 | 6.00 | 4.00 | **10.00** |
+| 100 × 100 | 6.00 | 4.00 | 10.00 entered by hand; **4.00** as the page's default "Special Offer" |
+
+135 × 92 saves **$1.10** on 160 × 92. Against 100 × 100 it costs **$6.00
+more** if the promotional $4.00 applies, nothing if it does not. The page
+showed $4.00 only in its untouched default state. Shipping, $31.23 by DHL,
+is the same for all three and dominates either way. PCBA charges are not in
+these numbers.
+
+100 × 100 is not reachable without compromising Pass 1. The two morpho
+sockets fix x from 67.7 to 133.0. The front end (Q1 with its heatsink
+keep-out, the force path, the GNDPWR region and the DUT socket) occupies
+x = 0–60. At 100 mm, about 35 mm of it would have to move under the
+Nucleo, which sits 8.5 mm above the board. Those parts would lose
+test-point access (§14.4), Q1 would lose its heatsink clearance, and every
+Pass 1 net would have to be re-placed and re-routed.
+
+**P-6 — Freerouting v2.5.0 for the non-critical nets.** It ran headless on
+a SPECCTRA export with:
+
+- every Pass 1 track and the pre-routes locked (exported as `fix`);
+- a layer cost of 1 on F.Cu and 8–10 on B.Cu;
+- +15V in a 0.5 mm / 0.25 mm power class, 0.25 mm default width;
+- the boundary inset by 0.4 mm for edge clearance.
+
+The first run without layer costs put 268 mm of copper on B.Cu and cut the
+GND pour into pieces. The costed run put ~12 mm there. T-junctions in the
+locked copper were split at their meeting points before export, because
+SPECCTRA only joins track ends. KiCad's session import replaces every
+track, so the routed session was imported into a copy, and only the new
+tracks and vias were merged back. Afterwards: four dangling vias removed,
+DAC_SWEEP joined to TP20, D3's GNDPWR via moved off its pad (VP-001).
+
+**P-7 — +15V spine routed by hand.** SHUNT_LO's loop around U2 encloses C7,
+so the autorouter could not reach C7's +15V pad. The spine runs at
+x = 57 mm with one back-layer hop into C7, and was locked before
+autorouting.
+
+**P-8 — Q1 collector pour and thermals.** +15V has a 379 mm² F.Cu pour with
+a solid (not thermal-relief) connection on Q1's collector. Its bottom edge
+moved to y = 18 so the collector is not starved. That pour carries current,
+not heat: a vertical TO-126 sheds very little through its leads. Junction
+temperature in the §3.1 sustained short, 0.89 W, from ST's figures
+(R_th j-a 100 °C/W, R_th j-c 10 °C/W, T_j max 150 °C):
+
+- no heatsink: 25 + 0.89 × 100 = **114 °C**, or 129 °C at 40 °C ambient;
+- ~20 °C/W clip-on heatsink plus ~1 °C/W interface: 25 + 0.89 × 31 ≈
+  **53 °C**.
+
+So the board survives a held short without a heatsink, with 21 °C of
+margin at 40 °C. The keep-out (x 17.5–35, y 1–15.5) is there for the
+heatsink, and the tab is +15 V (§8). The thermal analyzer skipped Q1, so
+these are hand numbers; H4 measures it.
+
+**P-9 — Silkscreen references hidden where there is no room**: J3, Q2, R5
+and TP1. They are still on the fab layer and in the renders.
+
+**P-10 — CPL rotations.** `tools/export_fab.py` adds −90° to SOT-23 (Q2,
+D4, D5) and 270° to SOIC (U1–U3), from the community table that
+`kicad-jlcpcb-tools` also uses. Both values are for KiCad 6+ footprints;
+the +180° quoted for SOT-23 dates from KiCad 5. C5's CP_Elec_5x5.4 is not
+in that table, and every listed CP_Elec size is 180°, so C5 gets 180°.
+These are not JLCPCB's numbers. JLCPCB's placement preview is where each
+polarised part gets checked (README, footprint orientation).
+
+## Layout review (H2, 2026-10-06)
+
+`kicad-happy` v2.3.0 on the routed board: schematic, PCB `--full`, cross,
+EMC, thermal, SPICE, gerbers. Raw output is in `analysis/` (gitignored).
+DRC (`--severity-all --schematic-parity`), ERC and `check_topology.py
+--self-test` are clean: 53/53, with every planted fault caught.
+
+| Finding | Where | Verdict |
+|---|---|---|
+| KO-001 ×4 (error) | C1, R1, R2, TP6 inside the IN− no-pour area | False positive. The rule area forbids copper pour only; these parts *are* the node §14.5(2) protects |
+| GP-001 ×8 error, ×12 warning | Nets without plane under them or crossing the split | By design. IN− has no plane (§14.5(2)); the rest are the P-1 crossings or the P-2 back-layer sense lines. All DC or low frequency; P-1 quantifies the two that see 3 MHz |
+| GP-005 | Two ground domains | Intended: P-1 |
+| PS-002 (cross) | "+15V split into 3 islands" | False positive. One 379 mm² fill outline, 0 unconnected items in DRC |
+| RP-001 ×8 | Layer change without a stitching via | Not applicable. Two layers with one reference plane (B.Cu) |
+| IO-001 (error) J6 | No filtering at the DUT socket | Intended. The DUT terminals must not be filtered |
+| IO-001 (error) J1 | No filtering at the supply input | **Open, Daniel's call.** Bench supply, F1 PTC and C5 bulk at the entry; no common-mode filter. Out of the H1 scope as drawn |
+| FD-001 | No fiducials | **Open, Daniel's call.** JLCPCB does not require board fiducials for Economic PCBA. Three 1 mm fiducials would cost nothing but space |
+| PM-002 | J5 0.73 mm from the edge | Intended: Kelvin leads exit at the edge |
+| TE-001 | Test points on 23 of 93 nets | Informational. §14.4's list is covered; `check_topology.py` asserts it |
+| CG-AUD ×2 | J3/J4 have no ground pin | False positive: range-select headers |
+| GR-004 | Paste on 99 of 267 copper pads | Expected: the rest are through-hole |
+| Thermal | Q1 skipped by the analyzer | Hand estimate, P-8 |
+| SPICE | 7 pass, 2 skip: R1/R2 and R9/R10 (operating point did not converge) | The skipped pair are op-amp gain networks, with no source in isolation. `check_topology.py` asserts both ratios |
+
+**Lifecycle.** `lifecycle_audit.py` returned *unknown* for all 29 lines.
+LCSC is the only source here, and the audit's LCSC path exposes no
+lifecycle field. DigiKey, Mouser and element14 need API keys that are not
+set up. Substitute: LCSC's own product record has `productCycle`, which
+reads **normal for all 29**. Thinnest stock on 2026-10-06:
+
+- R1/R9 23.2 kΩ 0.1% (C861768): 2,253 at JLCPCB, 860 at LCSC.
+- Q1 BD139 (C27866): 128 at JLCPCB, but it is hand-soldered from LCSC, which
+  has 5,075.
+- J7/J8 sockets (C2897420): 2,962.
+
+Nothing is short at qty 5. That is a stock check, not a manufacturer's
+lifecycle statement.
+
 ## Findings resolved 2026-10-06
 
 **F-1 — The Kelvin divider's current was measured as DUT current.**
@@ -332,6 +536,6 @@ loading fees, from 24 extended ($72) before. The planned eight moves would
 have saved $24. The F-1 divider gives $3 of it back: R21 no longer shares
 the 10 kΩ reel with R14. Part costs at JLCPCB/LCSC unit prices: **$3.42**
 placed by JLCPCB (the three OPA2197s are $2.48 of it) and **$1.79**
-hand-soldered from LCSC. Not priced: 27 Keystone 5001 test loops (not
-stocked at LCSC), two jumper shunts, the TO-126 heatsink. JLCPCB adds
+hand-soldered from LCSC. Not priced: 26 Keystone 5001 test loops (not
+stocked at LCSC; TP6 is a bare pad, C-4), two jumper shunts, the TO-126 heatsink. JLCPCB adds
 attrition and any minimum-quantity rounding at quote.

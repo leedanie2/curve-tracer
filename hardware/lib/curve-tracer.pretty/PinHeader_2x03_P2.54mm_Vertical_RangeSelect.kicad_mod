@@ -207,8 +207,8 @@
 			(justify right)
 		)
 	)
-	(fp_text user "J3+J4: SAME POSITION"
-		(at 1.27 7.7 0)
+	(fp_text user "J3=J4 POS"
+		(at -5.6 2.54 90)
 		(layer "F.SilkS")
 		(effects
 			(font
