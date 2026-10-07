@@ -106,7 +106,7 @@ entry). Read every Sim figure below with that in mind.
 | Ref | Part | Value | Source | Evidence | Bench |
 |---|---|---|---|---|---|
 | <a id="j1"></a>J1 | Barrel jack | DC-005, 2.0 mm pin | Blueprint §8 (15 V / 1 A adapter + barrel jack) | Check the adapter's plug before ordering: a 2.0 mm pin takes 5.5×2.1 plugs, not 5.5×2.5. The centre pin is net VIN, behind Q3 ([P-11](#layout-decisions-h2-pass-2-2026-10-06)) | — |
-| <a id="j2"></a>J2 | Supply header | 1×2 | Blueprint §14.4 ("headers, not soldered connections, for the supply") | On the +15V rail, **not** behind Q3: the reverse-polarity decision named J1 ([P-11](#layout-decisions-h2-pass-2-2026-10-06)). A bench supply reversed here is unprotected | — |
+| <a id="j2"></a>J2 | Supply header | 1×2 | Blueprint §14.4 ("headers, not soldered connections, for the supply") | On the +15V rail, **deliberately unprotected** (Daniel, 2026-10-07; [P-14](#layout-decisions-h2-pass-2-2026-10-06)). Silkscreen "+15V" and "GND" beside its pads | **H4:** polarity by meter before first power-up |
 | <a id="c5"></a>C5 | Bulk | **10 µF**, 50 V aluminium electrolytic | Blueprint §8 (≥25 V), §14.5(3) | 50 V is what is stocked in 5×5.4 mm, above the ≥25 V floor | — |
 | <a id="q3"></a>Q3 | J1 reverse-polarity FET | **HL2303** P-channel, SOT-23 (R+O, C7420345, Preferred) | **Decision, 2026-10-06**: Daniel ("P-channel MOSFET in the high side, not a Schottky"). Part: P-11 | −30 V V_DS, **±20 V V_GS**, R_DS(on) ≤ 190 mΩ at −10 V → ≤ 28.5 mV at 150 mA (≤ 50 mV asked). Drain = VIN (J1), source = +15V | **H4:** TP28 − TP7 at a known current; reversed supply on J1 |
 | <a id="d6"></a>D6 | Q3 gate clamp | **12 V**, BZT52C12, SOD-123 (C173429, D2's line) | P-11 | Cathode at source (+15V), anode at gate: holds V_GS at −12 V against hot-plug ringing past the 20 V rating | — |
@@ -491,8 +491,7 @@ source, the body diode is reverse-biased, and nothing flows.
   - A Schottky's ~0.4 V would leave ~1.8 V and the 9.06 V untouched.
   - The P-FET is still the better part: ≤ 28.5 mV and ≤ 4 mW, against
     ~0.4 V and ~60 mW for a Schottky.
-- **J2 is not behind Q3.** The decision named J1, so a bench supply reversed
-  on J2 still reaches the rail. Open, Daniel's call.
+- **J2 is not behind Q3**, by decision (P-14).
 - **Layout.** The parts sit in the free patch above J1 (x 7.5–17.5,
   y 0–7). The +15V pour's left edge moved from x = 12 to x = 17, so J1's
   centre pin and the new parts sit outside it. The pour went from 379 to
@@ -521,6 +520,21 @@ IO-001 on J1):
 **P-13 — No fiducials** (Daniel, 2026-10-06; it closes FD-001). JLCPCB does
 not require board fiducials for Economic PCBA, and the finest pitch here is
 the SOIC-8's 1.27 mm.
+
+**P-14 — J2 is deliberately unprotected** (Daniel, 2026-10-07). J2 is for a
+bench supply, where polarity is set deliberately and verified before
+connecting. J1 takes an arbitrary wall adapter, whose polarity nobody
+checks; that is the case Q3 covers.
+
+- J2's pads are labelled in silkscreen, "+15V" and "GND", beside each pad
+  rather than with a plus sign alone.
+- H4 verifies J2's polarity with a meter before first power-up.
+- The first power-up goes through J2, current-limited to 100 mA, rather
+  than through J1. The board idles at ~8 mA (three OPA2197s at ~1.2 mA per
+  channel, plus 0.3 mA in Q3's gate network), so 100 mA is ample.
+
+Routing J2 through Q3 would have needed ~25 mm of VIN along the left edge,
+on the back, through the GNDPWR pour.
 
 ## Layout review (H2, 2026-10-06)
 

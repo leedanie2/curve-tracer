@@ -22090,6 +22090,30 @@
 			)
 		)
 	)
+	(gr_text "+15V"
+		(at 45.6 70 0)
+		(layer "F.SilkS")
+		(uuid "d2ff2e15-d138-4ec2-9be4-161860d676e6")
+		(effects
+			(font
+				(size 1.2 1.2)
+				(thickness 0.2)
+			)
+			(justify left)
+		)
+	)
+	(gr_text "GND"
+		(at 45.6 72.54 0)
+		(layer "F.SilkS")
+		(uuid "815d9876-4270-4f07-b686-dc29b003e12c")
+		(effects
+			(font
+				(size 1.2 1.2)
+				(thickness 0.2)
+			)
+			(justify left)
+		)
+	)
 	(segment
 		(start 71 66.4625)
 		(end 71 68.5)

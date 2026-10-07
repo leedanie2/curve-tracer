@@ -268,6 +268,14 @@ at 40 °C ambient against a 150 °C limit: 21 °C of hand-calculated margin, on
 the part those tests stress on purpose (`DECISIONS.md` P-8). The silkscreen
 where the heatsink goes says the same.
 
+- [ ] **J2 polarity by meter before first power-up.** With the bench supply
+      set and its output off, meter its leads at J2: + on the pad marked
+      "+15V", − on "GND". J2 has no reverse-polarity protection
+      (`DECISIONS.md` P-14)
+- [ ] **First power-up through J2, not J1**, bench supply at 15 V with the
+      current limit at **100 mA**. Expect ~8 mA idle. Raise the limit above
+      ~120 mA before any held-short test below: a held short draws ~107 mA
+      plus idle, and a 100 mA limit would mask it
 - [ ] Rails and star ground: +15 V at TP7, +3V3 at TP8, 0 V between TP9
       (GND_STAR) and TP27 (GNDPWR) with no load
 - [ ] **ADC zero offsets**, both channels: ADC1 at zero DUT current and ADC2
