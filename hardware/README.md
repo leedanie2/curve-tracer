@@ -13,7 +13,8 @@ buys (test points everywhere, alternate-value footprints, headers over solder).
 hardware/
 ├── README.md       ← this file
 ├── DECISIONS.md    ← where every value on the board came from: blueprint, sim or bench
-├── CONTINGENCY.md  ← if the board oscillates at bring-up: decision tree, C_f sweep, alternates, rev 2 criteria
+├── H4_CARD.md      ← printable bring-up card: numbered steps, settings, pass/fail, blanks to fill
+├── CONTINGENCY.md  ← if the board oscillates at bring-up: Part A goto steps, Part B the reasoning
 ├── curve-tracer.kicad_pro
 ├── curve-tracer.kicad_sch   ← H1, captured Oct 5, 2026
 ├── curve-tracer.kicad_pcb   ← H2, routed Oct 6, 2026: 135 × 92 mm, two layers
@@ -171,17 +172,20 @@ checked at LCSC on 2026-10-07.
 | | 3.3 pF | FH 0603CG3R3B500NT | C2836771 | 3,250 | 50 |
 | | 3.9 pF | Murata GRM1885C1H3R9BA01D | C162229 | 1,035 | 10 |
 | | 4.7 pF | FH 0603CG4R7B500NT | C313086 | 3,400 | 100 (min) |
-| R_iso up, axial 1 W 1% | 33 Ω | Vishay CPF133R000FKE14 | C22414245 | **7** | 3 |
-| | 47 Ω | TyoHM RN1WS47ΩFT/BA1 | C385394 | 740 | 20 (min) |
+| R_iso up, axial 1 W 1% | 47 Ω | TyoHM RN1WS47ΩFT/BA1 | C385394 | 740 | 20 (min) |
 | U1 fallback | OPA2196 | TI OPA2196ID | C2878263 | 21 | 2 |
 
 - **Tolerance.** FH's "B" code and Murata's "B" are both ±0.1 pF (FH
   datasheet code table). FH's own 3.9 pF (C2836772) is out of stock, hence
   the Murata part.
-- **33 Ω is thin.** Every other 1 W 33 Ω axial checked at LCSC was out of
-  stock, and the Vishay part is $4.43 with 7 left. Its body (2.3 × 6.1 mm)
-  is smaller than the 0309 footprint, so bend the leads to the 12.7 mm
-  pitch.
+- **No 33 Ω, deliberately** (Daniel, 2026-10-09). The only 1 W 1% 33 Ω in
+  stock (Vishay CPF133R000FKE14, C22414245) was $4.43 with 7 left, and the
+  value does not earn that scarcity. R_iso can only be raised by removing
+  R7 and fitting one axial part alone, so what matters is bracketing the
+  range, and 22 → 47 Ω does that (`CONTINGENCY.md` §4).
+  - If an intermediate value is ever wanted: 39 Ω 1 W 1% (UNI-ROYAL
+    MFR01SF390JA10, C58700, 3.5 × 9.5 mm) had 2,850 in stock on
+    2026-10-09.
 - **OPA2196IDR** (C2057972, cut tape, 275 in stock) is the same part if
   the tube stock goes.
 
@@ -285,61 +289,23 @@ rotation in the preview, then copy the fix into `CORRECTIONS` in
 
 ---
 
-## H4 bring-up measurements
+## H4 bring-up
 
-What the board has to be measured for before its numbers are trusted. The
-H4 *gate* is blueprint §9; this is the list of measurements behind it, each
-traced to the `DECISIONS.md` row that asked for it. Log results in
-`docs/characterization.md`.
+**Run it from `H4_CARD.md`**, printed. It is a numbered card:
 
-**Do not run a short test without the TO-126 heatsink fitted on Q1.** That
-covers every held short below: limiter trip, op-amp current in a held short,
-short recovery. In a held short Q1 dissipates 0.89 W. Bare, that is 129 °C
-at 40 °C ambient against a 150 °C limit: 21 °C of hand-calculated margin, on
-the part those tests stress on purpose (`DECISIONS.md` P-8). The silkscreen
-where the heatsink goes says the same.
+- each step gives the instrument setting, the expected value, a pass/fail
+  threshold and a blank to fill;
+- every branch is a goto into `CONTINGENCY.md` Part A;
+- steps are ordered by information, oscillation first, with a stop point
+  about every 20 minutes.
 
-- [ ] **J2 polarity by meter before first power-up.** With the bench supply
-      set and its output off, meter its leads at J2: + on the pad marked
-      "+15V", − on "GND". J2 has no reverse-polarity protection
-      (`DECISIONS.md` P-14)
-- [ ] **First power-up through J2, not J1**, bench supply at 15 V with the
-      current limit at **100 mA**. Expect ~8 mA idle. Raise the limit above
-      ~120 mA before any held-short test below: a held short draws ~107 mA
-      plus idle, and a 100 mA limit would mask it
-- [ ] Rails and star ground: +15 V at TP7, +3V3 at TP8, 0 V between TP9
-      (GND_STAR) and TP27 (GNDPWR) with no load
-- [ ] **ADC zero offsets**, both channels: ADC1 at zero DUT current and ADC2
-      at V_DS = 0. The 1 kΩ isolation resistors turn BAT54S leakage into up
-      to 2 mV (8 mV at the DUT on ADC2, §3.5). Record them as calibration,
-      then re-check at full scale, since the leakage moves with signal level
-      and temperature
-- [ ] **+3V3 with a clamp conducting**: unplug the Kelvin leads so U3B rails,
-      and read TP8. Up to ~11 mA flows in through the BAT54S; the rail must
-      stay in spec (`DECISIONS.md` F-2)
-- [ ] **R_PTC**: the TP5 → TP17 drop at a known current. Set `CT_R_PTC_OHM`
-      in `firmware/core/ct_config.h`; re-measure after any trip
-- [ ] Zener knee: TP16 against TP18 at full-scale gate code; any difference is
-      D2 current × 1 kΩ (`DECISIONS.md` D2)
-- [ ] **Q3 drop**: TP28 (VIN) to TP7 (+15V) at a known supply current.
-      Datasheet bound ≤ 28.5 mV at 150 mA (`DECISIONS.md` P-11)
-- [ ] **Reverse polarity at J1**: bench supply reversed onto J1, current
-      limit ~20 mA. TP7 must stay at 0 V and the supply should draw ~0 mA.
-      J2 is not protected; never reverse it
-- [ ] **Q1 heatsink fitted and verified, before any short test.** This is a
-      check on the board, not a BOM line:
-      - The heatsink sits flat on the TO-126 tab, with an insulating pad if
-        it can touch anything grounded. The tab is +15 V.
-      - Meter: heatsink to GNDPWR reads open.
-      - In the first held short, log Q1's case temperature after a minute.
-        Expect about 45 °C at 25 °C ambient: 0.89 W into ~21 °C/W, P-8.
-      - Above 70 °C the heatsink is not doing its job: stop. That threshold
-        is a judgement, between the ~45 °C expected and the ~105 °C case
-        temperature of a bare part.
-- [ ] Limiter trip at ~75.2 mA, cold and again warm (§3.1)
-- [ ] §3.1 stability gate: ≤ 25% overshoot into 100 nF and 1% within 5 µs,
-      with `C_f` fitted *and swept* both ways. This is the loop's first stability test (Phase 1 dropped); if it
-      fails, `CONTINGENCY.md`
-- [ ] Op-amp current in a held short, from the drop across R_B: out of its
-      own limit (§3.1)
-- [ ] Short-recovery overshoot at the DUT socket against sim 10's +48% (§3.6)
+It replaces the checklist that stood here. Every item from that list is a
+card step. Results go back as the filled-in sheet plus `h4/*.csv`, then
+into `docs/characterization.md`.
+
+**Do not run a short test without the TO-126 heatsink fitted on Q1.** On
+the card that is prep step P4 and the precondition for Block 4. In a held
+short Q1 dissipates 0.89 W. Bare, that is 129 °C at 40 °C ambient against a
+150 °C limit: 21 °C of hand-calculated margin, on the part those tests
+stress on purpose (`DECISIONS.md` P-8). The silkscreen where the heatsink
+goes says the same.
