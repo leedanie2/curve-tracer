@@ -13,6 +13,7 @@ buys (test points everywhere, alternate-value footprints, headers over solder).
 hardware/
 ├── README.md       ← this file
 ├── DECISIONS.md    ← where every value on the board came from: blueprint, sim or bench
+├── CONTINGENCY.md  ← if the board oscillates at bring-up: decision tree, C_f sweep, alternates, rev 2 criteria
 ├── curve-tracer.kicad_pro
 ├── curve-tracer.kicad_sch   ← H1, captured Oct 5, 2026
 ├── curve-tracer.kicad_pcb   ← H2, routed Oct 6, 2026: 135 × 92 mm, two layers
@@ -157,12 +158,41 @@ It refuses to write the JLCPCB files if the BOM and CPL disagree.
 | `fab/curve-tracer_bom.csv` | Engineering BOM: every line including DNP. The LCSC hand-solder order is its `hand` lines |
 | `fab/gerbers/` | The same Gerbers unzipped, for review |
 
+### Contingency parts: order with the boards, not after
+
+For `CONTINGENCY.md`. None of these is on hand or on the PCBA BOM. Stock was
+checked at LCSC on 2026-10-07.
+
+| Part | Value | MPN | LCSC | Stock | Qty |
+|---|---|---|---|---|---|
+| C_f sweep, C0G 0603 50 V ±0.1 pF | 1.5 pF | FH 0603CG1R5B500NT | C507055 | 1,900 | 100 (min) |
+| | 2.2 pF | FH 0603CG2R2B500NT | C313085 | 12,200 | 50 |
+| | 2.7 pF | FH 0603CG2R7B500NT | C2836769 | 2,300 | 50 |
+| | 3.3 pF | FH 0603CG3R3B500NT | C2836771 | 3,250 | 50 |
+| | 3.9 pF | Murata GRM1885C1H3R9BA01D | C162229 | 1,035 | 10 |
+| | 4.7 pF | FH 0603CG4R7B500NT | C313086 | 3,400 | 100 (min) |
+| R_iso up, axial 1 W 1% | 33 Ω | Vishay CPF133R000FKE14 | C22414245 | **7** | 3 |
+| | 47 Ω | TyoHM RN1WS47ΩFT/BA1 | C385394 | 740 | 20 (min) |
+| U1 fallback | OPA2196 | TI OPA2196ID | C2878263 | 21 | 2 |
+
+- **Tolerance.** FH's "B" code and Murata's "B" are both ±0.1 pF (FH
+  datasheet code table). FH's own 3.9 pF (C2836772) is out of stock, hence
+  the Murata part.
+- **33 Ω is thin.** Every other 1 W 33 Ω axial checked at LCSC was out of
+  stock, and the Vishay part is $4.43 with 7 left. Its body (2.3 × 6.1 mm)
+  is smaller than the 0309 footprint, so bend the leads to the 12.7 mm
+  pitch.
+- **OPA2196IDR** (C2057972, cut tape, 275 in stock) is the same part if
+  the tube stock goes.
+
 ---
 
 ## Before the order goes out
 
-**The order is event-driven: it goes out as soon as this list is clear and
-Phase 1 has passed — target Oct 13, no later than Oct 20** (§9). Nothing on
+**The order is event-driven: it goes out as soon as this list is clear —
+target Oct 13, no later than Oct 20** (§9). Phase 1, the breadboard stability
+gate, was dropped on Oct 8 as an accepted risk (§9). The oscillation test is
+at H4, and `CONTINGENCY.md` is the response. Nothing on
 the board improves by waiting, so do not hold a DRC-clean layout for a
 calendar date. The Oct 26 abandon-the-PCB checkpoint is in §9.
 
@@ -197,10 +227,11 @@ order; there is none between arrival and the Nov 16 freeze.
 - [ ] ERC and DRC clean; `kicad-happy` review pass on schematic and layout
 - [ ] BOM and CPL checked against §8 — including that `R_f` is **23.2 kΩ**
       (E96; 23.3 kΩ does not exist and has never been orderable)
-- [ ] Phase 1 breadboard stability result is in `docs/characterization.md`,
-      and it is a **GO** — taken on a ≥8 MHz DIP-8 part, with the substitute
-      and its rails recorded (§14.3)
+- ~~Phase 1 breadboard stability GO~~: dropped Oct 8, 2026, as an accepted risk
+  (blueprint §9). The hedge is the `C_f` footprint, the parallel alternates and
+  the contingency parts
 - [ ] **Express shipping selected** on the fab order
+- [ ] Contingency parts (Fab outputs, above) ordered in the same order
 - [ ] Footprint orientation, below
 
 ### Footprint orientation: what ERC and DRC cannot see
@@ -307,7 +338,8 @@ where the heatsink goes says the same.
         temperature of a bare part.
 - [ ] Limiter trip at ~75.2 mA, cold and again warm (§3.1)
 - [ ] §3.1 stability gate: ≤ 25% overshoot into 100 nF and 1% within 5 µs,
-      with `C_f` fitted *and swept* both ways
+      with `C_f` fitted *and swept* both ways. This is the loop's first stability test (Phase 1 dropped); if it
+      fails, `CONTINGENCY.md`
 - [ ] Op-amp current in a held short, from the drop across R_B: out of its
       own limit (§3.1)
 - [ ] Short-recovery overshoot at the DUT socket against sim 10's +48% (§3.6)

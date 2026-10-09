@@ -139,12 +139,12 @@ The two effects cancel: raising `R_B` lowers the threshold current 2.8%, but les
 
 **Bench verification required:** measure the actual trip threshold and confirm it against 75.2 mA, and re-measure after the circuit has been held in limit long enough to warm up — the −2 mV/°C drift is the figure most likely to disagree with simulation.
 
-**The stability gate, stated numerically.** Sizing decisions above were made against a "well damped" criterion that was never written down. It is defined here so the Phase 1 bench work has something to check against. **This is a design decision, not a measured result** — the numbers are chosen, and choosing differently is legitimate if the reasoning below is challenged.
+**The stability gate, stated numerically.** Sizing decisions above were made against a "well damped" criterion that was never written down. It is defined here so the H4 bench work has something to check against. **This is a design decision, not a measured result** — the numbers are chosen, and choosing differently is legitimate if the reasoning below is challenged.
 
 | | Gate | equivalent ζ | ~PM |
 |---|---|---|---|
 | **Simulated** (sizing decisions) | small-signal overshoot **≤ 15%** into 100 nF / 200 Ω, and no oscillation or sustained ringing at any load from 100 pF to 100 nF | ≥ 0.52 | ≳ 52° |
-| **Bench, Phase 1** (the gate that counts) | overshoot **≤ 25%** at the emitter into 100 nF, decaying to within 1% inside **5 µs**, no sustained ringing | ≥ 0.40 | ≳ 40° |
+| **Bench, H4** (the gate that counts) | overshoot **≤ 25%** at the emitter into 100 nF, decaying to within 1% inside **5 µs**, no sustained ringing | ≥ 0.40 | ≳ 40° |
 
 **Why 15% simulated.** `R_B` = 330 Ω sits at 10.3% and 390 Ω at 12.7%, so the gate admits the chosen value with room; 470 Ω (15.6%) is marginal and 680 Ω (21.4%) is out. More to the point, §12 found this loop fails by *cliff*, not by drift: bare, it was stable to ~1 nF and oscillating by 2.2 nF. A loop with that character should be held well clear of the edge, not sized to just clear it.
 
@@ -162,7 +162,7 @@ Losing ~19° from the simulated ~59° leaves ~40°, which is **25.4% overshoot**
 
 **Two conditions on the bench measurement.** It must be taken on the **OPA2197**, not the LM324 substitute — §8 records that no transient measurement transfers across that swap, and the LM324's 0.4 V/µs slew rate would mask ringing entirely. And it must be taken **with `C_f` fitted and swept** as above. A failure without `C_f`, or at a single untuned `C_f`, is not a failure of `R_B`.
 
-**This gate is measured at H4, on the assembled board** (§9), where the OPA2197 condition is satisfied by construction — the fab fits it. It is **not** the Phase 1 breadboard gate, which is narrower (no `R_iso`, no clamp, no 100 nF load), asks only whether the bare loop oscillates, and therefore runs on a ≥8 MHz DIP-8 substitute instead. §14.3 has the reasoning and the GBW table.
+**This gate is measured at H4, on the assembled board** (§9), where the OPA2197 condition is satisfied by construction — the fab fits it. It is also the **first** stability test the loop gets. The narrower Phase 1 breadboard gate was dropped on Oct 8, 2026, as an accepted risk (§9), so this is where the composite amplifier first meets real parasitics. If it fails, `hardware/CONTINGENCY.md` is the response.
 
 **The 65 mA figure is typical, not guaranteed.** The OPA2197's short-circuit current varies with output voltage and temperature, so the 32 mA it supplies at 330 Ω is margin against a typical value, not a worst case. **Sim 10 models the limiter, not the op-amp's own fault behaviour.** The `UniversalOpAmp2` default 25 mA clamp is below the drive in both `R_B` cases, so sim 10 also steps it to 65 mA; either way the model's output stage (hard rail, ideal clamp) is not the OPA2197's. The trip point and Q2's numbers are trustworthy; the op-amp's condition in the fault is not. **Bench verification required:** with the limiter tripped into a short, measure the op-amp output current (the drop across `R_B`) and confirm the op-amp is not in its own current limit.
 
@@ -198,6 +198,15 @@ At 100 nF the unclamped τ matches `C·(R_L ‖ 33.3 kΩ)` to 3 significant figu
 **Feedback must be tapped after the 10 Ω sense resistor,** not before it. Tapping ahead of the sense resistor puts the sense drop inside the loop, so the op-amp corrects it away and the limiter never sees the voltage it needs to trip on.
 
 **Breadboard risks specific to this block.** Stray capacitance at the inverting input (**~5–10 pF** from breadboard rows and lead dress) works against `R_f ‖ R_g` = 7 kΩ, placing a pole at roughly **2–3 MHz** — right at crossover. This is the one case where a small capacitor across `R_f` is **correct**: `C_f = C_in · R_g / R_f` ≈ **2–4 pF**.
+
+**Design finding (Oct 8, 2026): on the PCB, `C_in` is mostly the op-amp.** The 5–10 pF above is breadboard rows and lead dress only. It never counted the OPA2197's own input capacitance: **1.6 pF differential and 6.4 pF common-mode** (datasheet, typical). With IN+ held by the DAC, the differential part also lands on IN− to AC ground. TI does not say whether the 6.4 pF is per input or for both inputs together, so count 3.2–6.4 pF.
+
+On the PCB the strays shrink to under ~1 pF (no pour under the node, §14.5(2)), and the op-amp dominates:
+
+- **`C_in` ≈ 5–9 pF, so `C_f` ≈ 2.2–3.9 pF.**
+- **3.3–3.9 pF if the 6.4 pF is per input**, the upper end of the 2–4 pF above.
+
+The "smaller on a PCB" assumption (§14.4, `hardware/DECISIONS.md` C1) holds for the stray component only. The total is not smaller than the breadboard estimate. On a breadboard it would have been larger than this section assumed: strays plus op-amp, ~10–18 pF. `C_f` is still fitted on the board from a measurement (`hardware/CONTINGENCY.md` §2).
 
 **This does not contradict the Phase 0 `C_comp` finding — the two address different poles.** Phase 0 removed a 10–100 pF cap that was attempting to compensate *the follower's output pole inside the loop*; that raised `β` toward 1 exactly where the follower's phase lag sat and made things monotonically worse (§12). The 2–4 pF `C_f` here does something else entirely: it **flattens the feedback divider** against the stray input capacitance, holding `β` constant with frequency instead of letting it rise. Same component, same location, opposite purpose — and two orders of magnitude different in value. State the distinction explicitly in the README; it is a good illustration of why "add a feedback cap" is not a general-purpose fix.
 
@@ -483,6 +492,8 @@ Order **two of every active component.** You will destroy at least one op-amp an
 
 Substitutes are acceptable for firmware and host work. The OPA2197 must be installed before **Phase 7** parameter extraction, because every accuracy figure in §7 assumes it — and on the PCB it always is, since the board is assembled by the fab with OPA2197s fitted (§14.3).
 
+*Phase 1 was dropped on Oct 8, 2026 (§9). This paragraph and the LM324 notes below now apply only to bench work after bring-up and to the Oct 26 fallback.*
+
 **The SOIC-8 adapters are no longer on the critical path.** They were, while Phase 1 required an OPA2197 on a breadboard; §14.3 withdrew that requirement. Phase 1 now runs on **the fastest DIP-8 op-amp in the lab, ≥8 MHz GBW** — enough to keep crossover inside the 2–3 MHz band where the stray input pole sits, which is the only thing that gate asks. **The LM324 is still not that part:** at 1.3 MHz GBW its crossover lands ~8× below the pole, so it cannot see the interaction at all, independently of the slew-rate problem below. Adapters are a nice-to-have for post-bring-up bench work.
 
 **No transient measurement on the LM324 transfers.** It slews at **0.4 V/µs** typical (V+ = 15 V, unity gain, R_L = 2 kΩ, C_L = 100 pF), ~25× slower than the 9.2–9.9 V/µs edges sim 08 measured. Every step-response, settling-time and edge-shape measurement taken on the substitute is slew-limited and says nothing about the OPA2197 circuit. Only DC measurements — gain ratio, linearity, limiter trip point — transfer, and those only with the caveats below.
@@ -500,19 +511,19 @@ What else an LM324 result does *not* carry over to the OPA2197:
 
 **The deliverable is an assembled PCB, not a breadboard** (§14). That changes
 what the breadboard is for. It is no longer the build platform staged through
-phases 1–3; it survives as **one measurement** — a stability GO/NO-GO on the
-composite amplifier (§3.1), the block simulation cannot settle on its own,
-taken *before* layout freezes so a NO-GO can still change the schematic.
-Everything after that is built and validated on the board.
+phases 1–3. It was kept for **one measurement**, a stability GO/NO-GO on the
+composite amplifier before layout froze, and that measurement has now been
+dropped too (Oct 8, 2026; *Phase 1 dropped*, below). Everything is built and
+validated on the board.
 
 | Phase | Deliverable | Gate to proceed |
 |---|---|---|
 | **0** | ~~LTspice model of sweep source~~ **DONE** — sweep source (§12) *and* difference amp CMRR + input loading (§13) | Sweep source settles cleanly into ≥100 nF with `R_iso`; diff amp buffering decided |
-| **1** | **Composite amplifier on breadboard — stability GO/NO-GO, nothing else.** Stages 1–6 of `docs/characterization.md` (rails → op-amp → gain network → BD139 + `R_B` → scope for VHF → `R_sense`, feedback past it) | **No oscillation with real parasitics**, at any stage, with `C_f` fitted and swept per §3.1. Run on **the fastest DIP-8 op-amp in the lab, ≥8 MHz GBW** — *not* the OPA2197, and *not* the LM324 (§14.3) |
+| **1** | ~~Composite amplifier on breadboard — stability GO/NO-GO~~ **Dropped Oct 8, 2026** (*Phase 1 dropped*, below). The oscillation test moves to H4 | — |
 | **H1** | KiCad schematic, in `hardware/` | Every §3 block drawn; test points placed on every node §3 names (§14); alternate-value footprints placed (§14) |
 | **H2** | KiCad layout | §14 layout constraints met; the analog-critical nets listed in `hardware/README.md` routed **by hand**, not autorouted; **DRC clean** |
-| **H3** | Design freeze → PCBA ordered, **express shipping** (§14.3) | The date gates below. Order as soon as H2 is DRC-clean *and* Phase 1 has passed — do not wait for a calendar date |
-| **H4** | Board bring-up | Rails and star ground first. Then sweep source: 0–10 V linear at low current; limiter trips at **~75 mA** (§3.1), **re-measured warm**; **§3.1 stability gate** — ≤25% overshoot into 100 nF, 1% in 5 µs, `C_f` fitted *and swept*. Also the §3.6 short-recovery overshoot, bench-verified |
+| **H3** | Design freeze → PCBA ordered, **express shipping** (§14.3) | The date gates below. Order as soon as H2 is DRC-clean *and* the pre-order checklist in `hardware/README.md` is clear — do not wait for a calendar date |
+| **H4** | Board bring-up | Rails and star ground first. Then sweep source: 0–10 V linear at low current; limiter trips at **~75 mA** (§3.1), **re-measured warm**; **§3.1 stability gate** — ≤25% overshoot into 100 nF, 1% in 5 µs, `C_f` fitted *and swept*. Also the §3.6 short-recovery overshoot, bench-verified. **This is the loop's first stability test** (Phase 1 dropped); if it fails, `hardware/CONTINGENCY.md` |
 | **2** | Current sense, range 1 — **on the PCB** | Reads a known resistor within 1% |
 | **3** | Kelvin sense — **on the PCB**. Ranges 2 & 3 only if the board gets there (MVP is range 1 — §14) | Kelvin `V_DS` tracks a DMM at the DUT within 0.5%. Ranges 2–3, if reached: 5-decade span against precision resistors |
 | **4** | Firmware sweep + serial CSV | First complete diode I-V curve |
@@ -523,36 +534,46 @@ Everything after that is built and validated on the board.
 | **9** | Characterization + README | Repo publishable |
 | **P2** | BJT support, relay auto-ranging, INA828 comparison, pulsed mode | Only if the board works and phases 0–9 are polished |
 
-**Phase 1's gate is narrower than §3.1's stability gate, deliberately.** Stages
-1–6 stop short of `R_iso` (stage 8), the clamp diode and the limiter (stage 7),
-and the DUT socket and load test (stage 8) — so the ≤25%-overshoot-into-100 nF
-figure §3.1 defines **cannot be measured in Phase 1** and moves to H4. What
-Phase 1 does test is the thing §12 says fails by cliff: whether the bare loop,
-with real breadboard stray capacitance at the inverting node, oscillates at
-all. §12 found it stable to ~1 nF and oscillating by 2.2 nF *without* `R_iso`,
-so a bare breadboard loop sitting quiet — with `C_f` swept both directions —
-is the GO. **The cost of this choice is explicit: `R_iso` and the limiter go to
-layout validated in simulation only.** Both are cheap to make adjustable on the
-board (§14), and that is where the adjustability budget is being spent.
+**Phase 1 dropped (Oct 8, 2026): a deliberate, accepted risk, not an
+oversight.** The breadboard stability GO/NO-GO due Oct 12 will not be run.
 
-**And because the gate is narrow, it does not need the OPA2197.** This follows
-from the narrowing above and is the reason the part requirement changed —
-reasoning in §14.3. The short form: Phase 1 asks *GBW against the follower pole
-with real stray capacitance at the inverting node*, which any op-amp with
-comparable GBW answers. It does **not** measure the §3.1 overshoot spec, so it
-has no claim on the exact part.
+- **No part for it.** As narrowed, the gate needed a DIP-8 op-amp of
+  ≥ 8 MHz GBW (§14.3), and there is none on hand.
+- **No working bench.**
+- **It tested less than it seemed to.** Narrowed, it covered only the bare
+  loop: stages 1–6, with no `R_iso`, no clamp, no limiter and no 100 nF
+  load, on a substitute op-amp and probably on different rails. The §3.1
+  overshoot gate was already at H4. A GO would have said only that the bare
+  loop, on a different part, did not oscillate.
+
+**The oscillation test moves to H4, on the assembled board.** That is where
+the composite amplifier meets real parasitics for the first time, and
+`hardware/CONTINGENCY.md` is the response if it oscillates or misses the
+§3.1 gate.
+
+**The hedge is on the board:**
+
+- the `C_f` footprint, fitted after measuring (§3.1, §14.4);
+- alternate-value footprints on `R_B`, `R_sense` and `R_iso` (§14.4). They
+  are parallel-only, which fixes the direction each can move
+  (`hardware/DECISIONS.md` R4, R6, R8).
+
+**What the risk costs if it lands:** a loop the alternates cannot fix is a
+rev 2 (CONTINGENCY §7), with a week or less before Nov 16. The question
+Phase 1 existed to ask, the §12 cliff with real stray capacitance at the
+inverting node, is still the first thing H4 checks.
 
 ### Date gates
 
 Hard dates. Each row is a gate, not a milestone. **The order is event-driven,
-not calendar-driven** — it goes out the moment layout is DRC-clean and Phase 1
-has passed, which is why the two order rows read "target" and "no later than"
+not calendar-driven** — it goes out the moment layout is DRC-clean and the
+pre-order checklist is clear, which is why the two order rows read "target" and "no later than"
 rather than naming one day.
 
 | Date | Gate | Missed → |
 |---|---|---|
-| **Mon Oct 12** | **Breadboard stability GO/NO-GO** (Phase 1) | A NO-GO, or no result, blocks the Oct 13 order target and pushes it toward the Oct 20 backstop |
-| **Tue Oct 13** | **Target: design freeze and PCBA ordered**, express shipping. Requires H2 DRC-clean *and* Phase 1 passed | Falls through to the two backstop rows below, spending slack |
+| ~~Mon Oct 12~~ | ~~Breadboard stability GO/NO-GO (Phase 1)~~ **Dropped Oct 8, 2026** (*Phase 1 dropped*, above) | — |
+| **Tue Oct 13** | **Target: design freeze and PCBA ordered**, express shipping. Requires H2 DRC-clean *and* the pre-order checklist clear | Falls through to the two backstop rows below, spending slack |
 | **Mon Oct 19** | **Design freeze — backstop.** Schematic and layout final, `hardware/` committed | Slip eats the Oct 20 → Oct 26 slack directly |
 | **Tue Oct 20** | **PCBA ordered — no later than this.** Still express | Slack runs to Oct 26 |
 | **Mon Oct 26** | **Checkpoint — if not ordered, abandon the PCB and finish on breadboard.** No further extension | — (this *is* the decision point) |
@@ -562,9 +583,8 @@ rather than naming one day.
 **Why order early rather than freeze late.** Nothing improves between a
 DRC-clean layout and Oct 20 — the board does not get better by being looked
 at, and §14.4's whole strategy is to make the uncertain parts *adjustable on
-the board* rather than resolved before it. The only thing the wait buys is the
-Phase 1 result, and that arrives Oct 12. After that, every day held is a day
-subtracted from bring-up.
+the board* rather than resolved before it. With Phase 1 dropped, the wait buys
+nothing at all: every day held is a day subtracted from bring-up.
 
 **Where this plan is tight: the window from arrival to Nov 16.** Against the
 Nov 3 backstop that is **13 days**, carrying board bring-up (H4), phases 2 and
@@ -583,7 +603,9 @@ README, which are the phases the project exists to produce. Two consequences:
 `docs/characterization.md` stay in that document for exactly this reason: if
 the PCB is abandoned, Phase 1 reverts to its full scope (clamp, limiter,
 `R_iso`, load and short tests) and phases 2–3 are built on the breadboard as
-originally planned. That path is not deleted, only deprioritised.
+originally planned. That path is not deleted, only deprioritised. **It needs a working bench,
+which is one of the reasons Phase 1 was dropped.** Until there is one, the
+fallback is notional and the board is the only path.
 
 ---
 
@@ -614,7 +636,7 @@ The "what I'd do differently" section is the one interviewers respond to. Write 
 
 | Risk | Mitigation |
 |---|---|
-| Composite amp oscillates | Simulate compensation first (Phase 0); breadboard stability GO/NO-GO before layout freezes (Phase 1, §9); scope every stage before adding the next |
+| Composite amp oscillates | Simulated first (Phase 0). The breadboard GO/NO-GO (Phase 1) was **dropped** on Oct 8, 2026, as an accepted risk (§9). The first test is at H4, with the `C_f` footprint and the parallel alternates on the board and `hardware/CONTINGENCY.md` as the response |
 | Noise floor limits low range | Star-ground, short leads, decoupling at every op-amp — §14.5 makes these layout constraints rather than breadboard hygiene. Range 3 is outside MVP scope (§14.2); if it is reached and unusable, report the measured limitation honestly — that's a legitimate finding |
 | **One PCB revision, and the analog front end goes to layout validated in simulation only** | `R_iso`, `R_B` and `R_sense` get alternate-value footprints; `C_f` gets a footprint and is fitted after measuring; test points on every §3 node (§14.4). The Oct 26 checkpoint (§9) is the abandon path |
 | **Fab slips, or arrival lands late** | Only 13 days separate the Nov 3 backstop arrival from the Nov 16 freeze, and they carry bring-up plus phases 2–9. Three mitigations, all already decided: order **event-driven** the moment layout is DRC-clean (target Oct 13, §9); pay for **express shipping** (§14.3a); and finish phases 4, 5 and 7 against the simulated DUT *during* the fab window, not after |
@@ -649,7 +671,7 @@ Simulation files: `sim/01_sweep_source_compensation.asc` (2N2222), `sim/02_sweep
 
 **Previously open, now closed:** difference amplifier CMRR simulation — completed Sep 18, 2026, results in **§13**.
 
-**Bench items carried forward — split by phase after the §9 restructure.** To **Phase 1** (breadboard, stages 1–6): measure actual settling, and confirm the bare loop does not oscillate with real parasitics. To **H4** (PCB bring-up), because stages 7–8 are no longer breadboarded: confirm `R_iso` behavior with the real BD139; verify the current limit trips at **~75 mA** (sim 11; the ~65 mA in earlier drafts was a target, never a measurement — see §3.1), re-measured warm.
+**Bench items carried forward — split by phase after the §9 restructure.** These go to **H4** as well, since Phase 1 was dropped (§9): measure actual settling, and confirm the loop does not oscillate with real parasitics. To **H4** (PCB bring-up), because stages 7–8 are no longer breadboarded: confirm `R_iso` behavior with the real BD139; verify the current limit trips at **~75 mA** (sim 11; the ~65 mA in earlier drafts was a target, never a measurement — see §3.1), re-measured warm.
 
 ---
 
@@ -669,7 +691,7 @@ Simulation files: `sim/04_diffamp_cmrr.cir` (worst-case tolerance corner), `sim/
 
 **Method note.** This LTspice is the Windows build in a CrossOver bottle; `-b` against the `/Applications` binary exits 0 without simulating. The working headless invocation is recorded in `sim/README.md`. `.meas` on a stepped `.op` logs only the first step, so per-step values come from the `.raw` file — and `.raw` is float32 while `.meas` is double (§3.5).
 
-**Bench items carried forward to H4 / Phase 2 — on the PCB, not a breadboard** (§9: Phase 1 is now the composite amplifier only): verify the buffered difference amp's actual CMRR against the 74.4 dB floor with real 0.1% parts; measure input bias current contribution directly rather than trusting the datasheet typ. The range-3 usability question moves with it, and is now **outside MVP scope** (§14.2) — the buffers are still required, because unbuffered error is 0.95% on range 1 alone.
+**Bench items carried forward to H4 / Phase 2 — on the PCB, not a breadboard** (§9: no breadboard phase remains): verify the buffered difference amp's actual CMRR against the 74.4 dB floor with real 0.1% parts; measure input bias current contribution directly rather than trusting the datasheet typ. The range-3 usability question moves with it, and is now **outside MVP scope** (§14.2) — the buffers are still required, because unbuffered error is 0.95% on range 1 alone.
 
 ---
 
@@ -694,6 +716,13 @@ documenting it.
 The breadboard keeps exactly one job — the Phase 1 stability GO/NO-GO — because
 that is the one question a PCB answers *worse*: it is unchangeable once
 fabricated, and §12 found this loop fails by cliff.
+
+**Update, Oct 8, 2026: it no longer has even that job.** Phase 1 was dropped
+(§9): no ≥ 8 MHz DIP-8 part, no working bench, and the narrowed gate tested
+only the bare loop on a substitute. The reason above still holds. A PCB
+answers the stability question worse because it cannot be changed, which is
+why the board carries the `C_f` footprint and the alternate values, and why
+`hardware/CONTINGENCY.md` exists.
 
 ### 14.2 Scope
 
@@ -739,6 +768,9 @@ withdrawn.** Since the board is assembled by the fab, every OPA2197 that
 matters arrives already soldered, and the adapters become a **nice-to-have**:
 useful for bench experiments after bring-up, not a prerequisite for anything
 dated. Buy them or don't; nothing in §9 waits on them.
+
+*Superseded Oct 8, 2026: Phase 1 was dropped (§9). The reasoning below stays as the
+record of what the gate could and could not have shown.*
 
 **What Phase 1 runs on instead: the fastest DIP-8 op-amp in the lab, ≥8 MHz
 GBW.** The justification is the narrowing in §9. Phase 1 tests the **§12
@@ -823,8 +855,10 @@ hardware, which after the §9 restructure is most of the analog front end.
 **`C_f` gets a footprint even though its value is not yet knowable.** §3.1
 sizes it at **2–4 pF** from `C_f = C_in · R_g / R_f`, and `C_in` is known only
 as 5–10 pF — a 2× uncertainty that puts the exact value anywhere in
-2.16–4.31 pF. On a PCB `C_in` is *different again*, and smaller, because the
-breadboard rows that dominated the estimate are gone. So the value cannot be
+2.16–4.31 pF. On a PCB the breadboard rows are gone, but the
+estimate never counted the op-amp's own input capacitance, which then
+dominates: §3.1's design finding puts the PCB `C_in` at ~5–9 pF and `C_f` at
+2.2–3.9 pF. So the value cannot be
 chosen before the board exists: **place the footprint, leave it unstuffed, and
 fit `C_f` after measuring, per §3.1.** Bring-up sweeps it in both directions —
 §3.1's residual table is two-sided, and below ~7.5 pF of `C_in` a 3.3 pF `C_f`

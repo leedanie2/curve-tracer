@@ -42,7 +42,18 @@ The feedback tap moves deliberately: op-amp output (stage 3), then emitter
 each addition inside the loop is tested on its own. `R_iso` at stage 8 does
 not move it — feedback stays on the emitter side of `R_iso` (§3.1).
 
-### What Phase 1 covers now
+### What Phase 1 covered (dropped Oct 8, 2026)
+
+**Phase 1 was dropped on Oct 8, 2026** (blueprint §9), as an accepted risk:
+
+- no ≥ 8 MHz DIP-8 part on hand;
+- no working bench;
+- the narrowed gate tested only the bare loop on a substitute part.
+
+Stages 1–6 below are not run before the order. The oscillation test is at
+H4, on the board, with `hardware/CONTINGENCY.md` as the response. The stages
+stay documented as the Oct 26 fallback path, which needs a working bench.
+The rest of this section is the record of the gate as it stood.
 
 **Scope changed Oct 5, 2026 — the project now targets an assembled PCB**
 (blueprint §14). Blueprint **Phase 1 is now stages 1–6 only**: a stability
