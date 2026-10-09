@@ -57,6 +57,18 @@ typedef struct {
     uint16_t sweep_code;
     int      abort_flag;
 
+    /* Simulated time, advanced by delay_us() and by each conversion, so
+     * HOLD's report cadence can be tested without waiting. */
+    uint64_t t_us;
+
+    /* HOLD's input_pending. If input_fn is set it decides (main_sim polls
+     * stdin); otherwise input "arrives" after input_after_polls polls, and
+     * never if that is 0. */
+    int    (*input_fn)(void *user);
+    void    *input_user;
+    uint32_t input_after_polls;
+    uint32_t input_polls;
+
     /* Instrumentation for the tests */
     uint32_t delay_calls;
     uint32_t last_delay_us;

@@ -8,6 +8,10 @@
 
 #define VT_300K  0.02585f       /* kT/q at 300 K */
 
+/* Nominal conversion time: the F303 at its longest sampling time is ~10 us
+ * per conversion. Only HOLD's report cadence depends on it. */
+#define CT_SIM_US_PER_CONVERSION 10u
+
 void ct_sim_init(ct_sim_t *s, ct_sim_kind_t kind)
 {
     memset(s, 0, sizeof(*s));
@@ -216,6 +220,7 @@ static void sim_operating_point(ct_sim_t *s, float *v_dut, float *i_a)
 static uint32_t sim_read_current(void *ctx, uint16_t n)
 {
     ct_sim_t *s = (ct_sim_t *)ctx;
+    s->t_us += (uint64_t)n * CT_SIM_US_PER_CONVERSION;
     float v_dut, i_a;
     sim_operating_point(s, &v_dut, &i_a);
 
@@ -230,6 +235,7 @@ static uint32_t sim_read_current(void *ctx, uint16_t n)
 static uint32_t sim_read_voltage(void *ctx, uint16_t n)
 {
     ct_sim_t *s = (ct_sim_t *)ctx;
+    s->t_us += (uint64_t)n * CT_SIM_US_PER_CONVERSION;
     float v_dut, i_a;
     sim_operating_point(s, &v_dut, &i_a);
 
@@ -243,7 +249,27 @@ static void sim_delay(void *ctx, uint32_t us)
     ct_sim_t *s = (ct_sim_t *)ctx;
     s->delay_calls++;
     s->last_delay_us = us;
+    s->t_us += us;
     /* No actual delay: the model has no dynamics to wait for. */
+}
+
+static uint32_t sim_now_ms(void *ctx)
+{
+    ct_sim_t *s = (ct_sim_t *)ctx;
+    return (uint32_t)(s->t_us / 1000u);
+}
+
+static int sim_input_pending(void *ctx)
+{
+    ct_sim_t *s = (ct_sim_t *)ctx;
+    if (s->input_fn != NULL) {
+        return s->input_fn(s->input_user);
+    }
+    if (s->input_after_polls == 0u) {
+        return 0;
+    }
+    s->input_polls++;
+    return s->input_polls >= s->input_after_polls;
 }
 
 static void sim_emit(void *ctx, const char *str, size_t len)
@@ -292,6 +318,8 @@ ct_device_t ct_sim_device(ct_sim_t *s)
     d.emit             = sim_emit;
     d.die_temp_c10     = sim_temp;
     d.abort_requested  = sim_abort;
+    d.input_pending    = sim_input_pending;
+    d.now_ms           = sim_now_ms;
     d.ctx              = s;
     return d;
 }

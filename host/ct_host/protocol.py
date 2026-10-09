@@ -14,6 +14,7 @@ module:
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Callable, Iterable, Sequence
 
@@ -22,7 +23,7 @@ from .csvio import (EXPECTED_COLUMNS, Columns, End, Error, MetaLine, Metadata,
 from .transport import Transport
 
 __all__ = ["SweepRequest", "CommandError", "SweepAborted",
-           "run_sweep", "identify", "get_params", "send_and_check"]
+           "run_sweep", "run_hold", "identify", "get_params", "send_and_check"]
 
 
 class CommandError(RuntimeError):
@@ -178,6 +179,97 @@ def run_sweep(
     if raise_on_abort and end_reason != "ok":
         raise SweepAborted(end_reason, sweep)
     return sweep
+
+
+def run_hold(
+    transport: Transport,
+    vds: float,
+    request: SweepRequest | None = None,
+    *,
+    rows: int | None = None,
+    seconds: float | None = None,
+    on_row: Callable[[Row], None] | None = None,
+    timeout: float | None = 30.0,
+    clock: Callable[[], float] = time.monotonic,
+) -> Sweep:
+    """``HOLD <vds>``: hold one drain level, then ``STOP``.
+
+    The firmware reports one row per second at the gate set by the single
+    ``vgs_list`` entry (``request.vgs_list``). The current limit is checked on
+    every measurement in between, and a trip ends the hold by itself with a
+    flagged row and ``ilimit``. Otherwise this sends ``STOP`` once ``rows``
+    report rows have arrived or ``seconds`` have passed since the first,
+    whichever comes first, then reads to ``# end:``.
+
+    The STOP's own acknowledgement (``# stop: requested``) follows the end
+    line and is consumed here, so the link is clean for the next command.
+    Returns the transcript as a :class:`Sweep` whose ``mode`` is ``hold``.
+    """
+    if rows is None and seconds is None:
+        raise ValueError("run_hold needs rows= or seconds=, or it never ends")
+    if request is not None:
+        for command in request.commands():
+            send_and_check(transport, command, timeout=timeout)
+
+    transport.send(f"HOLD {_fmt(vds)}")
+
+    raw_lines: list[str] = []
+    meta_items: list[tuple[str, str]] = []
+    meta_lines: list[str] = []
+    got: list[Row] = []
+    errors: list[str] = []
+    columns = None
+    end_reason: str | None = None
+    stop_sent = False
+    first_row_at: float | None = None
+
+    def tapped() -> Iterable[str]:
+        for line in transport.lines(timeout=timeout):
+            raw_lines.append(line)
+            yield line
+
+    for event in parse_stream(tapped(), strict=True):
+        if isinstance(event, MetaLine):
+            meta_items.append((event.key, event.value))
+            meta_lines.append(event.raw)
+        elif isinstance(event, Columns):
+            columns = event.names
+        elif isinstance(event, Row):
+            got.append(event)
+            if on_row is not None:
+                on_row(event)
+            now = clock()
+            if first_row_at is None:
+                first_row_at = now
+            done = ((rows is not None and len(got) >= rows) or
+                    (seconds is not None and now - first_row_at >= seconds))
+            if done and not stop_sent:
+                transport.send("STOP")
+                stop_sent = True
+        elif isinstance(event, Error):
+            if columns is None:
+                raise CommandError(f"HOLD {_fmt(vds)} rejected: {event.text}")
+            errors.append(event.text)
+        elif isinstance(event, End):
+            end_reason = event.reason
+            break
+
+    if stop_sent:
+        for line in transport.lines(timeout=timeout):
+            if line.startswith("# stop:"):
+                break
+
+    hold = Sweep(
+        meta=Metadata(meta_items, meta_lines),
+        rows=got,
+        columns=columns if columns is not None else EXPECTED_COLUMNS,
+        errors=tuple(errors),
+        end_reason=end_reason,
+        raw_text="".join(line + "\r\n" for line in raw_lines),
+    )
+    if end_reason is None:
+        hold.require_complete()
+    return hold
 
 
 def identify(transport: Transport, *, timeout: float | None = 10.0) -> dict[str, str]:

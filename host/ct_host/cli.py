@@ -1,6 +1,7 @@
-"""Command line: capture, plot, extract, model.
+"""Command line: capture, hold, plot, extract, model.
 
     python -m ct_host capture --sim mosfet -o data/run.csv
+    python -m ct_host hold    --sim resistor --vds 5 --seconds 10 -o data/hold.csv
     python -m ct_host extract data/run.csv --type mosfet
     python -m ct_host model   data/run.csv --type mosfet --name 2N7000_EXT
     python -m ct_host plot    data/run.csv --save iv.png
@@ -20,7 +21,7 @@ from pathlib import Path
 from .csvio import Sweep, parse, save
 from .dataset import vds_delta_report
 from .extract import FitError, extract_diode, extract_mosfet
-from .protocol import SweepRequest, run_sweep
+from .protocol import SweepRequest, run_hold, run_sweep
 from .recompute import CalibrationMismatch, recompute
 from .spice import diode_model_card, mosfet_model_card
 from .transport import SimTransport, TransportError, list_serial_ports
@@ -127,6 +128,35 @@ def cmd_capture(args: argparse.Namespace) -> int:
     if live is not None and args.save_plot:
         live.save(args.save_plot)
         print(f"wrote {args.save_plot}", file=sys.stderr)
+    return 0
+
+
+def cmd_hold(args: argparse.Namespace) -> int:
+    request = SweepRequest(
+        device=args.device,
+        date=_dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        vgs_list=[args.vgs], oversample_n=args.oversample,
+        settle_us=args.settle_us, i_limit_ma=args.i_limit,
+    )
+    with _open_transport(args) as transport:
+        source_description = transport.description
+        print(f"source: {source_description}", file=sys.stderr)
+        print(f"holding {args.vds} V at vgs {args.vgs} V for {args.seconds} s",
+              file=sys.stderr)
+
+        def show(row) -> None:
+            print(f"  t={row.point:>4d} s  vds_meas {row.vds_meas_v:7.3f} V  "
+                  f"i_meas {row.i_meas_ma:8.3f} mA  {row.flags}", file=sys.stderr)
+
+        hold = run_hold(transport, args.vds, request, seconds=args.seconds,
+                        on_row=show)
+
+    if hold.end_reason == "ilimit":
+        print(f"\nNOTE: hold ended 'ilimit' -- the current passed {args.i_limit or 60} mA "
+              f"and the drain was zeroed.", file=sys.stderr)
+    out = save(hold, args.output, source=source_description)
+    print(f"\nwrote {out}  ({len(hold.rows)} rows, end {hold.end_reason})",
+          file=sys.stderr)
     return 0
 
 
@@ -238,6 +268,20 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--live", action="store_true", help="plot as it arrives")
     p.add_argument("--save-plot", metavar="PNG")
     p.set_defaults(func=cmd_capture)
+
+    p = sub.add_parser("hold", help="hold one drain level, one row per second")
+    _source_args(p)
+    p.add_argument("--vds", type=float, required=True, help="drain level to hold, V")
+    p.add_argument("--vgs", type=float, default=0.0, help="gate level, V (default 0)")
+    p.add_argument("--seconds", type=float, default=30.0,
+                   help="how long to hold before STOP (default 30)")
+    p.add_argument("--device", help="part name recorded in the header")
+    p.add_argument("--oversample", type=int)
+    p.add_argument("--settle-us", type=int)
+    p.add_argument("--i-limit", type=float, metavar="MA",
+                   help="DUT protection ceiling in mA")
+    p.add_argument("-o", "--output", required=True)
+    p.set_defaults(func=cmd_hold)
 
     p = sub.add_parser("extract", help="extract parameters from a CSV")
     p.add_argument("csv")

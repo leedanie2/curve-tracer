@@ -75,7 +75,7 @@ entry). Read every Sim figure below with that in mind.
 | <a id="j4"></a>J4 | Range select, sense | 2×3 header | Capture C-1, **accepted 2026-10-06** | Same footprint and silkscreen as J3 | — |
 | <a id="nt1"></a>NT1 | Net tie, SHUNT_LO | — | **Capture C-2** | Kelvin tap at R12's pad (§14.5(6)) | — |
 | <a id="j6"></a>J6 | DUT socket | 3-pin screw terminal, 5.0 mm | Blueprint §3.6 ("3-pin ZIF or screw terminal, clearly labeled G/D/S"), §14.4 | Pin 1 G, 2 D, 3 S | — |
-| <a id="d3"></a>D3 | Output clamp | **DNP, type open** | Blueprint §14.6 | Footprint for §3.6's +48% short-recovery overshoot: 14.8 V at the socket on a 10 V setpoint (sim 10, peak trustworthy, duration not). Mitigation unresolved — open O-3 | **H4**: bench-verify the overshoot magnitude (§3.6) |
+| <a id="d3"></a>D3 | Output clamp | **DNP, type open** | Blueprint §14.6 | Footprint for §3.6's +48% short-recovery overshoot: 14.8 V at the socket on a 10 V setpoint (sim 10, peak trustworthy, duration not). Mitigation unresolved — open O-3. **Fit threshold (Daniel, 2026-10-09): 12 V peak at the DUT node.** §1 caps the instrument at 10 V and every DUT is selected against that ceiling; sim 10 measured 14.8 V at 100 pF. 12 V gives 20% headroom over spec while still catching the structural overshoot. **The part is still open (O-3):** a step-15 failure needs one chosen before it can be fitted | **H4 step 15** (`H4_CARD.md`): peak ≤ 12.0 V, record and continue; > 12.0 V, fit D3 |
 | <a id="j5"></a>J5 | Kelvin leads | 1×2 header | Blueprint §14.4 | — | — |
 
 ## Current sense — blueprint §3.3

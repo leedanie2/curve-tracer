@@ -235,6 +235,30 @@ static int hal_abort(void *ctx)
     return s_abort;
 }
 
+/* HOLD's "until STOP or another command": anything left in the receive ring.
+ * Main thread only, the ring's sole consumer, so peeking at the tail is safe
+ * against the ISR producer. Leading CR/LF is consumed: the host terminates
+ * lines CRLF, the CR already ran the HOLD line, and the LF would otherwise
+ * end the hold at once. A blank line is a no-op to the parser anyway. */
+static int hal_input_pending(void *ctx)
+{
+    (void)ctx;
+    while (s_rx_head != s_rx_tail) {
+        uint8_t c = s_rx[s_rx_tail];
+        if (c != (uint8_t)'\r' && c != (uint8_t)'\n') {
+            return 1;
+        }
+        s_rx_tail = (s_rx_tail + 1u) % RX_SIZE;
+    }
+    return 0;
+}
+
+static uint32_t hal_now_ms(void *ctx)
+{
+    (void)ctx;
+    return HAL_GetTick();
+}
+
 ct_device_t ct_hal_device(void)
 {
     ct_device_t d;
@@ -246,6 +270,8 @@ ct_device_t ct_hal_device(void)
     d.emit             = hal_emit;
     d.die_temp_c10     = hal_die_temp;
     d.abort_requested  = hal_abort;
+    d.input_pending    = hal_input_pending;
+    d.now_ms           = hal_now_ms;
     d.ctx              = NULL;
     return d;
 }

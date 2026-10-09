@@ -4,6 +4,7 @@
 
 #include "ct_csv.h"
 #include "ct_fmt.h"
+#include "ct_hold.h"
 #include "ct_sweep.h"
 
 static char lower(char c)
@@ -143,7 +144,8 @@ static void cmd_get(ct_cmd_ctx_t *c)
 
 static void cmd_help(ct_cmd_ctx_t *c)
 {
-    ct_csv_write_line(c->dev, "# commands: ID GET SET SWEEP STOP HELP");
+    ct_csv_write_line(c->dev, "# commands: ID GET SET SWEEP HOLD STOP HELP");
+    ct_csv_write_line(c->dev, "# hold: HOLD <vds> holds the drain at vgs_list's one entry until STOP");
     ct_csv_write_line(c->dev, "# set: settle_us n oversample_n i_limit_ma vds_max vgs_list device date");
     ct_csv_write_line(c->dev, "# range is fixed at 1 in this build");
 }
@@ -229,6 +231,31 @@ static void cmd_set(ct_cmd_ctx_t *c, char *rest)
     }
 }
 
+static void cmd_hold(ct_cmd_ctx_t *c, char *rest)
+{
+    char *arg = next_token(&rest);
+    if (arg == NULL) {
+        ct_csv_write_error(c->dev, "HOLD needs a voltage");
+        return;
+    }
+    if (next_token(&rest) != NULL) {
+        ct_csv_write_error(c->dev, "HOLD takes one value");
+        return;
+    }
+    float vds;
+    if (!ct_parse_f(arg, &vds)) {
+        ct_csv_write_error(c->dev, "HOLD voltage out of range (0..10.96)");
+        return;
+    }
+    const char *why = ct_hold_check(c->params, vds);
+    if (why != NULL) {
+        ct_csv_write_error(c->dev, why);
+        return;
+    }
+    ct_hold_status_t st;
+    ct_hold_run(c->dev, c->params, vds, &st);
+}
+
 void ct_cmd_execute(ct_cmd_ctx_t *c, const char *line)
 {
     char  work[CT_CMD_LINE_MAX];
@@ -255,9 +282,12 @@ void ct_cmd_execute(ct_cmd_ctx_t *c, const char *line)
     } else if (ieq(verb, "SWEEP")) {
         ct_sweep_status_t st;
         ct_sweep_run(c->dev, c->params, &st);
+    } else if (ieq(verb, "HOLD")) {
+        cmd_hold(c, rest);
     } else if (ieq(verb, "STOP")) {
-        /* Only meaningful mid-sweep, which means it is handled by the device
-         * layer's abort_requested hook while ct_sweep_run is executing. */
+        /* Mid-HOLD, the arrival of these bytes is what ended the hold (the
+         * input_pending hook); mid-sweep only Ctrl-C reaches the engine. Either
+         * way, by the time the parser sees STOP there is nothing to stop. */
         ct_csv_write_info(c->dev, "stop", "requested");
     } else if (ieq(verb, "HELP")) {
         cmd_help(c);

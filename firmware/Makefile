@@ -15,10 +15,10 @@ LDLIBS   = -lm
 
 BUILD    = build
 
-CORE_SRC = core/ct_fmt.c core/ct_params.c core/ct_csv.c core/ct_sweep.c core/ct_cmd.c
+CORE_SRC = core/ct_fmt.c core/ct_params.c core/ct_csv.c core/ct_sweep.c core/ct_hold.c core/ct_cmd.c
 SIM_SRC  = sim/ct_sim_device.c
 
-TESTS    = test_sweep test_csv test_params
+TESTS    = test_sweep test_csv test_params test_hold
 TEST_BIN = $(addprefix $(BUILD)/,$(TESTS))
 
 .PHONY: all test demo clean

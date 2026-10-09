@@ -51,6 +51,19 @@ typedef struct ct_device {
      * Polled once per point. May be NULL, meaning "never aborts". */
     int (*abort_requested)(void *ctx);
 
+    /* True if the host has sent a command since the current one began. HOLD
+     * polls it: on a link where a running command blocks the parser, "until
+     * STOP or another command" can only mean "until a byte arrives". The
+     * byte stays queued and is parsed once HOLD returns. Implementations
+     * discard pending bare CR/LF first, so the LF of the CRLF that started
+     * HOLD does not end it. May be NULL, meaning "never". */
+    int (*input_pending)(void *ctx);
+
+    /* Milliseconds from any fixed origin; may wrap. HOLD paces its report
+     * rows with it. May be NULL, in which case HOLD reports every
+     * measurement. */
+    uint32_t (*now_ms)(void *ctx);
+
     void *ctx;
 } ct_device_t;
 

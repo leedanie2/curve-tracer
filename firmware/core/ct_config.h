@@ -88,6 +88,12 @@
 #define CT_VGS_LIST_MAX         16u
 #define CT_VGS_MAX              10.96f
 
+/* HOLD: one report row per this many milliseconds. The current limit is
+ * checked on every measurement in between, as the sweep checks every point. */
+#define CT_HOLD_REPORT_MS       1000u
+#define CT_HOLD_VDS_MIN         0.0f
+#define CT_HOLD_VDS_MAX         CT_VDS_MAX_MAX
+
 /* String field sizes, including the terminator. */
 #define CT_DEVICE_LEN           32u
 #define CT_DATE_LEN             32u

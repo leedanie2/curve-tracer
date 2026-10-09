@@ -55,6 +55,13 @@ typedef struct {
 void ct_csv_write_header(const ct_device_t *dev, const ct_params_t *p,
                          int16_t die_temp_c10);
 
+/* The same block with an explicit mode. A HOLD block passes "hold" and the
+ * commanded level, which is written as "# hold_vds_set_v:" before the column
+ * header. Pass a negative hold_vds_set_v for none. */
+void ct_csv_write_header_mode(const ct_device_t *dev, const ct_params_t *p,
+                              int16_t die_temp_c10, const char *mode,
+                              float hold_vds_set_v);
+
 /* Write one data row. */
 void ct_csv_write_row(const ct_device_t *dev, const ct_csv_row_t *row);
 

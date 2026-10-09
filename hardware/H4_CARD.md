@@ -16,13 +16,21 @@ Record column.
 - Supply output OFF before touching any part.
 - Steps run in order. Stop only at a ■ STOP POINT.
 
-**Commands** run from `host/` with `P` set. `CAP` means:
+**Commands** run from `host/` with `P` set. `CAP` means
 
 ```
 python -m ct_host capture --port $P --vgs 0
 ```
 
-followed by the flags in the step.
+and `HOLD` means
+
+```
+python -m ct_host hold --port $P
+```
+
+each followed by the flags in the step. HOLD keeps the level until its
+`--seconds` run out, printing one line a second: **"t = N s" on that
+printout is the step's clock**. No stopwatch. `--vgs` defaults to 0.
 
 ---
 
@@ -99,32 +107,37 @@ It is data, not a stop.
 ■ **STOP POINT C** (~20 min): output OFF, USB. The loop result is now on
 paper.
 
-## Block 3: calibration and protection (≈ 15 min). J6 open, Kelvin pair on.
+## Block 3: calibration and protection (≈ 10 min). J6 open, Kelvin pair on.
 
 | # | min | Do | Expect | Pass | Record | Fail → |
 |---|---|---|---|---|---|---|
 | 8 | 2 | **ADC zero.** Remove L1. `CAP --vds-max 1 --n 2 --settle-us 100000 -o h4/08_zero.csv`, then `grep -v '^#' h4/08_zero.csv \| head -1 \| cut -d, -f4,5` (prints vds_meas_v, i_meas_ma at 0 V) | ~0, ~0 | \|v\| ≤ 0.008 V; \|i\| ≤ 0.10 mA | v = ____ V ; i = ____ mA | Record, continue |
 | 9 | 1 | **+3V3, clamp conducting.** Unplug the Kelvin pair at J5, wait 5 s, DMM TP8 to TP9, plug back | 3.30 V | 3.20–3.40 V | ____ V | Plug J5 back at once, record, continue |
-| 10 | 2 | **Zener knee.** `CAP --vgs 10.95 --vds-max 0.1 --n 10 --settle-us 1000000 -o h4/10_zener.csv` (the `--vgs` overrides CAP's 0; 10 s). During it, DMM red TP16, black TP18 | ~0 mV | ≤ 10 mV | ____ mV | Record, continue |
-| 11 | 2 | **Q3 drop under load.** Fit L1. `CAP --vds-max 6 --n 31 --settle-us 1000000 -o h4/11_q3.csv` (31 s). DMM red TP28, black TP7: record the last reading before it falls at the end, and the supply current at the same moment | ≤ 6 mV at ~34 mA | ≤ 7 mV | V = ____ mV ; I = ____ mA | Record, continue |
-| 12 | 2 | **R_PTC.** Same command → `h4/12_rptc.csv`. DMM red TP5, black TP17: last reading before the fall | 40–400 mV at ~26 mA | 1.6–15 Ω (off-bench: V / last-row i_meas) | V = ____ mV | Record, continue |
+| 10 | 1 | **Zener knee.** `HOLD --vgs 10.95 --vds 0.1 --seconds 20 -o h4/10_zener.csv`. At host **t = 10 s**: DMM red TP16, black TP18 | ~0 mV | ≤ 10 mV | ____ mV | Record, continue |
+| 11 | 1 | **Q3 drop under load.** Fit L1. `HOLD --vds 6 --seconds 20 -o h4/11_q3.csv`. At **t = 10 s**: DMM red TP28, black TP7; supply current; the host's i_meas | ≤ 6.5 mV at ~34 mA | ≤ 7 mV | V = ____ mV ; I_supply = ____ mA ; i_meas = ____ mA | Record, continue |
+| 12 | 1 | **R_PTC.** `HOLD --vds 6 --seconds 20 -o h4/12_rptc.csv`. At **t = 10 s**: DMM red TP5, black TP17; the host's i_meas | 40–400 mV at ~26 mA | R = V / i_meas in 1.6–15 Ω | V = ____ mV ; i = ____ mA ; R = ____ Ω | Record, continue |
 | 13 | 3 | **Reverse polarity, J1.** Output OFF; disconnect the J2 leads; limit **20 mA**; connect the reversed barrel lead to J1. Output ON for 5 s: read the supply current and TP7 to TP27. Output OFF, remove the lead, reconnect J2, limit back to **100 mA** | 0 mA ; 0.00 V | ≤ 1 mA ; ≤ ±0.10 V | I = ____ ; V = ____ | Output OFF → record → **STOP**, end session |
 
-■ **STOP POINT D** (~15 min): output OFF, USB.
+■ **STOP POINT D** (~10 min): output OFF, USB.
 
-## Block 4: held short (≈ 15 min). Only with P4 done.
+## Block 4: held short (≈ 8 min). Only with P4 done.
 
 Supply limit **150 mA**. J6: L1 off, **jumper D–S on**. Kelvin pair on.
 Scope CH1 on TP3: AC, 50 mV/div, 1 µs/div, trigger auto.
 
 | # | min | Do | Expect | Pass | Record | Fail → |
 |---|---|---|---|---|---|---|
-| 14 | 5 | `CAP --vds-max 10.96 --n 250 --settle-us 1000000 --i-limit 165 -o h4/14_short.csv` (~4.2 min; ends by itself). Start a stopwatch when the supply current jumps to ~115 mA (t = 0) | — | Jump occurs within 90 s | t0 clock time ____ | No jump by 90 s → record, → 15 |
-| 14a | — | t ≈ 5 s: DMM red **TP3**, black **TP4** (R_sense) | 0.752 V (sim 11) | 0.68–0.83 V | V_cold = ____ | Record, continue |
-| 14b | — | t ≈ 20 s: DMM red **TP1**, black **TP2** (R_B) | ~10.6 V (32 mA, sim 10) | ≤ 14.85 V (≤ 45 mA) | V_RB = ____ | Record, continue |
-| 14c | — | t ≈ 30 s: supply current; scope p-p on TP3 | ~115 mA ; < 10 mV | 100–130 mA ; < 20 mV | I = ____ ; p-p = ____ | Record, continue |
-| 14d | — | t = 180 s: TP3–TP4 again; thermometer on the heatsink at the tab | ≤ V_cold ; ~45 °C | ≥ 0.60 V ; ≤ 70 °C | V_warm = ____ ; T = ____ °C | **T > 70 °C: output OFF at once** → record → **STOP** |
-| 15 | 4 | **Short recovery.** Scope CH1 → **TP19**, DC, 2 V/div, 1 µs/div, trigger rising 12 V, **single**. `CAP --vds-max 10 --n 100 --settle-us 1000000 --i-limit 165 -o h4/15_recovery.csv`. At t = 92 s from the run's start (setpoint ≥ 9.1 V), pull the jumper | ≈ 14.8 V peak (sim 10, +48%) | No threshold: this feeds the D3 decision, off-bench | peak = ____ V ; time to 1% = ____ µs | — |
+| 14 | 4 | `HOLD --vds 10.96 --seconds 200 --i-limit 165 -o h4/14_short.csv`. The jumper is on, so the limiter is engaged from the first row. The host's t is the clock; the hold ends itself at 200 s. At **t = 5 s**: supply current | ~115 mA (107 load + idle, sim 10) | 100–130 mA | I = ____ mA | Output OFF, record, → 15 |
+| 14a | — | **t = 10 s**: DMM red **TP3**, black **TP4** (R_sense) | 0.752 V (sim 11) | 0.68–0.83 V | V_cold = ____ | Record, continue |
+| 14b | — | **t = 20 s**: DMM red **TP1**, black **TP2** (R_B) | ~10.6 V (32 mA, sim 10) | ≤ 14.85 V (≤ 45 mA) | V_RB = ____ | Record, continue |
+| 14c | — | **t = 30 s**: scope p-p on TP3; the host's i_meas | < 10 mV ; ~107 mA | < 20 mV ; 95–120 mA | p-p = ____ ; i = ____ | Record, continue |
+| 14d | — | **t = 180 s**: TP3–TP4 again; thermometer on the heatsink at the tab | ≤ V_cold ; ~45 °C | ≥ 0.60 V ; ≤ 70 °C | V_warm = ____ ; T = ____ °C | **T > 70 °C: output OFF at once** → record → **STOP** |
+| 15 | 2 | **Short recovery.** Jumper on. Scope CH1 → **TP19** (DUT_D), DC, 2 V/div, 1 µs/div, trigger rising **10.5 V**, single, armed. `HOLD --vds 10 --seconds 60 --i-limit 165 -o h4/15_recovery.csv`. Any time after host t = 5 s, **pull the jumper**. Read the peak | ≈ 14.8 V (sim 10, +48% at 100 pF) | **≤ 12.0 V** | peak = ____ V (no trigger: write "< 10.5") | **> 12.0 V: D3 needed.** Record; the part is not chosen yet (DECISIONS O-3), so the fit is off-bench. Continue |
+
+**Step 15 threshold** (Daniel, 2026-10-09). §1 caps the instrument at 10 V,
+and every DUT is selected against that ceiling. Sim 10 measured 14.8 V at
+100 pF. So 12 V is 20% headroom over spec while still catching the
+structural overshoot. Below 12 V, record and continue; above it, fit D3.
 
 ■ **STOP POINT E**: supply output OFF, USB. Session complete. Hand back
 this sheet and `h4/`.

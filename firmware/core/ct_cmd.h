@@ -5,6 +5,7 @@
  *   GET                 dump every parameter as "# name: value"
  *   SET <name> <value>  assign; "# ok: ..." or "! err: ..."
  *   SWEEP               run a sweep, emitting a full CSV block
+ *   HOLD <vds>          hold one drain level until STOP or any other input
  *   STOP                request abort (handled by the device layer)
  *   HELP                command list
  *

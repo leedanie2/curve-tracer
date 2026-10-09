@@ -6,7 +6,7 @@ which has no STM32 dependency and is tested on the host against a modelled
 DUT — see [Testing without hardware](#testing-without-hardware).
 
 ```
-core/    portable sweep engine, CSV writer, parameters, command parser
+core/    portable sweep and HOLD engines, CSV writer, parameters, command parser
 sim/     modelled DUT + a host binary that speaks the same protocol
 tests/   C suites for the engine and format, pytest for the CSV contract
 stm32/   CubeIDE project: HAL glue, peripheral init, interrupts
@@ -198,9 +198,9 @@ that ordering explicitly rather than trusting it.
 
 | Reason | Meaning |
 |---|---|
-| `ok` | ran to completion |
+| `ok` | ran to completion (SWEEP only) |
 | `ilimit` | aborted, firmware current limit |
-| `stopped` | aborted, host sent STOP |
+| `stopped` | SWEEP: aborted by Ctrl-C. HOLD: ended by STOP, Ctrl-C or any other command; this is HOLD's normal end |
 
 A transcript without an `# end:` line is **truncated** — treat it as a failed
 capture, not a short sweep.
@@ -247,8 +247,50 @@ terminated by CR, LF or CRLF.
 | `GET` | every parameter, one `# name: value` per line |
 | `SET <name> <value>` | assign; replies `# ok: name=value` or `! err: ...` |
 | `SWEEP` | run a sweep, emitting a full CSV block |
-| `STOP` | abort a running sweep (also Ctrl-C, 0x03) |
+| `HOLD <vds>` | hold the drain at one level until STOP or any other command, one row per second ([HOLD](#hold)) |
+| `STOP` | end a HOLD. A running **SWEEP** is aborted only by **Ctrl-C (0x03)**: the parser is blocked while a command runs, so a typed `STOP` waits in the receive queue until the sweep finishes |
 | `HELP` | command list |
+
+### HOLD
+
+`HOLD <vds>` sets the sweep DAC to `<vds>` (0–10.96 V) and the gate DAC to
+`vgs_list`'s **single** entry, and keeps them there. It exists for the bench,
+where a level has to stay put long enough to read with a meter. A sweep
+point lasts at most `settle_us` = 1 s, and the drain returns to zero at the
+end. To hold a gate level, `SET vgs_list 10.95` first.
+
+- **Gate.** `vgs_list` must have exactly one entry. With more, HOLD is
+  rejected (`! err: HOLD needs vgs_list with exactly one entry`) rather than
+  guessing which to use. The DACs are not touched.
+- **Current limit, as the sweep does it.** The current is measured every
+  `settle_us` (oversampled `oversample_n` times) and checked against
+  `i_limit_ma` on **every** measurement, not only the reported ones. On
+  exceedance the drain DAC is zeroed **before** the offending measurement is
+  emitted, flagged `ilimit`, and HOLD ends with `# end: ilimit`.
+- **Reporting.** One row per second (`CT_HOLD_REPORT_MS`), the first after
+  the first `settle_us`, so a HOLD always reports at least one row. `point`
+  counts reported rows. The rows are ordinary CSV rows; `vds_set_v` is the
+  level the DAC code actually commands.
+- **Ending.** STOP, Ctrl-C, or **any other command** ends it with
+  `# end: stopped`; both DACs go to zero. The command that ended it is
+  then executed normally (STOP replies `# stop: requested`). A bare CR or LF
+  does not end it: the host's CRLF would otherwise end the hold at once.
+- **Header.** The usual block, with `# mode: hold` (SWEEP says `dc`) and
+  `# hold_vds_set_v:` before the column header. `n` and `vds_max` are
+  printed as the current parameter values; HOLD does not use them.
+
+```
+SET vgs_list 0
+SET i_limit_ma 60
+HOLD 5
+...rows, one per second...
+STOP
+```
+
+From the host: `python -m ct_host hold --port <port> --vds 5 --seconds 30 -o
+hold.csv`, or `ct_host.protocol.run_hold()`. Against the simulator its clock
+is simulated, so "one per second" means simulated seconds and rows arrive far
+faster than that.
 
 ### Settable parameters
 
@@ -341,9 +383,10 @@ to exercise the sweep engine, the CSV writer and the current limit.
 | `test_sweep.c` | row counts, header ordering, **limit fires**, **DAC zeroed before emit**, STOP, settle called per point, ramp endpoints, accumulator semantics, the `vds` delta |
 | `test_csv.c` | row shape, field count, float formatting and rounding, buffer-overflow safety, framing rule, CRLF, metadata presence |
 | `test_params.c` | bounds rejection, `vgs_list` parsing, unit conversions, command parsing, line framing, overlong lines |
+| `test_hold.c` | HOLD: held levels and one report per second, **limit checked between reports**, **DAC zeroed before the flagged row**, rejection without touching the DACs (bad value, two gate values), Ctrl-C, the no-clock fallback, SWEEP still `dc` |
 | `test_csv_contract.py` | the format as a naive Python host consumes it, **no truncation on a full-size family**, **output streams rather than arriving in one block** |
 
-Current status: **176 C checks and 16 pytest cases, all passing.**
+Current status: **230 C checks and 16 pytest cases, all passing** (2026-10-09).
 
 ---
 

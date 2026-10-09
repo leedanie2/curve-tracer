@@ -34,10 +34,11 @@ void USART2_IRQHandler(void)
         char c = (char)(huart2.Instance->RDR & 0xFFu);
         ct_hal_rx_byte(c);
 
-        /* A lone Ctrl-C or the literal word STOP both need to reach a
-         * running sweep, which is inside ct_sweep_run and not reading the
-         * command queue. Set the abort flag here so the engine's poll sees
-         * it on the next point. */
+        /* Ctrl-C has to reach a running sweep, which is inside ct_sweep_run
+         * and not reading the command queue, so it sets the abort flag here
+         * for the engine's poll. The typed word STOP does NOT abort a sweep:
+         * it waits in the queue. It does end a HOLD, which polls the queue
+         * through input_pending. */
         if (c == 0x03) {
             ct_hal_set_abort(1);
         }

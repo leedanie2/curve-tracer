@@ -8,9 +8,15 @@
  *   echo "SWEEP" | ./ct_sim --dut mosfet
  *   printf 'SET n 20\nSET vgs_list 2.5,3.0\nSWEEP\n' | ./ct_sim
  */
+/* select(), fileno() and STDIN_FILENO are POSIX, hidden by -std=c11. */
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 #include "ct_cmd.h"
 #include "ct_csv.h"
@@ -47,8 +53,36 @@ static void usage(void)
         "              [--is A] [--n-diode N] [--rs OHM] [--rload OHM]\n"
         "              [--rptc OHM] [--rdiv OHM]\n"
         "\n"
-        "Reads commands on stdin (ID GET SET SWEEP STOP HELP), writes CSV to\n"
+        "Reads commands on stdin (ID GET SET SWEEP HOLD STOP HELP), writes CSV to\n"
         "stdout. See firmware/README.md for the wire format.\n");
+}
+
+/* HOLD ends when the host sends anything. stdin is unbuffered (see main), so
+ * select() sees exactly what the parser has not yet read. A bare CR or LF is
+ * consumed and ignored: it is the tail of the line that started HOLD, or a
+ * blank line, which the parser would ignore anyway. EOF counts as input, so
+ * a piped script that ends during a HOLD does not hang. */
+static int stdin_input_pending(void *user)
+{
+    (void)user;
+    for (;;) {
+        fd_set fds;
+        FD_ZERO(&fds);
+        FD_SET(STDIN_FILENO, &fds);
+        struct timeval tv = {0, 0};
+        if (select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv) <= 0) {
+            return 0;
+        }
+        int c = fgetc(stdin);
+        if (c == EOF) {
+            return 1;
+        }
+        if (c == '\r' || c == '\n') {
+            continue;
+        }
+        ungetc(c, stdin);
+        return 1;
+    }
 }
 
 int main(int argc, char **argv)
@@ -101,6 +135,9 @@ int main(int argc, char **argv)
             return 2;
         }
     }
+
+    setvbuf(stdin, NULL, _IONBF, 0);
+    sim.input_fn = stdin_input_pending;
 
     ct_sim_set_sink(&sim, stdout_sink, NULL);
     ct_device_t dev = ct_sim_device(&sim);

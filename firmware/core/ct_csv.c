@@ -81,6 +81,13 @@ static void info_f(const ct_device_t *dev, const char *key, float v, unsigned dp
 void ct_csv_write_header(const ct_device_t *dev, const ct_params_t *p,
                          int16_t die_temp_c10)
 {
+    ct_csv_write_header_mode(dev, p, die_temp_c10, "dc", -1.0f);
+}
+
+void ct_csv_write_header_mode(const ct_device_t *dev, const ct_params_t *p,
+                              int16_t die_temp_c10, const char *mode,
+                              float hold_vds_set_v)
+{
     char   buf[CT_CSV_LINE_MAX];
     size_t pos;
 
@@ -101,7 +108,7 @@ void ct_csv_write_header(const ct_device_t *dev, const ct_params_t *p,
     }
 
     info_u32(dev, "range", (uint32_t)p->range);
-    ct_csv_write_info(dev, "mode", "dc");
+    ct_csv_write_info(dev, "mode", mode);
 
     /* Die temperature, explicitly labelled. This is NOT the DUT temperature
      * and NOT ambient — see firmware/README.md. */
@@ -147,6 +154,10 @@ void ct_csv_write_header(const ct_device_t *dev, const ct_params_t *p,
     info_f(dev, "cal_vref",         CT_VREF,         3u);
     info_u32(dev, "cal_adc_full_scale", (uint32_t)CT_ADC_FULL_SCALE);
     info_u32(dev, "cal_dac_full_scale", (uint32_t)CT_DAC_FULL_SCALE);
+
+    if (hold_vds_set_v >= 0.0f) {
+        info_f(dev, "hold_vds_set_v", hold_vds_set_v, DP_VOLTS);
+    }
 
     ct_csv_write_info(dev, "columns", CT_CSV_COLUMNS);
     ct_csv_write_line(dev, CT_CSV_COLUMNS);
