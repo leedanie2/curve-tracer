@@ -174,6 +174,7 @@ checked at LCSC on 2026-10-07.
 | | 4.7 pF | FH 0603CG4R7B500NT | C313086 | 3,400 | 100 (min) |
 | R_iso up, axial 1 W 1% | 47 Ω | TyoHM RN1WS47ΩFT/BA1 | C385394 | 740 | 20 (min) |
 | U1 fallback | OPA2196 | TI OPA2196ID | C2878263 | 21 | 2 |
+| D3, if H4 step 15 fails | TVS 12 V standoff, SMA, unidirectional | MDD SMAJ12A | C113957 | 78,080 (JLC 126,199) | 20 (min) |
 
 - **Tolerance.** FH's "B" code and Murata's "B" are both ±0.1 pF (FH
   datasheet code table). FH's own 3.9 pF (C2836772) is out of stock, hence
@@ -188,6 +189,9 @@ checked at LCSC on 2026-10-07.
     2026-10-09.
 - **OPA2196IDR** (C2057972, cut tape, 275 in stock) is the same part if
   the tube stock goes.
+- **SMAJ12A** clamps at ~13.3–14.8 V at this circuit's ≤ ~0.1 A, its
+  breakdown voltage, not at 12 V (`DECISIONS.md` D3). Cathode (band) to
+  DUT_D, which is D3's pad 1: the +y pad, at y = 78 mm.
 
 ---
 

@@ -75,7 +75,7 @@ entry). Read every Sim figure below with that in mind.
 | <a id="j4"></a>J4 | Range select, sense | 2×3 header | Capture C-1, **accepted 2026-10-06** | Same footprint and silkscreen as J3 | — |
 | <a id="nt1"></a>NT1 | Net tie, SHUNT_LO | — | **Capture C-2** | Kelvin tap at R12's pad (§14.5(6)) | — |
 | <a id="j6"></a>J6 | DUT socket | 3-pin screw terminal, 5.0 mm | Blueprint §3.6 ("3-pin ZIF or screw terminal, clearly labeled G/D/S"), §14.4 | Pin 1 G, 2 D, 3 S | — |
-| <a id="d3"></a>D3 | Output clamp | **DNP, type open** | Blueprint §14.6 | Footprint for §3.6's +48% short-recovery overshoot: 14.8 V at the socket on a 10 V setpoint (sim 10, peak trustworthy, duration not). Mitigation unresolved — open O-3. **Fit threshold (Daniel, 2026-10-09): 12 V peak at the DUT node.** §1 caps the instrument at 10 V and every DUT is selected against that ceiling; sim 10 measured 14.8 V at 100 pF. 12 V gives 20% headroom over spec while still catching the structural overshoot. **The part is still open (O-3):** a step-15 failure needs one chosen before it can be fitted | **H4 step 15** (`H4_CARD.md`): peak ≤ 12.0 V, record and continue; > 12.0 V, fit D3 |
+| <a id="d3"></a>D3 | Output clamp | **SMAJ12A** TVS, unidirectional, SMA (MDD, C113957). **DNP**: fitted only if H4 step 15 fails | Blueprint §14.6. **Decision, 2026-10-09** (Daniel); closes O-3 | **Why a TVS, not a Zener:** it clamps a microsecond-scale structural overshoot (sim 10: 14.8 V at the socket, 100 pF, 10 V setpoint), not a steady condition. A TVS has the faster response and the energy rating for it; 400 W at 10/1000 µs against an event of ~0.1 A × ~15 V for µs. **What it clamps to here:** the follower behind R_iso, the PTC and the shunt is held to ≤ ~0.11 A by the limiter (sim 10), so the clamp sits at its breakdown voltage, **V_BR 13.3–14.7 V at 1 mA**, plus ≤ ~0.03 V (datasheet dynamic resistance ≤ (19.9 − 14.7) / 20.1 A ≈ 0.26 Ω). That is **~13.3–14.8 V**. Its 19.9 V figure is at 20.1 A, which this circuit cannot source. **12 V is its standoff**, the level below which it does not conduct (≤ 1 µA), not where it starts. So with D3 fitted, the step 15 peak is expected at 13.3–14.8 V, still above the card's 12 V threshold. At the high end of the V_BR tolerance it barely lowers sim 10's 14.8 V. **Leakage reads as DUT current:** it sits on the DUT node, on the DUT side of the shunt (§3.4). ≤ 1 µA is 0.03 LSB on range 1 but 2.5 LSB on range 2 and 10% of range 3's full scale: remove it, or measure and subtract, before ranges 2–3. Its junction capacitance also loads the DUT node, inside the 100 pF–100 nF that R_iso is shown clean for (sim 03); how it changes the overshoot itself is unsimulated | **H4 step 15** (`H4_CARD.md`): peak ≤ 12.0 V, record and continue; > 12.0 V, fit D3 (threshold: Daniel 2026-10-09; §1 caps the instrument at 10 V; 20% headroom; still catches sim 10's 14.8 V) |
 | <a id="j5"></a>J5 | Kelvin leads | 1×2 header | Blueprint §14.4 | — | — |
 
 ## Current sense — blueprint §3.3
@@ -185,8 +185,8 @@ footprints cost nothing. **The value is open**, and they ship unstuffed.
 | Id | Ref | What is open | Why it is not filled |
 |---|---|---|---|
 | ~~O-1~~ | D2 | Gate Zener voltage | **Closed 2026-10-06: 12 V**, see [D2](#d2) |
-| ~~O-2~~ | R19, R22 | ADC isolation resistance | **Closed 2026-10-06: 51 Ω**, see [R19](#r19) |
-| **O-3** | D3 | Output clamp type and voltage | §3.6/§14.6: mitigation unresolved. Ships unstuffed, as §14.6 allows |
+| ~~O-2~~ | R19, R22 | ADC isolation resistance | **Closed 2026-10-06: 51 Ω**, then raised to **1 kΩ** the same day (F-2), see [R19](#r19) |
+| ~~O-3~~ | D3 | Output clamp type and voltage | **Closed 2026-10-09: SMAJ12A TVS**, see [D3](#d3). Still ships unstuffed; fitted only if H4 step 15 fails |
 | O-4 | R23, R24 | Pull-down value | Ships unstuffed (C-6) |
 
 ## Substitutions — what the blueprint names vs what JLCPCB can fit

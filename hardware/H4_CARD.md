@@ -139,5 +139,10 @@ and every DUT is selected against that ceiling. Sim 10 measured 14.8 V at
 100 pF. So 12 V is 20% headroom over spec while still catching the
 structural overshoot. Below 12 V, record and continue; above it, fit D3.
 
+D3 is an SMAJ12A, fitted off-bench. It clamps at its breakdown voltage,
+**13.3–14.8 V**, not at its 12 V standoff (`DECISIONS.md` D3). So after D3 is
+fitted, a re-run of step 15 is expected to read 13.3–14.8 V. Record it; do
+not treat it as a new failure.
+
 ■ **STOP POINT E**: supply output OFF, USB. Session complete. Hand back
 this sheet and `h4/`.
