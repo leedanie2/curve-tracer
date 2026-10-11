@@ -41,12 +41,19 @@ printout is the step's clock**. No stopwatch. `--vgs` defaults to 0.
 | P1 | Flash the firmware. `python -m ct_host ports` lists the Nucleo; write the port in the header | fw version ____ |
 | P2 | Seat the Nucleo on J7/J8; check against README *Footprint orientation*. J3 and J4 jumpers on **RNG1** | done ☐ |
 | P3 | **Fit C1 = 3.3 pF** (FH 0603CG3R3B500NT), clean with IPA, dry. *As assembled C1 is empty, and the uncancelled IN- pole is predicted to leave ~10–25° of phase margin (CONTINGENCY Part B §2B), so first power-up is with the predicted value* | done ☐ |
-| P4 | Heatsink (Boyd 577500B00000G, slide-on) on Q1's tab, with an insulating pad if it can touch anything grounded. DMM continuity, heatsink to TP27: expect **OL** | reading ____ |
+| P4 | **Pad, then heatsink on Q1.** Trim the Sil-Pad K-10 (cut for TO-220) to Q1's TO-126 tab. Fit it between the tab and the heatsink (Boyd 577500B00000G, slide-on); the heatsink must still grip firmly with the pad in place. Board unpowered. DMM: **(a)** heatsink to **TP7 (+15 V)**: expect **OL**, which proves the pad insulates. **(b)** heatsink to **TP27**: expect **OL**. Either reading not OL, or a loose heatsink: refit, re-measure; no Block 4 until both pass | grips ☐ ; (a) ____ ; (b) ____ |
 | P5 | Build **L1**: 100 nF ceramic ‖ 200 Ω 1 W, leads ≤ 3 cm, to J6 pins 2 (D) and 3 (S). DMM: L1's resistance (used off-bench for the full-scale ADC check against `11_q3.csv`). Build a **jumper** for J6 D–S | R_L1 = ____ Ω |
 | P6 | Build the **Kelvin pair**: J5 pin 1 → J6 D, J5 pin 2 → J6 S | done ☐ |
 | P7 | Build a **reversed barrel lead**: plug centre to supply −, sleeve to supply + | done ☐ |
 | P8 | Kit: C0G 1.5 / 2.2 / 2.7 / 3.9 / 4.7 pF (labelled), 330 Ω and 47 Ω axial, IPA, brush, fine iron, thermometer for step 14. For step 13a: a **10 kΩ** resistor (§8 assortment) with a mini-grabber on each lead | done ☐ |
 | P9 | Laptop: `mkdir h4`, terminal in `host/`, `P=<port>` | done ☐ |
+
+**Why P4(a).** Q1's tab is its collector, tied to **+15 V**. Without the pad,
+the heatsink is live at +15 V, and anything grounded touching it shorts the
++15 V rail straight to ground, bypassing the current limiter; only the bench
+supply's current limit is left. The heatsink-to-TP27 check (b) does not
+catch this: a live heatsink still reads OL to ground when nothing grounded
+touches it. Only the reading to TP7 proves the pad insulates.
 
 ## Setup at the bench (10 min)
 

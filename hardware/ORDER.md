@@ -252,9 +252,9 @@ it if it meets the spec exactly.
     scissors. The TO-126 shape (Bergquist 1009AC-60) is no longer stocked
     at DigiKey.
   - ⚠ **Check that the slide-on heatsink still grips with the pad in
-    place.** Then check the pad with the DMM: heatsink to **TP7 (+15 V)**
-    must read **OL**. H4 step P4 only checks heatsink to TP27 (ground), which
-    a live heatsink also passes when nothing grounded touches it.
+    place.** H4 step P4 now checks both: heatsink to **TP7 (+15 V)** must
+    read **OL** (the pad insulates), as well as heatsink to TP27 (ground),
+    which a live heatsink also passes when nothing grounded touches it.
 - [ ] **10 kΩ resistor**, any tolerance, ≥ 1/8 W.
   - Dissipates at most ~20 mW (+15 V across it with D3 reversed).
   - **Without it:** H4 step 13a cannot run, so D3's presence and
