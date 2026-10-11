@@ -595,10 +595,10 @@ rather than naming one day.
 | Date | Gate | Missed → |
 |---|---|---|
 | ~~Mon Oct 12~~ | ~~Breadboard stability GO/NO-GO (Phase 1)~~ **Dropped Oct 8, 2026** (*Phase 1 dropped*, above) | — |
-| ~~Tue Oct 13~~ | ~~Target: design freeze and PCBA ordered~~ **Met early, Sun Oct 11**: frozen at commit `6af53c7`, JLCPCB order quoted and carted (5 boards, all assembled, DHL Express DDP; `hardware/ORDER.md`) | — |
+| ~~Tue Oct 13~~ | ~~Target: design freeze and PCBA ordered~~ **Met early, Sun Oct 11**: frozen at commit `6af53c7`, JLCPCB order paid, W2026101205158610 (5 boards, all assembled, DHL Express DDP, $235.05; `hardware/ORDER.md`) | — |
 | ~~Mon Oct 19~~ | ~~Design freeze — backstop~~ Not needed | — |
 | ~~Tue Oct 20~~ | ~~PCBA ordered — no later than this~~ Not needed | — |
-| ~~Mon Oct 26~~ | ~~Checkpoint: abandon the PCB if not ordered~~ Not needed once the carted order is paid | — |
+| ~~Mon Oct 26~~ | ~~Checkpoint: abandon the PCB if not ordered~~ Not needed: the order is paid | — |
 | **Wed Oct 14** | **JLCPCB ships** (cart estimate: PCB 24 h + assembly 2–3 days). Assumes payment on Oct 11 and the 72-hour placement confirmation approved promptly | A slip moves the arrival row by the same days |
 | **Fri Oct 16 – Tue Oct 20** | **Boards arrive** (DHL Express DDP, 2–4 business days). **27–31 days to the Nov 16 freeze, about four weeks, against 13 days on the Nov 3 backstop** | Re-check against the Nov 16 freeze the day the slip is known |
 | ~~Tue Nov 3~~ | ~~**Boards expected — backstop arrival.** Derived from the Oct 20 backstop order plus 14 days of standard fab + assembly + shipping. The target path beats it twice over: **7 days** from ordering on Oct 13 instead, plus whatever express saves on the shipping leg. Take the real number from the fab's quote at order time rather than trusting either figure here~~ **Superseded Oct 11** by the quote's Oct 16–20 arrival, above | — |
@@ -841,7 +841,7 @@ no assembly, no shipping. The real project cost is that plus:
 
 | Item | Note |
 |---|---|
-| PCB fab + PCBA | Assembly is the §14.3 decision. Every part, through-hole included, is fitted by JLCPCB (Oct 11). **JLCPCB quote: $137.98 + $37.16 DHL Express (DDP) − $10.00 coupon = $165.14** for 5 boards, all assembled, test loops included; itemised in `hardware/ORDER.md` |
+| PCB fab + PCBA | Assembly is the §14.3 decision. Every part, through-hole included, is fitted by JLCPCB (Oct 11). **Paid $235.05**: $137.98 boards and assembly + $31.59 DHL Express (DDP) + $55.82 duties + $9.66 sales tax, for 5 boards, all assembled, test loops included; itemised in `hardware/ORDER.md` |
 | **Express fab shipping** | **Bought deliberately.** See below |
 | Stencil / setup fees | In the quote: setup $8.24, stencil $1.55 |
 

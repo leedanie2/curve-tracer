@@ -6,17 +6,21 @@ not settled by this file; they are listed under *Verify yourself* at the end.
 
 | Vendor | What | Subtotal | Shipping | Total |
 |---|---|---|---|---|
-| JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB, test loops included | $137.98 | $37.16 DHL Express (DDP), less a $10.00 coupon | **$165.14** |
+| JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB, test loops included | $137.98 | $31.59 DHL Express (DDP), plus $55.82 duties and $9.66 sales tax | **$235.05 paid** |
 | LCSC | Contingency parts and jumper shunts | $11.66 | not quoted ⚠ | $11.66 + shipping |
 | DigiKey | TO-126 heatsink | $3.52 | not quoted ⚠ | $3.52 + shipping |
 
 All 5 boards are assembled (Daniel, 2026-10-11): spares against a soldering
 accident, a reversed supply or a blown op-amp, with no second spin.
 
-**JLCPCB status, 2026-10-11:** quoted and in the cart, from commit
-`6af53c7`; payment is Daniel's. The cart gives an **estimated ship date of
+**JLCPCB status, 2026-10-11:** **paid**, order **W2026101205158610**
+(PCB Y2-13791044A, PCBA SMT026101162484-13791044A), built from commit
+`6af53c7`. The uploaded files are `curve-tracer_bom_jlc_6af53c7.csv` and
+`curve-tracer_cpl_jlc_6af53c7.csv`, byte-identical copies of the committed
+`fab/jlc/` files under new names (JLCPCB ignored a re-upload with the same
+name). The cart gives an **estimated ship date of
 Wed 14 Oct**; DHL Express (DDP) takes 2–4 business days, so the boards
-arrive **Fri 16 – Tue 20 Oct**. Both dates assume payment on 11 Oct.
+arrive **Fri 16 – Tue 20 Oct**. Paid on 11 Oct, so both dates stand.
 **Confirm Parts Placement is on**: JLCPCB's engineer checks the placement
 and Daniel has **72 hours** to approve it, after which the order goes into
 production automatically. Approving promptly keeps the ship date.
@@ -54,9 +58,18 @@ an estimate:
 | Manual (through-hole) joints | $10.64 |
 | Nitrogen reflow (JLCPCB's Economic default) | $0.91 |
 | **Merchandise** | **$137.98** |
-| Shipping: DHL Express (DDP), 1.38 kg | $37.16 |
-| Coupon (applied by JLCPCB) | −$10.00 |
-| **Total** | **$165.14** |
+| Shipping: DHL Express (DDP), 1.38 kg, as charged | $31.59 |
+| Customs duty (35% of merchandise) + duty and tax disbursement fee | $48.30 + $7.52 = $55.82 |
+| Sales tax (~7% of merchandise) | $9.66 |
+| **Order total, paid 2026-10-11** | **$235.05** |
+
+**Paid against quoted.** The cart showed $165.14: $137.98 + $37.16
+shipping − a $10.00 coupon. It did not show the duty, the disbursement fee
+or the sales tax, which together add $65.48. Shipping as charged, $31.59, is
+$4.43 more than the cart's $37.16 − $10.00 = $27.16; the invoice should
+show whether the coupon was smaller or applied differently. The $55.82 of
+duty and fee is the cost of DDP: the same duty is owed on any carrier, but
+paying it at checkout keeps the parcel from waiting in customs.
 
 **Why the estimate was high ($188.56).** It charged the $3.07 loading fee
 on all 25 extended lines. JLCPCB charges it **only on the 18 SMD extended
