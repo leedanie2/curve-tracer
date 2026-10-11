@@ -13,9 +13,11 @@ Writes, under hardware/fab/:
 
 Each symbol's `Assembly` field decides where a part goes (DECISIONS.md,
 Assembly). `PCBA` lines get an LCSC number in the JLC BOM and a row in the
-CPL. `hand` lines stay in the JLC BOM so the order lists every part, but are
-marked HAND-SOLDER and carry no LCSC number and no CPL row, so JLCPCB has
-nothing to match and nowhere to place them. DNP lines are left out.
+CPL; since 2026-10-11 that includes the through-hole parts, which JLCPCB
+solders by hand. `hand` lines, if any come back, stay in the JLC BOM so the
+order lists every part, but are marked HAND-SOLDER and carry no LCSC number
+and no CPL row. DNP lines are left out, and so are symbols excluded from the
+BOM (the bare test-point pads).
 
 The CPL rotations are KiCad's plus a per-package correction (CORRECTIONS
 below). Those are community data, not JLCPCB's: check every polarised part in
@@ -23,7 +25,8 @@ JLCPCB's placement preview before paying (README, footprint orientation).
 
 The script exits 1 without writing the JLC files if the CPL and the BOM
 disagree: a CPL designator missing from the PCBA lines, a PCBA line without
-an LCSC number or a CPL row, or a through-hole part headed for Economic PCBA.
+an LCSC number or a CPL row, or a through-hole PCBA part whose LCSC number
+is not in THT_VERIFIED.
 """
 import csv
 import os
@@ -57,6 +60,20 @@ CORRECTIONS = [
     # 5x5.4 is not in the table; every CP_Elec size that is listed is 180.
     (r'^CP_Elec_', 180, 'by analogy: every listed CP_Elec size'),
 ]
+
+# Through-hole parts JLCPCB will assemble. Each was read from JLCPCB's part
+# detail (cart.jlcpcb.com .../getComponentDetail) on 2026-10-11: assembly
+# process THT, mode manualWeld (soldered by hand at JLCPCB), status yes.
+# A through-hole PCBA part not listed here stops the export: check its
+# record first, then add it.
+THT_VERIFIED = {
+    'C16214': 'DC-005 2.0 barrel jack (J1)',
+    'C492401': 'PZ254V-11-02P 1x2 header (J2, J5)',
+    'C492420': 'PZ254V-12-6P 2x3 header (J3, J4)',
+    'C474882': 'KF301-5.0-3P terminal block (J6)',
+    'C2897420': 'PM254-2-19-Z-8.5 2x19 socket (J7, J8)',
+    'C27866': 'BD139 TO-126 (Q1)',
+}
 
 
 def cli():
@@ -146,13 +163,17 @@ def main():
         sys.exit('export_fab: not writing the JLC files:\n  ' + '\n  '.join(errors))
 
     # CPL: PCBA parts only. A hand-soldered part with a CPL row is one JLCPCB
-    # could place.
+    # could place. Through-hole PCBA parts must be ones JLCPCB assembles.
     th = os.path.join(tmp, 'pos_th.csv')
     run('pcb', 'export', 'pos', '--format', 'csv', '--units', 'mm', '--side', 'front',
         '--exclude-dnp', '--smd-only', '-o', th, PCB)
     smd = {r['Ref'] for r in read_csv(th)}
-    for ref in sorted(pcba_refs - smd):
-        errors.append(f'{ref} is PCBA but has through-hole pads; Economic PCBA is SMD only')
+    lcsc_of = {r: line['LCSC'] for line, refs in pcba for r in refs}
+    tht_refs = sorted(pcba_refs - smd)
+    for ref in tht_refs:
+        if lcsc_of[ref] not in THT_VERIFIED:
+            errors.append(f'{ref} is a through-hole PCBA part ({lcsc_of[ref]}) '
+                          'not in THT_VERIFIED; check JLCPCB assembles it')
     if errors:
         sys.exit('export_fab: not writing the JLC files:\n  ' + '\n  '.join(errors))
 
@@ -172,9 +193,16 @@ def main():
     with open(os.path.join(JLC, 'curve-tracer_bom_jlc.csv'), 'w', newline='') as f:
         w = csv.writer(f)
         w.writerow(['Comment', 'Designator', 'Footprint', 'LCSC Part #'])
+        # One line per LCSC part: JLCPCB loads, buys and charges the extended
+        # fee per part, and J2/J5, J3/J4 and J7/J8 differ only in Value.
+        by_part = {}
         for line, refs in pcba:
-            w.writerow([line['Value'], ','.join(refs),
-                        line['Footprint'].split(':')[-1], line['LCSC']])
+            entry = by_part.setdefault(line['LCSC'], [[], [], line['Footprint'], line['MPN']])
+            entry[0].append(line['Value'])
+            entry[1].extend(refs)
+        for lcsc, (values, refs, fp, mpn) in by_part.items():
+            comment = values[0] if len(set(values)) == 1 else mpn
+            w.writerow([comment, ','.join(refs), fp.split(':')[-1], lcsc])
         # One line per part to buy: the BOM groups by Value, and the test
         # points' values are their net names.
         merged = {}
@@ -198,9 +226,10 @@ def main():
     shutil.rmtree(tmp)
 
     print(f'gerbers: {len(os.listdir(GERBERS))} files -> {os.path.relpath(zpath, HW)}')
-    print(f'JLC BOM: {len(pcba)} PCBA lines ({len(pcba_refs)} parts), '
+    print(f'JLC BOM: {len(by_part)} PCBA lines, one per LCSC part ({len(pcba_refs)} parts), '
           f'{len(merged)} HAND-SOLDER lines ({sum(len(r) for _, r in hand)} parts)')
-    print(f'JLC CPL: {len(pcba_refs)} rows, every one a PCBA part')
+    print(f'JLC CPL: {len(pcba_refs)} rows, every one a PCBA part; '
+          f'through-hole: {",".join(tht_refs) or "none"}')
     for (pkg, deg, src), refs in sorted(rot_report.items()):
         print(f'  rotation {deg:+d} on {pkg} ({src}): {",".join(refs)}')
 

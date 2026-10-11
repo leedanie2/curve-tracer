@@ -9388,9 +9388,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "02c34b95-cb19-5267-b700-de4512da01d5")
 		(property "Reference" "TP12"
@@ -9439,7 +9439,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 561.34 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -9451,7 +9451,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 561.34 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -9463,7 +9463,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 561.34 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -9499,7 +9499,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 561.34 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -9971,9 +9971,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "077d7a77-b4b7-5833-9049-63e1e16436d8")
 		(property "Reference" "TP9"
@@ -10022,7 +10022,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 485.14 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -10034,7 +10034,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 485.14 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -10046,7 +10046,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 485.14 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -10082,7 +10082,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 485.14 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -10723,7 +10723,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 269.24 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -11210,9 +11210,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "1fe653a9-4e1c-509f-8ec3-6cdb537c57ee")
 		(property "Reference" "TP13"
@@ -11261,7 +11261,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 434.34 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -11273,7 +11273,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 434.34 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -11285,7 +11285,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 434.34 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -11321,7 +11321,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 434.34 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -11736,9 +11736,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "25adc321-eb3c-59f8-bf95-9bc40b6907a1")
 		(property "Reference" "TP1"
@@ -11787,7 +11787,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 434.34 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -11799,7 +11799,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 434.34 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -11811,7 +11811,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 434.34 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -11847,7 +11847,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 434.34 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -12106,9 +12106,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "29cd898e-6691-50ef-9fb9-eed9ff99387a")
 		(property "Reference" "TP16"
@@ -12157,7 +12157,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 510.54 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -12169,7 +12169,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 510.54 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -12181,7 +12181,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 510.54 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -12217,7 +12217,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 510.54 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -12391,9 +12391,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "30444059-35d6-52ad-b428-56451d56b912")
 		(property "Reference" "TP22"
@@ -12442,7 +12442,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 510.54 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -12454,7 +12454,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 510.54 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -12466,7 +12466,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 510.54 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -12502,7 +12502,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 510.54 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -12532,9 +12532,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "310c3035-6bdf-5510-b019-32feb4f70c4b")
 		(property "Reference" "TP15"
@@ -12583,7 +12583,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 485.14 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -12595,7 +12595,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 485.14 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -12607,7 +12607,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 485.14 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -12643,7 +12643,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 485.14 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -12775,7 +12775,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 25.4 243.84 0)
 			(hide yes)
 			(show_name no)
@@ -13249,9 +13249,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "3fff7cee-230d-57de-9c5b-4fea07ccf9de")
 		(property "Reference" "TP24"
@@ -13300,7 +13300,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 561.34 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -13312,7 +13312,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 561.34 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -13324,7 +13324,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 561.34 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -13360,7 +13360,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 561.34 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -14256,9 +14256,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "56310d87-f838-5bd5-aa98-a1f8e4f45d03")
 		(property "Reference" "TP7"
@@ -14307,7 +14307,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 434.34 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -14319,7 +14319,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 434.34 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -14331,7 +14331,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 434.34 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -14367,7 +14367,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 434.34 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -14762,9 +14762,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "5889cf40-561a-5ea8-9e5c-f89107d53fe8")
 		(property "Reference" "TP3"
@@ -14813,7 +14813,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 485.14 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -14825,7 +14825,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 485.14 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -14837,7 +14837,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 485.14 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -14873,7 +14873,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 485.14 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -15005,7 +15005,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 127 322.58 0)
 			(hide yes)
 			(show_name no)
@@ -16802,7 +16802,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 259.08 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -17177,7 +17177,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 50.8 322.58 0)
 			(hide yes)
 			(show_name no)
@@ -17317,9 +17317,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "7a957a7d-a357-55f5-a3ae-19c7c0ddb4fd")
 		(property "Reference" "TP2"
@@ -17368,7 +17368,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 459.74 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -17380,7 +17380,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 459.74 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -17392,7 +17392,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 459.74 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -17428,7 +17428,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 459.74 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -17753,9 +17753,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "7f36387a-5c91-5795-8145-23f81c723e68")
 		(property "Reference" "TP18"
@@ -17804,7 +17804,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 561.34 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -17816,7 +17816,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 561.34 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -17828,7 +17828,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 561.34 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -17864,7 +17864,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 561.34 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -18125,9 +18125,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "863e1e7f-e1eb-58af-997e-405d754b7a36")
 		(property "Reference" "TP27"
@@ -18176,7 +18176,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 485.14 264.16 0)
 			(hide yes)
 			(show_name no)
@@ -18188,7 +18188,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 485.14 264.16 0)
 			(hide yes)
 			(show_name no)
@@ -18200,7 +18200,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 485.14 264.16 0)
 			(hide yes)
 			(show_name no)
@@ -18236,7 +18236,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 485.14 264.16 0)
 			(hide yes)
 			(show_name no)
@@ -18343,9 +18343,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "8fa23d42-33ce-5765-ba00-d672f283ab29")
 		(property "Reference" "TP26"
@@ -18394,7 +18394,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 459.74 264.16 0)
 			(hide yes)
 			(show_name no)
@@ -18406,7 +18406,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 459.74 264.16 0)
 			(hide yes)
 			(show_name no)
@@ -18418,7 +18418,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 459.74 264.16 0)
 			(hide yes)
 			(show_name no)
@@ -18454,7 +18454,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 459.74 264.16 0)
 			(hide yes)
 			(show_name no)
@@ -18815,7 +18815,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 363.22 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -19242,9 +19242,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "9618037b-7eb8-5ac1-b2d5-e3f24a2583d9")
 		(property "Reference" "TP8"
@@ -19293,7 +19293,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 459.74 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -19305,7 +19305,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 459.74 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -19317,7 +19317,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 459.74 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -19353,7 +19353,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 459.74 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -21210,9 +21210,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "af4604ee-568b-5b7c-8e8c-dbd5c952f509")
 		(property "Reference" "TP23"
@@ -21261,7 +21261,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 535.94 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -21273,7 +21273,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 535.94 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -21285,7 +21285,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 535.94 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -21321,7 +21321,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 535.94 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -21639,9 +21639,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "b22150c8-2fcb-591a-9a0e-66631276ecf7")
 		(property "Reference" "TP19"
@@ -21690,7 +21690,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 434.34 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -21702,7 +21702,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 434.34 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -21714,7 +21714,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 434.34 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -21750,7 +21750,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 434.34 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -22159,7 +22159,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 81.28 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -22915,9 +22915,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "c27c76bf-7027-5b4b-9c51-01a3339024ea")
 		(property "Reference" "TP21"
@@ -22966,7 +22966,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 485.14 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -22978,7 +22978,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 485.14 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -22990,7 +22990,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 485.14 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -23026,7 +23026,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 485.14 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -23056,9 +23056,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "c2b3bc94-60bf-5312-9b68-e45b1f5801e2")
 		(property "Reference" "TP25"
@@ -23107,7 +23107,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 434.34 264.16 0)
 			(hide yes)
 			(show_name no)
@@ -23119,7 +23119,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 434.34 264.16 0)
 			(hide yes)
 			(show_name no)
@@ -23131,7 +23131,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 434.34 264.16 0)
 			(hide yes)
 			(show_name no)
@@ -23167,7 +23167,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 434.34 264.16 0)
 			(hide yes)
 			(show_name no)
@@ -23930,9 +23930,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "cfd467db-b86d-5dc5-8841-0a9004924187")
 		(property "Reference" "TP5"
@@ -23981,7 +23981,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 535.94 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -23993,7 +23993,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 535.94 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -24005,7 +24005,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 535.94 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -24041,7 +24041,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 535.94 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -24173,7 +24173,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 345.44 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -24562,9 +24562,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "da031346-6c6a-553d-bcb4-5ba4e672bcd6")
 		(property "Reference" "TP20"
@@ -24613,7 +24613,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 459.74 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -24625,7 +24625,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 459.74 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -24637,7 +24637,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 459.74 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -24673,7 +24673,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 459.74 231.14 0)
 			(hide yes)
 			(show_name no)
@@ -25145,9 +25145,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "deee9532-a622-5624-bdb2-357c109ce6f2")
 		(property "Reference" "TP14"
@@ -25196,7 +25196,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 459.74 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -25208,7 +25208,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 459.74 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -25220,7 +25220,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 459.74 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -25256,7 +25256,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 459.74 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -25420,9 +25420,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "e1c3b1df-8dfb-502e-a12b-fb015b652f17")
 		(property "Reference" "TP11"
@@ -25471,7 +25471,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 535.94 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -25483,7 +25483,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 535.94 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -25495,7 +25495,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 535.94 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -25531,7 +25531,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 535.94 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -25740,7 +25740,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 55.88 243.84 0)
 			(hide yes)
 			(show_name no)
@@ -25772,9 +25772,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "e64b59a3-4642-5904-a79d-e289ad47dd6b")
 		(property "Reference" "TP10"
@@ -25823,7 +25823,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 510.54 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -25835,7 +25835,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 510.54 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -25847,7 +25847,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 510.54 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -25883,7 +25883,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 510.54 165.1 0)
 			(hide yes)
 			(show_name no)
@@ -25913,9 +25913,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "e7c5e684-e47e-518d-9716-36d3d3c1e48e")
 		(property "Reference" "TP17"
@@ -25964,7 +25964,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 535.94 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -25976,7 +25976,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 535.94 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -25988,7 +25988,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 535.94 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -26024,7 +26024,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 535.94 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -26336,9 +26336,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(in_pos_files yes)
+		(in_pos_files no)
 		(dnp no)
 		(uuid "ede08e99-8d45-5816-85dc-70bb12ea9e66")
 		(property "Reference" "TP4"
@@ -26387,7 +26387,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 510.54 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -26399,7 +26399,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 510.54 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -26411,7 +26411,7 @@
 				(justify left)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 510.54 132.08 0)
 			(hide yes)
 			(show_name no)
@@ -26447,7 +26447,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 510.54 132.08 0)
 			(hide yes)
 			(show_name no)

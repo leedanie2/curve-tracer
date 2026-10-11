@@ -15,6 +15,7 @@ hardware/
 ├── DECISIONS.md    ← where every value on the board came from: blueprint, sim or bench
 ├── H4_CARD.md      ← printable bring-up card: numbered steps, settings, pass/fail, blanks to fill
 ├── CONTINGENCY.md  ← if the board oscillates at bring-up: Part A goto steps, Part B the reasoning
+├── ORDER.md        ← everything to buy, by vendor (JLCPCB, LCSC, DigiKey), with stock, prices and what to verify
 ├── curve-tracer.kicad_pro
 ├── curve-tracer.kicad_sch   ← H1, captured Oct 5, 2026
 ├── curve-tracer.kicad_pcb   ← H2, routed Oct 6, 2026: 135 × 92 mm, two layers
@@ -156,12 +157,15 @@ It refuses to write the JLCPCB files if the BOM and CPL disagree.
 | File | What it is for |
 |---|---|
 | `fab/jlc/curve-tracer_gerbers.zip` | The quote page upload: Gerbers (Protel names) and Excellon PTH/NPTH, in JLCPCB's documented KiCad settings |
-| `fab/jlc/curve-tracer_bom_jlc.csv` | PCBA BOM upload. 26 PCBA lines with LCSC numbers. Seven more are marked **HAND-SOLDER** and have no LCSC number, so they cannot be matched |
-| `fab/jlc/curve-tracer_cpl_jlc.csv` | PCBA placement upload: 39 rows, PCBA parts only, rotations corrected per `DECISIONS.md` P-10 |
-| `fab/curve-tracer_bom.csv` | Engineering BOM: every line including DNP. The LCSC hand-solder order is its `hand` lines |
+| `fab/jlc/curve-tracer_bom_jlc.csv` | PCBA BOM upload. 32 lines, one per LCSC part, every one assembled by JLCPCB, the six through-hole parts included. No hand-solder lines |
+| `fab/jlc/curve-tracer_cpl_jlc.csv` | PCBA placement upload: 48 rows, PCBA parts only (nine through-hole), rotations corrected per `DECISIONS.md` P-10 |
+| `fab/curve-tracer_bom.csv` | Engineering BOM: every line including DNP. The bare test-point pads are not in it |
 | `fab/gerbers/` | The same Gerbers unzipped, for review |
 
 ### Contingency parts: order with the boards, not after
+
+**The consolidated order, with stock and prices re-checked on 2026-10-11, is
+[`ORDER.md`](ORDER.md).** This section keeps the reasons for each part.
 
 For `CONTINGENCY.md`. None of these is on hand, and only D3 is on the PCBA BOM (spares). Stock was
 checked at LCSC on 2026-10-07.
@@ -221,14 +225,10 @@ order; there is none between arrival and the Nov 16 freeze.
       for a net at +15 V
 - [ ] BD139 footprint checked against the **physical** E-C-B lead order, not
       ST's pin numbers, which run the other way (`DECISIONS.md` L-1)
-- [ ] Two 2.54 mm jumper shunts for J3/J4 on the parts order; they are not
-      on the PCBA BOM
-- [ ] Hand-solder parts ordered from LCSC alongside the PCBA: every BOM line
-      with `Assembly` = `hand` (J1–J8, Q1) plus 26 Keystone 5001 test loops,
-      which LCSC does not stock (TP6 is a bare pad; `DECISIONS.md`, Assembly)
-- [ ] In JLCPCB's BOM step, only the 25 `PCBA` lines match parts. The seven
-      HAND-SOLDER lines show as unmatched / not placed: no LCSC number, no
-      CPL row
+- [ ] Everything in [`ORDER.md`](ORDER.md) ordered, and its **Verify
+      yourself** list cleared
+- [ ] In JLCPCB's BOM step all 32 lines match. The nine through-hole parts
+      (J1–J8, Q1) show as hand-soldered by JLCPCB; nothing is unmatched
 - [ ] `tools/check_topology.py --self-test` passes on the frozen schematic
 - [ ] BAT54S ADC clamps and gate Zener placed; output-clamp footprint at the
       DUT socket for §3.6's +48% short-recovery overshoot, unstuffed is fine
@@ -242,7 +242,7 @@ order; there is none between arrival and the Nov 16 freeze.
   (blueprint §9). The hedge is the `C_f` footprint, the parallel alternates and
   the contingency parts
 - [ ] **Express shipping selected** on the fab order
-- [ ] Contingency parts (Fab outputs, above) ordered in the same order
+- [ ] Contingency parts ordered from LCSC with the boards (`ORDER.md`)
 - [ ] Footprint orientation, below
 
 ### Footprint orientation: what ERC and DRC cannot see
@@ -292,7 +292,11 @@ from the top-left corner.
       entries face the left board edge
 
 **Then again in JLCPCB's placement preview**, for the PCBA parts in that
-list: C5, D1, D2, D3, D4, D5, D6, Q2, Q3, U1–U3. The CPL rotations are community data
+list: C5, D1, D2, D3, D4, D5, D6, Q1, Q2, Q3, U1–U3, J1, J6, J7, J8. Q1 and J6
+are the through-hole parts that fit their holes either way round: Q1
+reversed swaps emitter and base, and J6 reversed faces its wire entries into
+the board. The through-hole positions in the CPL are KiCad's footprint
+origins (pin 1), not body centres, so the preview may draw them offset. The CPL rotations are community data
 (`DECISIONS.md` P-10), not JLCPCB's. A rotation that is wrong there is the
 PCBA version of L-2: every file checks out and the board does not. Fix any
 rotation in the preview, then copy the fix into `CORRECTIONS` in

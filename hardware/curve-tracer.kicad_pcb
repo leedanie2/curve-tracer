@@ -129,7 +129,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -142,7 +142,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -154,7 +154,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -178,7 +178,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -203,7 +203,7 @@
 			)
 		)
 		(path "/25adc321-eb3c-59f8-bf95-9bc40b6907a1")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -323,7 +323,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -336,7 +336,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -348,7 +348,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -372,7 +372,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -397,7 +397,7 @@
 			)
 		)
 		(path "/7a957a7d-a357-55f5-a3ae-19c7c0ddb4fd")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -945,7 +945,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -958,7 +958,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -970,7 +970,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -994,7 +994,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -1019,7 +1019,7 @@
 			)
 		)
 		(path "/c27c76bf-7027-5b4b-9c51-01a3339024ea")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -1346,7 +1346,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1359,7 +1359,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -1371,7 +1371,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -1395,7 +1395,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -1420,7 +1420,7 @@
 			)
 		)
 		(path "/deee9532-a622-5624-bdb2-357c109ce6f2")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -1540,7 +1540,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1553,7 +1553,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -1565,7 +1565,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -1589,7 +1589,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -1614,7 +1614,7 @@
 			)
 		)
 		(path "/b22150c8-2fcb-591a-9a0e-66631276ecf7")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -2148,7 +2148,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -2161,7 +2161,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -2173,7 +2173,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -2197,7 +2197,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -2222,7 +2222,7 @@
 			)
 		)
 		(path "/c2b3bc94-60bf-5312-9b68-e45b1f5801e2")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -2805,7 +2805,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -5563,7 +5563,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -5576,7 +5576,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -5588,7 +5588,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -5612,7 +5612,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -5637,7 +5637,7 @@
 			)
 		)
 		(path "/ede08e99-8d45-5816-85dc-70bb12ea9e66")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -5757,7 +5757,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -5770,7 +5770,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -5782,7 +5782,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -5806,7 +5806,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -5831,7 +5831,7 @@
 			)
 		)
 		(path "/cfd467db-b86d-5dc5-8841-0a9004924187")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -6422,7 +6422,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -7523,7 +7523,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -8392,7 +8392,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -8996,7 +8996,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -9009,7 +9009,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -9021,7 +9021,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -9045,7 +9045,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -9070,7 +9070,7 @@
 			)
 		)
 		(path "/7f36387a-5c91-5795-8145-23f81c723e68")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -9604,7 +9604,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -9617,7 +9617,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -9629,7 +9629,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -9653,7 +9653,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -9678,7 +9678,7 @@
 			)
 		)
 		(path "/e64b59a3-4642-5904-a79d-e289ad47dd6b")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -9798,7 +9798,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -9811,7 +9811,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -9823,7 +9823,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -9847,7 +9847,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -9872,7 +9872,7 @@
 			)
 		)
 		(path "/02c34b95-cb19-5267-b700-de4512da01d5")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -10199,7 +10199,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -10212,7 +10212,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -10224,7 +10224,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -10248,7 +10248,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -10273,7 +10273,7 @@
 			)
 		)
 		(path "/e7c5e684-e47e-518d-9716-36d3d3c1e48e")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -10393,7 +10393,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -10406,7 +10406,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -10418,7 +10418,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -10442,7 +10442,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -10467,7 +10467,7 @@
 			)
 		)
 		(path "/29cd898e-6691-50ef-9fb9-eed9ff99387a")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -11395,7 +11395,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 0 0 270)
 			(layer "F.SilkS")
 			(hide yes)
@@ -12664,7 +12664,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -12677,7 +12677,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -12689,7 +12689,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -12713,7 +12713,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -12738,7 +12738,7 @@
 			)
 		)
 		(path "/077d7a77-b4b7-5833-9049-63e1e16436d8")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -12858,7 +12858,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -12871,7 +12871,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -12883,7 +12883,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -12907,7 +12907,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -12932,7 +12932,7 @@
 			)
 		)
 		(path "/8fa23d42-33ce-5765-ba00-d672f283ab29")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -13052,7 +13052,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -13065,7 +13065,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -13077,7 +13077,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -13101,7 +13101,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -13126,7 +13126,7 @@
 			)
 		)
 		(path "/af4604ee-568b-5b7c-8e8c-dbd5c952f509")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -13246,7 +13246,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -13259,7 +13259,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -13271,7 +13271,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -13295,7 +13295,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -13320,7 +13320,7 @@
 			)
 		)
 		(path "/310c3035-6bdf-5510-b019-32feb4f70c4b")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -13440,7 +13440,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -13453,7 +13453,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -13465,7 +13465,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -13489,7 +13489,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -13514,7 +13514,7 @@
 			)
 		)
 		(path "/863e1e7f-e1eb-58af-997e-405d754b7a36")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -13634,7 +13634,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -13647,7 +13647,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -13659,7 +13659,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -13683,7 +13683,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -13708,7 +13708,7 @@
 			)
 		)
 		(path "/9618037b-7eb8-5ac1-b2d5-e3f24a2583d9")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -15804,7 +15804,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -15817,7 +15817,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -15829,7 +15829,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -15853,7 +15853,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -15878,7 +15878,7 @@
 			)
 		)
 		(path "/5889cf40-561a-5ea8-9e5c-f89107d53fe8")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -16055,7 +16055,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 0 0 90)
 			(layer "F.SilkS")
 			(hide yes)
@@ -16451,7 +16451,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -16464,7 +16464,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -16476,7 +16476,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -16500,7 +16500,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -16525,7 +16525,7 @@
 			)
 		)
 		(path "/da031346-6c6a-553d-bcb4-5ba4e672bcd6")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -16861,7 +16861,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -17465,7 +17465,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -17478,7 +17478,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -17490,7 +17490,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -17514,7 +17514,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -17539,7 +17539,7 @@
 			)
 		)
 		(path "/e1c3b1df-8dfb-502e-a12b-fb015b652f17")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -17659,7 +17659,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -17672,7 +17672,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -17684,7 +17684,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -17708,7 +17708,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -17733,7 +17733,7 @@
 			)
 		)
 		(path "/1fe653a9-4e1c-509f-8ec3-6cdb537c57ee")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -17853,7 +17853,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -17866,7 +17866,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -17878,7 +17878,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -17902,7 +17902,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -17927,7 +17927,7 @@
 			)
 		)
 		(path "/3fff7cee-230d-57de-9c5b-4fea07ccf9de")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -19716,7 +19716,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -20268,7 +20268,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -20281,7 +20281,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -20293,7 +20293,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -20317,7 +20317,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -20342,7 +20342,7 @@
 			)
 		)
 		(path "/56310d87-f838-5bd5-aa98-a1f8e4f45d03")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -20669,7 +20669,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Bare plated hole (1.0 mm), no loop fitted; probe with a tip in the hole (DECISIONS.md TP)"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -20682,7 +20682,7 @@
 				)
 			)
 		)
-		(property "MPN" "5001"
+		(property "MPN" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -20694,7 +20694,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Keystone"
+		(property "Manufacturer" ""
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -20718,7 +20718,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "none"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -20743,7 +20743,7 @@
 			)
 		)
 		(path "/30444059-35d6-52ad-b428-56451d56b912")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -20921,7 +20921,7 @@
 				)
 			)
 		)
-		(property "Assembly" "hand"
+		(property "Assembly" "PCBA"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)

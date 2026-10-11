@@ -114,7 +114,7 @@ entry). Read every Sim figure below with that in mind.
 | <a id="c6"></a>C6, <a id="c7"></a>C7, <a id="c8"></a>C8 | Op-amp decoupling | **100 nF** X7R 50 V | Blueprint §8, §14.5(3) | One per OPA2197 V+, within ~5 mm | — |
 | <a id="nt2"></a>NT2 | Star point | — | **Capture C-2** | §14.5(4) | — |
 | <a id="j7"></a>J7, <a id="j8"></a>J8 | Nucleo CN7 / CN10 | 2×19 sockets | Blueprint §14.4. `firmware/README.md` pin table | PA0 = CN7-28 (ADC1_IN1), PA4 = CN7-32 (DAC1_OUT1), PC0 = CN7-38 (ADC2_IN6, default solder bridges), PA6 = CN10-13 (DAC2_OUT1). Verified against **UM1724 Rev 14 Table 26**. PA5 unused (LD2, §3.5). Nucleo is USB-powered: +15 V exceeds VIN max | — |
-| <a id="tp"></a>TP1–TP28 | Test points | Keystone 5001 loops; TP6 and TP28 bare pads | Blueprint §14.4. TP6: Capture C-4. TP28 (VIN): a 1 mm pad because a loop does not fit by J1 (P-11) | Every node §14.4 lists, plus every other named net except Q3's gate (RP_GATE), the op-amp input nodes DA_P, DA_N, GATE_IN- and the per-shunt pads SH1–3_TOP, which SHUNT_HI reaches when selected | — |
+| <a id="tp"></a>TP1–TP28 | Test points | **Bare pads, no loops** (Daniel, 2026-10-11): TP1–TP27 are the Keystone 5001 footprint's 1.0 mm plated hole with nothing fitted, out of the BOM and CPL; TP6 and TP28 bare SMD pads. A loop can still be fitted later: the footprint is unchanged | Blueprint §14.4. TP6: Capture C-4. TP28 (VIN): a 1 mm pad because a loop does not fit by J1 (P-11) | Every node §14.4 lists, plus every other named net except Q3's gate (RP_GATE), the op-amp input nodes DA_P, DA_N, GATE_IN- and the per-shunt pads SH1–3_TOP, which SHUNT_HI reaches when selected | — |
 
 `BD139_C` from the README routing table is not a separate net: the collector
 is tied directly to +15 V (§3.1), so it is net `+15V`, probed at TP7.
@@ -446,6 +446,16 @@ trip, held short, short recovery), and it is not enough to rely on. So:
 The keep-out (x 17.5–35, y 1–15.5) is there for the heatsink, and the tab is
 +15 V (§8). The thermal analyzer skipped Q1, so these are hand numbers.
 
+**Heatsink chosen 2026-10-11: Boyd 577500B00000G** (DigiKey HS216-ND),
+TO-126 slide-on. It is 13.20 × 19.81 mm with 8.13 mm fins, against the
+keep-out's 17.5 × 14.5 mm (width across the tab, depth behind it). It is
+26 °C/W in still air (DigiKey), not the ~20 °C/W assumed above, so the
+sustained short gives 25 + 0.89 × (26 + 1 + 10) ≈ **58 °C** junction and
+~48 °C at the heatsink. H4 step 14d expects ~48 °C, and its 70 °C limit is
+unchanged. The Boyd TV5G (21.6 °C/W) was rejected: 22 mm wide, over the
+keep-out. **Which way the 19.81 mm runs is read from DigiKey's dimension
+names, not a drawing: check it against the keep-out before ordering.**
+
 **P-9 — Silkscreen references hidden where there is no room**: J3, Q2, R5,
 TP1, and (P-11) Q3, D6, R25, TP28 and H1. They are still on the fab layer
 and in the renders. J1's reference moved below the jack, beside C5.
@@ -611,7 +621,49 @@ it is fed. **That condition is not verified**: it is an H4 measurement (TP8,
 Kelvin leads unplugged). The routes are unchanged: unplugged Kelvin leads on
 any range, and over-range on ranges 2–3.
 
-## Assembly — what JLCPCB places and what is hand-soldered
+## Assembly — JLCPCB assembles everything; nothing is hand-soldered
+
+**Decision, 2026-10-11 (Daniel): zero hand-soldering.** The 2026-10-06
+decision below is reversed. The six through-hole lines go back to the PCBA
+order: J1 barrel jack, J2/J5 1×2 headers, J3/J4 2×3 headers, J6 terminal
+block, J7/J8 2×19 sockets, Q1 BD139. JLCPCB solders them by hand. Each was
+checked in JLCPCB's part record on 2026-10-11: assembly process THT, mode
+`manualWeld`, status available. They are listed in `tools/export_fab.py`
+`THT_VERIFIED`, which stops the export if a through-hole PCBA part is not on
+that list. The seventh hand line, the 26 test loops, is dropped, not moved
+(TP row above).
+
+**Cost of the reversal**, at JLCPCB's price page and part prices read on
+2026-10-11, for 5 assembled boards:
+- six more extended parts at $3.07: **$18.42**. That is six, not seven: the
+  test loops were never on the PCBA order, so they never carried a fee to
+  avoid.
+- hand-soldering labour **$3.58** per order, and 101 through-hole joints per
+  board at $0.0164: **$8.28**.
+- the six parts move from the LCSC hand order to JLCPCB: **$7.87**.
+
+The per-part loading fee is now $3.07, not the $3 used below, and the JLC BOM
+has one line per LCSC part (J2/J5, J3/J4 and J7/J8 were separate lines):
+**32 lines, 6 Basic, 2 Preferred, 24 extended, $73.68**. Totals are in
+`hardware/ORDER.md`.
+
+**Correction to the record below.** "Keystone 5001 test loops (not stocked at
+LCSC)" is wrong as of 2026-10-11. JLCPCB's library carries Keystone 5001
+(C238122, 21,003 in stock, $0.32) and the ronghe RH-5001 (C5199801, 167,868,
+$0.083), both THT / `manualWeld`. Re-adding the loops as PCBA would cost one
+extended fee plus 130 parts and 130 joints: about $16 with RH-5001, $47 with
+Keystone, for 5 boards. Not done: Daniel's decision is bare pads.
+
+**What bare pads cost at the bench.** DMM readings are unaffected: a tip
+seats in a 1.0 mm hole. The scope is not. H4 holds a probe on TP3 for Blocks
+1, 2 and 4, and on TP19 at step 15, with both hands busy. A hole gives a hook
+nothing to grip, so the card now needs a **probe holder**, and the scope
+ground clips to J2's GND pin. Step 13a moved its clips to the supply post
+and J6. CONTINGENCY A2 lost its spring-ground option. That option never
+existed in fact: TP27 is 50 mm from TP3, and the one ground pad near TP3
+(C2's, 4.8 mm) is 1.6 mm from C2's +15 V pad.
+
+### Superseded 2026-10-11: the 2026-10-06 hand-solder decision
 
 Decided 2026-10-06. Each symbol's `Assembly` field is `PCBA`, `hand` or
 `DNP`, and the BOM carries the column.

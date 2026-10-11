@@ -13,6 +13,9 @@ Record column.
 
 - No held short (Block 4, steps 14–15) unless P4 is done.
 - Nothing on TP6, ever.
+- **Test points are bare 1.0 mm plated holes**, no loops (`DECISIONS.md` TP).
+  DMM tips go into the hole. The scope probe tip sits in the hole, held by
+  the probe holder; its ground lead clips to a header pin.
 - Supply output OFF before touching any part.
 - Steps run in order. Stop only at a ■ STOP POINT.
 
@@ -41,11 +44,11 @@ printout is the step's clock**. No stopwatch. `--vgs` defaults to 0.
 | P1 | Flash the firmware. `python -m ct_host ports` lists the Nucleo; write the port in the header | fw version ____ |
 | P2 | Seat the Nucleo on J7/J8; check against README *Footprint orientation*. J3 and J4 jumpers on **RNG1** | done ☐ |
 | P3 | **Fit C1 = 3.3 pF** (FH 0603CG3R3B500NT), clean with IPA, dry. *As assembled C1 is empty, and the uncancelled IN- pole is predicted to leave ~10–25° of phase margin (CONTINGENCY Part B §2B), so first power-up is with the predicted value* | done ☐ |
-| P4 | Heatsink on Q1, with an insulating pad if it can touch anything grounded. DMM continuity, heatsink to TP27: expect **OL** | reading ____ |
+| P4 | Heatsink (Boyd 577500B00000G, slide-on) on Q1's tab, with an insulating pad if it can touch anything grounded. DMM continuity, heatsink to TP27: expect **OL** | reading ____ |
 | P5 | Build **L1**: 100 nF ceramic ‖ 200 Ω 1 W, leads ≤ 3 cm, to J6 pins 2 (D) and 3 (S). DMM: L1's resistance (used off-bench for the full-scale ADC check against `11_q3.csv`). Build a **jumper** for J6 D–S | R_L1 = ____ Ω |
 | P6 | Build the **Kelvin pair**: J5 pin 1 → J6 D, J5 pin 2 → J6 S | done ☐ |
 | P7 | Build a **reversed barrel lead**: plug centre to supply −, sleeve to supply + | done ☐ |
-| P8 | Kit: C0G 1.5 / 2.2 / 2.7 / 3.9 / 4.7 pF (labelled), 330 Ω and 47 Ω axial, IPA, brush, fine iron, thermometer for step 14. For step 13a: a **10 kΩ** resistor (§8 assortment) with a mini-grabber on each lead | done ☐ |
+| P8 | Kit: C0G 1.5 / 2.2 / 2.7 / 3.9 / 4.7 pF (labelled), 330 Ω and 47 Ω axial, IPA, brush, fine iron, thermometer for step 14. For step 13a: a **10 kΩ** resistor (§8 assortment) with a mini-grabber on one lead. **Probe holder** for the scope probe (no loops to hook) | done ☐ |
 | P9 | Laptop: `mkdir h4`, terminal in `host/`, `P=<port>` | done ☐ |
 
 ## Setup at the bench (10 min)
@@ -53,7 +56,7 @@ printout is the step's clock**. No stopwatch. `--vgs` defaults to 0.
 | # | Do |
 |---|---|
 | S1 | Bench supply: **15.00 V, limit 100 mA, output OFF**. Leads not connected to the board yet |
-| S2 | Scope CH1: 10× probe on **TP3** (emitter), spring ground on **TP27**. AC, 20 mV/div, BW limit 20 MHz, 1 µs/div, trigger CH1 rising +30 mV, normal mode, holdoff 1 ms, trigger point 1 div from left |
+| S2 | Scope CH1: 10× probe, hook tip off, **tip seated in TP3's hole** (emitter), held by the probe holder. Ground lead clipped to **J2's GND pin** (GNDPWR), below the supply lead. AC, 20 mV/div, BW limit 20 MHz, 1 µs/div, trigger CH1 rising +30 mV, normal mode, holdoff 1 ms, trigger point 1 div from left |
 | S3 | J6: **L1** fitted, Kelvin pair fitted. Nucleo USB to the laptop |
 
 ---
@@ -117,14 +120,14 @@ paper.
 | 11 | 1 | **Q3 drop under load.** Fit L1. `HOLD --vds 6 --seconds 20 -o h4/11_q3.csv`. At **t = 10 s**: DMM red TP28, black TP7; supply current; the host's i_meas | ≤ 6.5 mV at ~34 mA | ≤ 7 mV | V = ____ mV ; I_supply = ____ mA ; i_meas = ____ mA | Record, continue |
 | 12 | 1 | **R_PTC.** `HOLD --vds 6 --seconds 20 -o h4/12_rptc.csv`. At **t = 10 s**: DMM red TP5, black TP17; the host's i_meas | 40–400 mV at ~26 mA | R = V / i_meas in 1.6–15 Ω | V = ____ mV ; i = ____ mA ; R = ____ Ω | Record, continue |
 | 13 | 3 | **Reverse polarity, J1.** Output OFF; disconnect the J2 leads; limit **20 mA**; connect the reversed barrel lead to J1. Output ON for 5 s: read the supply current and TP7 to TP27. Output OFF, remove the lead, reconnect J2, limit back to **100 mA** | 0 mA ; 0.00 V | ≤ 1 mA ; ≤ ±0.10 V | I = ____ ; V = ____ | Output OFF → record → **STOP**, end session |
-| 13a | 3 | **D3 present and the right way round.** Output OFF. Pull the **J3** jumper (this disconnects the sweep output from DUT_D) and unplug the Kelvin pair at **J5**. Clip the 10 kΩ between **TP7** (+15 V) and **TP19** (DUT_D). Output ON, wait 5 s. DMM: TP19 to TP27, then TP7 to TP27. Output OFF, remove the 10 kΩ, J3 back on **RNG1**, J5 back on | TP19 = V_D3 ≈ 13.3–14.7 V (D3 in breakdown at 0.03–0.3 mA) | **TP19 12.0–14.8 V, and ≥ 0.2 V below TP7** | V_D3 = ____ V ; TP7 = ____ V | Record, continue; off-bench, inspect D3 (README *Footprint orientation*). Within 0.2 V of TP7 = D3 missing or open; below 1 V = reversed or shorted |
+| 13a | 3 | **D3 present and the right way round.** Output OFF. Pull the **J3** jumper (this disconnects the sweep output from DUT_D) and unplug the Kelvin pair at **J5**. 10 kΩ: one lead screwed into **J6 D** beside the Kelvin wire, the grabber on the **supply's + output post**. Output ON, wait 5 s. DMM: **J6 D to J6 S** (V_D3), then TP7 to TP27. Output OFF, remove the 10 kΩ, J3 back on **RNG1**, J5 back on | V_D3 ≈ 13.3–14.7 V (D3 in breakdown at 0.03–0.3 mA) | **V_D3 12.0–14.8 V, and ≥ 0.2 V below TP7** | V_D3 = ____ V ; TP7 = ____ V | Record, continue; off-bench, inspect D3 (README *Footprint orientation*). Within 0.2 V of TP7 = D3 missing or open; below 1 V = reversed or shorted |
 
 ■ **STOP POINT D** (~13 min): output OFF, USB.
 
 ## Block 4: held short (≈ 8 min). Only with P4 done.
 
 Supply limit **150 mA**. J6: L1 off, **jumper D–S on**. Kelvin pair on.
-Scope CH1 on TP3: AC, 50 mV/div, 1 µs/div, trigger auto.
+Scope CH1 on TP3 as in S2 (holder; ground on J2 GND): AC, 50 mV/div, 1 µs/div, trigger auto.
 
 | # | min | Do | Expect | Pass | Record | Fail → |
 |---|---|---|---|---|---|---|
@@ -132,8 +135,8 @@ Scope CH1 on TP3: AC, 50 mV/div, 1 µs/div, trigger auto.
 | 14a | — | **t = 10 s**: DMM red **TP3**, black **TP4** (R_sense) | 0.752 V (sim 11) | 0.68–0.83 V | V_cold = ____ | Record, continue |
 | 14b | — | **t = 20 s**: DMM red **TP1**, black **TP2** (R_B) | ~10.6 V (32 mA, sim 10) | ≤ 14.85 V (≤ 45 mA) | V_RB = ____ | Record, continue |
 | 14c | — | **t = 30 s**: scope p-p on TP3; the host's i_meas | < 10 mV ; ~107 mA | < 20 mV ; 95–120 mA | p-p = ____ ; i = ____ | Record, continue |
-| 14d | — | **t = 180 s**: TP3–TP4 again; thermometer on the heatsink at the tab | ≤ V_cold ; ~45 °C | ≥ 0.60 V ; ≤ 70 °C | V_warm = ____ ; T = ____ °C | **T > 70 °C: output OFF at once** → record → **STOP** |
-| 15 | 2 | **Short recovery: verify the bound.** Jumper on. Scope CH1 → **TP19** (DUT_D), DC, 2 V/div, vertical offset so the **screen centre is +10 V** (shows +2…+18 V), 1 µs/div, trigger rising **10.5 V**, single, armed. `HOLD --vds 10 --seconds 60 --i-limit 165 -o h4/15_recovery.csv`. Any time after host t = 5 s, **pull the jumper**. Read the peak | 13.3–14.8 V: D3 clamping at its breakdown voltage (sim 10's unclamped peak is 14.8 V) | **≤ 16.0 V** | peak = ____ V (no trigger: write "< 10.5"; off the top: write "> 18") | **> 16.0 V: something other than the predicted overshoot is happening.** Save the scope screen to `h4/15_peak.png`, record, continue. Off-bench: find the cause |
+| 14d | — | **t = 180 s**: TP3–TP4 again; thermometer on the heatsink at the tab | ≤ V_cold ; ~48 °C (26 °C/W) | ≥ 0.60 V ; ≤ 70 °C | V_warm = ____ ; T = ____ °C | **T > 70 °C: output OFF at once** → record → **STOP** |
+| 15 | 2 | **Short recovery: verify the bound.** Jumper on. Scope probe moved to **TP19's hole** (DUT_D), in the holder; ground stays on J2 GND. DC, 2 V/div, vertical offset so the **screen centre is +10 V** (shows +2…+18 V), 1 µs/div, trigger rising **10.5 V**, single, armed. `HOLD --vds 10 --seconds 60 --i-limit 165 -o h4/15_recovery.csv`. Any time after host t = 5 s, **pull the jumper**. Read the peak | 13.3–14.8 V: D3 clamping at its breakdown voltage (sim 10's unclamped peak is 14.8 V) | **≤ 16.0 V** | peak = ____ V (no trigger: write "< 10.5"; off the top: write "> 18") | **> 16.0 V: something other than the predicted overshoot is happening.** Save the scope screen to `h4/15_peak.png`, record, continue. Off-bench: find the cause |
 
 **Steps 13a and 15** (D3 fitted by default, Daniel 2026-10-11;
 `DECISIONS.md` D3). Step 15 verifies a bound; it does not decide anything.

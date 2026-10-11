@@ -29,7 +29,7 @@ and the parallel alternates.
 |---|---|---|---|---|---|
 | **A1** | 0 | Oscillation frequency f, recorded at H4 2/2b/3 | — | — | f ≥ 20 MHz → **A2**. 0.3 ≤ f < 20 MHz → **A4**. f < 0.3 MHz → **A1.1** |
 | A1.1 | 1 | f < 0.3 MHz | Is the supply in CC? | CC Y/N ____ | Y: output OFF → **STOP**. N: record → **STOP** (off-bench: §6) |
-| **A2** | 3 | VHF | Move the probe's spring ground from TP27 to **TP9**. Re-run the H4 step that failed | p-p = ____ mV | < 20 mV: record "probe artefact", go to the H4 step after the failed one. ≥ 20 mV → **A2.1** |
+| **A2** | 3 | VHF | Move the scope ground lead from J2 GND (GNDPWR) to the Nucleo's **CN7-8** (GND, top-side pin), dressed flat along the board. Re-run the H4 step that failed | p-p = ____ mV | < 20 mV: record "probe artefact", go to the H4 step after the failed one. ≥ 20 mV → **A2.1** |
 | A2.1 | 1 | VHF persists | Output OFF | — | **STOP** (off-bench: §5, the base stopper needs a prepared part) |
 | **A4** | 40 | Loop-band oscillation at C_f 3.3 pF | Run H4 Block 2 (the C_f sweep) exactly as written, recording p-p on every row | (on the H4 sheet) | Any row with p-p < 5 mV → **H4 step 7**. Every row ≥ 5 mV → **A5** |
 | **A3** | 0 | Gate failed at H4 step 7 | ΔO = O_L1 − O_open, both from step 7 | ΔO = ____ points | ΔO ≥ 10 → **A6**. ΔO < 10 → **A5** |
@@ -256,11 +256,16 @@ board or the probe is touched. An emitter follower driving capacitance can
 oscillate locally there. C_f cannot reach it, and **no sim covers it**: the
 models have no lead or trace inductance.
 
-A long ground lead rings near 100 MHz by itself, which is why A2 moves the
-spring ground first. L1 is built with short leads (H4 P5) for the same
+A long ground lead rings near 100 MHz by itself, which is why A2 changes
+the ground path first: a reading that moves with the ground lead is the
+probe. A spring ground would settle it, but the board has no safe point for
+one near TP3: the nearest ground, C2's GNDPWR pad, is 1.6 mm from C2's
++15 V pad. The S2 setup's "spring ground on TP27" could never reach either:
+TP27 is 50 mm from TP3. The test points are bare holes since 2026-10-11, so
+both scope grounds clip to header pins. L1 is built with short leads (H4 P5) for the same
 reason: lead inductance into 100 nF is a classic VHF ringer.
 
-**The bodge.** Q1 is hand-soldered through-hole, so a ferrite bead or a
+**The bodge.** Q1 is through-hole (soldered by JLCPCB), so a ferrite bead or a
 22–47 Ω resistor can go in series with the base leg at the transistor
 without cutting copper. That needs a prepared part, hence STOP.
 
