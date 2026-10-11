@@ -238,6 +238,23 @@ Shunt in the drain path, high-side, measured by a discrete difference amplifier 
 - **Buffers make range 3 functional, not merely more accurate.** Unbuffered, the bare four-resistor bridge loads the shunt: with **no DUT connected at all**, the 10 kΩ range sits at **8.66 V** output — near the rail on a 15 V supply, leaving almost no usable span. The buffers are what make that range work, not a refinement on top of a working range.
 - Optional phase 2: swap in an INA828 instrumentation amp and compare measured CMRR against your discrete build.
 
+**Design rule: everything on the DUT node is read as DUT current.** The DUT node is everything between the shunt and the DUT's source: `DUT_D`, `KELVIN_HI` and the shunt's DUT-side end. Any current that leaves that node by a path other than the DUT also flows through the shunt, and the difference amp cannot tell it from the DUT's. It is invisible on range 1 and dominant on range 3, so every instance so far was found late. Three instances:
+
+| Instance | Path | Size | Range 3 (10 µA full scale) | Resolved by |
+|---|---|---|---|---|
+| §13: unbuffered difference-amp bridge | The bridge resistors across the shunt | **475.6 µA** on range 1 (`0.476/(1000 + R_sh)` A); 43 µA on range 3, with no DUT | 433% | Input buffers (3-op-amp topology) |
+| F-1: Kelvin divider R20 + R21 (§3.4) | `KELVIN_HI` to ground | **25 µA/V** at 30k/10k; now 2.5 µA/V, 25 µA at 10 V | At 10 V: 2,500% at 30k/10k; 250% at 300k/100k uncorrected; ~0.25% after the firmware subtracts it (residual set by the 0.1% divider tolerance) | 300k/100k, plus a firmware correction |
+| D3, SMAJ12A (`hardware/DECISIONS.md` D3) | `DUT_D` to ground | ≤ **1 µA** (I_R at 12 V standoff, 25 °C) | **10%** | Not fitted by default; with it fitted, ranges 2–3 need it removed or measured and subtracted |
+
+**Anything added to that node in future gets its contribution checked against range 3 before it is fitted.** Take its worst-case current at the 10.96 V DAC ceiling and divide by range 3's 10 µA full scale. Record the result in `hardware/DECISIONS.md` as one of three outcomes:
+- negligible;
+- corrected in firmware, like the divider;
+- incompatible with range 3, like D3.
+
+Range 3 is outside MVP scope (§14.2), but it is where this error shows first.
+
+The rule covers bench instruments too. `TP19` (`DUT_D`) and `TP13` (`KELVIN_HI`) are on the DUT node. A 10 MΩ scope probe or DMM clipped there draws 1 µA at 10 V, the same as D3. Take it off before any range 2–3 reading.
+
 ### 3.4 Voltage sense (Kelvin)
 
 Because shunt burden voltage can reach 100 mV, the voltage across the DUT is **not** the sweep source output. Sense `V_DS` directly at the DUT terminals with separate wires.
@@ -251,7 +268,7 @@ Divider `÷4` (**300 kΩ / 100 kΩ**, 0.1%) into a unity-gain buffer into ADC2. 
 
 On range 1, 25 µA is 0.6 of an LSB, so the correction is a sub-LSB term there, and a device that is off reads within an LSB of zero on either side. On ranges 2 and 3 it is most of full scale, and the correction is what makes them usable at all.
 
-This is the same mechanism as §13's phantom current, reached by a different path. There, the unbuffered difference-amp bridge drew 475.6 µA through the shunt with no DUT connected; here the sense divider does. **For any network added to the board, check where its current returns: anything connected between the shunt and the DUT's source is measured as DUT current.**
+This is the same mechanism as §13's phantom current, reached by a different path. There, the unbuffered difference-amp bridge drew 475.6 µA through the shunt with no DUT connected; here the sense divider does. It is now a design rule with three instances, in §3.3: **anything connected between the shunt and the DUT's source is measured as DUT current, and anything added there gets checked against range 3.**
 
 This is a genuine four-wire measurement, and explaining why it's necessary is a strong README paragraph.
 
@@ -299,7 +316,13 @@ So extracting anything at a fixed `V_DS` — `V_th` and `β` from a `√I_D` fit
 
 **The gap is real and must be stated.** Firmware cannot react faster than one measurement interval: `settle_us` plus 64× oversampling, on the order of **1 ms** per point. Between the DAC step and the comparison, the DUT sees whatever the analog limiter allows — up to 75.2 mA through `R_sense`, and up to 107 mA at the load into a hard short. **A fragile DUT can therefore be destroyed by a single sweep point before firmware sees it.** Lowering `i_limit_ma` does not close this gap; it only stops the *second* bad point. For genuinely fragile parts the mitigations are a lower `V_max`, a finer step so no single step is a large jump, or an external series resistor — not a firmware value.
 
-**Short-recovery overshoot (sim 10).** When a heavy load current stops abruptly, the op-amp is at its rail and the output overshoots before the loop recovers. At 100 pF the load node reaches 14.8 V on a 10 V setpoint (+48%), holds near 14.2 V for ~1 µs, and settles within 1% by 1.9 µs. At 100 nF there is no overshoot and recovery takes 12–14 µs. The peak is structural and trustworthy; the duration depends on the op-amp model's overload recovery and is not. Sim 11 gives the same peak (+48%) for every `R_B` / `R_sense` pair it tried, so resizing the limiter does not change it. This is not only a fault case: a MOSFET DUT sitting in the current limit and then switching off produces the same edge. Every DUT is selected against the instrument's 10 V ceiling (§1 non-goals), so 14.8 V at the socket can exceed a DUT's rating. **Mitigation (Oct 9, 2026): D3, an SMAJ12A TVS across the DUT socket, fitted if H4 step 15 measures a peak above 12 V** (`hardware/DECISIONS.md` D3). At this circuit's ≤ ~0.1 A it clamps at its breakdown voltage, 13.3–14.8 V. It does not clamp at its 12 V standoff, so it trims the peak rather than holding it under 12 V. Bench-verify the real magnitude at H4 step 15 (Phase 1 was dropped, §9); do not rely on the PTC or the ADC clamps to cover it.
+**Short-recovery overshoot (sim 10).** When a heavy load current stops abruptly, the op-amp is at its rail and the output overshoots before the loop recovers. At 100 pF the load node reaches 14.8 V on a 10 V setpoint (+48%), holds near 14.2 V for ~1 µs, and settles within 1% by 1.9 µs. At 100 nF there is no overshoot and recovery takes 12–14 µs. The peak is structural and trustworthy; the duration depends on the op-amp model's overload recovery and is not. Sim 11 gives the same peak (+48%) for every `R_B` / `R_sense` pair it tried, so resizing the limiter does not change it. This is not only a fault case: a MOSFET DUT sitting in the current limit and then switching off produces the same edge. Every DUT is selected against the instrument's 10 V ceiling (§1 non-goals), so 14.8 V at the socket can exceed a DUT's rating. **Mitigation (Oct 9, 2026): D3, an SMAJ12A TVS across the DUT socket, fitted if H4 step 15 measures a peak above 16 V** (`hardware/DECISIONS.md` D3; threshold revised from 12 V on Oct 11).
+- **What it clamps to.** At this circuit's ≤ ~0.1 A it clamps at its breakdown voltage, 13.3–14.8 V, not at its 12 V standoff. With D3 fitted, 13.3–14.8 V is the part working as specified.
+- **Why the threshold is 16 V.** No TVS can hold the socket under 12 V without conducting near the 10.96 V full scale.
+- **What a fail means.** A peak above 16 V is something other than the structural overshoot sim 10 predicts.
+- **What D3 does not do.** It bounds a microsecond transient. It does not enforce §1's 10 V ceiling, and with the threshold at 16 V the predicted ~14.8 V, ~1 µs peak passes step 15 and reaches the socket without D3.
+- **Sustained overcurrent is not D3's job.** It belongs to the firmware limit (§4), as in the table above.
+- **Measure it on the bench.** Bench-verify the real magnitude at H4 step 15 (Phase 1 was dropped, §9). Do not rely on the PTC or the ADC clamps to cover it.
 
 **The PTC does not protect the DUT. Do not count it as DUT protection.** The nSMD010 holds **100 mA** and is only guaranteed to open at its **250 mA** trip current (the RXEF010 it replaced: 200 mA). The limiter's sustained-short load current is **107 mA** (sim 11), which sits between the two: above hold, far below trip. It may or may not open there, depending on ambient temperature and how long the fault persists, and either outcome is safe — the limiter already bounds the current, and a tripped PTC only removes it.
 
@@ -918,6 +941,6 @@ Recorded so they are not rediscovered during bring-up:
   keep-out drawn, before the board is called frozen.
 - **§3.6's short-recovery overshoot reaches 14.8 V at the load node on a 10 V
   setpoint** (+48%, structural, every `R_B`/`R_sense` pair). Its mitigation is
-  now D3, an SMAJ12A TVS, fitted if H4 step 15 reads above 12 V (§3.6). On a one-revision board, place the ADC clamp diodes
+  now D3, an SMAJ12A TVS, fitted if H4 step 15 reads above 16 V (§3.6). On a one-revision board, place the ADC clamp diodes
   (BAT54S) and the gate Zener before freeze and leave a footprint for an output
   clamp at the DUT socket, even if it ships unstuffed.

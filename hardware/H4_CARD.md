@@ -132,17 +132,19 @@ Scope CH1 on TP3: AC, 50 mV/div, 1 µs/div, trigger auto.
 | 14b | — | **t = 20 s**: DMM red **TP1**, black **TP2** (R_B) | ~10.6 V (32 mA, sim 10) | ≤ 14.85 V (≤ 45 mA) | V_RB = ____ | Record, continue |
 | 14c | — | **t = 30 s**: scope p-p on TP3; the host's i_meas | < 10 mV ; ~107 mA | < 20 mV ; 95–120 mA | p-p = ____ ; i = ____ | Record, continue |
 | 14d | — | **t = 180 s**: TP3–TP4 again; thermometer on the heatsink at the tab | ≤ V_cold ; ~45 °C | ≥ 0.60 V ; ≤ 70 °C | V_warm = ____ ; T = ____ °C | **T > 70 °C: output OFF at once** → record → **STOP** |
-| 15 | 2 | **Short recovery.** Jumper on. Scope CH1 → **TP19** (DUT_D), DC, 2 V/div, 1 µs/div, trigger rising **10.5 V**, single, armed. `HOLD --vds 10 --seconds 60 --i-limit 165 -o h4/15_recovery.csv`. Any time after host t = 5 s, **pull the jumper**. Read the peak | ≈ 14.8 V (sim 10, +48% at 100 pF) | **≤ 12.0 V** | peak = ____ V (no trigger: write "< 10.5") | **> 12.0 V: D3 needed.** Record; the part is not chosen yet (DECISIONS O-3), so the fit is off-bench. Continue |
+| 15 | 2 | **Short recovery.** Jumper on. Scope CH1 → **TP19** (DUT_D), DC, 2 V/div, vertical offset so the **screen centre is +10 V** (shows +2…+18 V), 1 µs/div, trigger rising **10.5 V**, single, armed. `HOLD --vds 10 --seconds 60 --i-limit 165 -o h4/15_recovery.csv`. Any time after host t = 5 s, **pull the jumper**. Read the peak | ≈ 14.8 V (sim 10, +48% at 100 pF); 13.3–14.8 V if D3 is fitted | **≤ 16.0 V** | peak = ____ V (no trigger: write "< 10.5"; off the top: write "> 18") | **> 16.0 V: not sim 10's overshoot.** Save the scope screen to `h4/15_peak.png`, record, continue. Off-bench: fit D3 (SMAJ12A) and find the cause |
 
-**Step 15 threshold** (Daniel, 2026-10-09). §1 caps the instrument at 10 V,
-and every DUT is selected against that ceiling. Sim 10 measured 14.8 V at
-100 pF. So 12 V is 20% headroom over spec while still catching the
-structural overshoot. Below 12 V, record and continue; above it, fit D3.
+**Step 15 threshold** (Daniel, 2026-10-11; was 12 V, 2026-10-09). 16 V.
+The 12 V figure came from §1's 10 V ceiling, but no TVS can hold 12 V
+without leaking at the 10.96 V full scale (`DECISIONS.md` D3). Sim 10
+predicts ≈ 14.8 V, and a fitted D3 clamps at 13.3–14.8 V, its breakdown
+voltage, as specified. Both pass. Above 16 V is something other than the
+overshoot sim 10 predicted. D3 bounds a microsecond transient; it does not
+enforce the 10 V ceiling, and sustained overcurrent is the firmware limit's
+job, not D3's.
 
-D3 is an SMAJ12A, fitted off-bench. It clamps at its breakdown voltage,
-**13.3–14.8 V**, not at its 12 V standoff (`DECISIONS.md` D3). So after D3 is
-fitted, a re-run of step 15 is expected to read 13.3–14.8 V. Record it; do
-not treat it as a new failure.
+Probe off TP19 after this step: a 10 MΩ probe on the DUT node draws 1 µA
+at 10 V, and reads as DUT current on ranges 2–3 (blueprint §3.3).
 
 ■ **STOP POINT E**: supply output OFF, USB. Session complete. Hand back
 this sheet and `h4/`.

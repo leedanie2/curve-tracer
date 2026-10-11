@@ -5,7 +5,7 @@
 "C5","10u 50V","Capacitor_SMD:CP_Elec_5x5.4","RVT1H100M0505","ROQANG","C72487","PCBA","","1"
 "D1","1N4148W","Diode_SMD:D_SOD-123","1N4148W","ST(Semtech)","C81598","PCBA","","1"
 "D2,D6","BZT52C12 12V","Diode_SMD:D_SOD-123","BZT52C12","MDD(Microdiode Semiconductor)","C173429","PCBA","","2"
-"D3","DNP (output clamp)","Diode_SMD:D_SMA","","","","DNP","DNP","1"
+"D3","SMAJ12A (DNP)","Diode_SMD:D_SMA","SMAJ12A","MDD(Microdiode Semiconductor)","C113957","DNP","DNP","1"
 "D4,D5","BAT54S","Package_TO_SOT_SMD:SOT-23","BAT54S","R+O","C7420333","PCBA","","2"
 "F1","PTC 100mA hold","Fuse:Fuse_1206_3216Metric","nSMD010","TECHFUSE","C70065","PCBA","","1"
 "J1","15V IN","Connector_BarrelJack:BarrelJack_Horizontal","DC-005 2.0","BOOMELE","C16214","hand","","1"

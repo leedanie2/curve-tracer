@@ -7115,7 +7115,7 @@
 				)
 			)
 		)
-		(property "Value" "DNP (output clamp)"
+		(property "Value" "SMAJ12A (DNP)"
 			(at 0 2.6 90)
 			(layer "F.Fab")
 			(uuid "5e3ab663-3927-4018-806c-7096c0b747fe")
@@ -7139,7 +7139,7 @@
 				)
 			)
 		)
-		(property "Description" "Output clamp footprint at DUT socket (§14.6)"
+		(property "Description" "Output clamp TVS at DUT socket; fit only if H4 step 15 fails (blueprint §3.6)"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -7152,7 +7152,7 @@
 				)
 			)
 		)
-		(property "MPN" ""
+		(property "MPN" "SMAJ12A"
 			(at 0 0 90)
 			(layer "F.SilkS")
 			(hide yes)
@@ -7164,7 +7164,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" ""
+		(property "Manufacturer" "MDD(Microdiode Semiconductor)"
 			(at 0 0 90)
 			(layer "F.SilkS")
 			(hide yes)
@@ -7176,7 +7176,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "C113957"
 			(at 0 0 90)
 			(layer "F.SilkS")
 			(hide yes)

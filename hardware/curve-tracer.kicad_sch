@@ -21807,7 +21807,7 @@
 				)
 			)
 		)
-		(property "Value" "DNP (output clamp)"
+		(property "Value" "SMAJ12A (DNP)"
 			(at 304.8 86.36 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -21839,7 +21839,7 @@
 				)
 			)
 		)
-		(property "Description" "Output clamp footprint at DUT socket (§14.6)"
+		(property "Description" "Output clamp TVS at DUT socket; fit only if H4 step 15 fails (blueprint §3.6)"
 			(at 304.8 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -21850,7 +21850,7 @@
 				)
 			)
 		)
-		(property "MPN" ""
+		(property "MPN" "SMAJ12A"
 			(at 304.8 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -21861,7 +21861,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" ""
+		(property "Manufacturer" "MDD(Microdiode Semiconductor)"
 			(at 304.8 88.9 0)
 			(hide yes)
 			(show_name no)
@@ -21872,7 +21872,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "C113957"
 			(at 304.8 88.9 0)
 			(hide yes)
 			(show_name no)
