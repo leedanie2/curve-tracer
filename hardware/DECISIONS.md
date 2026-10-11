@@ -107,7 +107,7 @@ entry). Read every Sim figure below with that in mind.
 |---|---|---|---|---|---|
 | <a id="j1"></a>J1 | Barrel jack | DC-005, 2.0 mm pin | Blueprint §8 (15 V / 1 A adapter + barrel jack) | Check the adapter's plug before ordering: a 2.0 mm pin takes 5.5×2.1 plugs, not 5.5×2.5. The centre pin is net VIN, behind Q3 ([P-11](#layout-decisions-h2-pass-2-2026-10-06)) | — |
 | <a id="j2"></a>J2 | Supply header | 1×2 | Blueprint §14.4 ("headers, not soldered connections, for the supply") | On the +15V rail, **deliberately unprotected** (Daniel, 2026-10-07; [P-14](#layout-decisions-h2-pass-2-2026-10-06)). Silkscreen "+15V" and "GND" beside its pads | **H4:** polarity by meter before first power-up |
-| <a id="c5"></a>C5 | Bulk | **10 µF**, 50 V aluminium electrolytic | Blueprint §8 (≥25 V), §14.5(3) | 50 V is what is stocked in 5×5.4 mm, above the ≥25 V floor | — |
+| <a id="c5"></a>C5 | Bulk | **10 µF**, 50 V aluminium electrolytic, **jieerrui RVT50V10M5X5 (C47023118)** | Blueprint §8 (≥25 V), §14.5(3). Substituted 2026-10-11 (Daniel) | 50 V is what is stocked in 5×5.4 mm, above the ≥25 V floor. Was ROQANG RVT1H100M0505 (C72487), which JLCPCB tags "Standard Only": not placed on Economic PCBA. The replacement shares the RVT series name, 2000 h at 105 °C and 17 mA ripple at 120 Hz, with no "Standard Only" tag. **Neither part has a listed ESR**, so the match is on series, ripple and family, not a measured ESR. C5 is electrolytic because it damps the supply lead, and that damping comes from its ESR: the parameter that matters is inferred, not measured. **JLCPCB's placement preview showed the replacement reversed** with the +180° CP_Elec correction (P-10, applied by analogy): its "+" on pad 2 (GNDPWR). The correction is removed (P-10, revised) | H4 step 1b would show a reversed C5 only as a fault at power-up; check it in the placement preview before ordering |
 | <a id="q3"></a>Q3 | J1 reverse-polarity FET | **HL2303** P-channel, SOT-23 (R+O, C7420345, Preferred) | **Decision, 2026-10-06**: Daniel ("P-channel MOSFET in the high side, not a Schottky"). Part: P-11 | −30 V V_DS, **±20 V V_GS**, R_DS(on) ≤ 190 mΩ at −10 V → ≤ 28.5 mV at 150 mA (≤ 50 mV asked). Drain = VIN (J1), source = +15V | **H4:** TP28 − TP7 at a known current; reversed supply on J1 |
 | <a id="d6"></a>D6 | Q3 gate clamp | **12 V**, BZT52C12, SOD-123 (C173429, D2's line) | P-11 | Cathode at source (+15V), anode at gate: holds V_GS at −12 V against hot-plug ringing past the 20 V rating | — |
 | <a id="r25"></a>R25 | Q3 gate pull-down | **10 kΩ** 1% 0603 (C25804, Basic) | P-11 | Gate to GNDPWR. D6 current (15 − 12) V / 10 kΩ = 0.3 mA | — |
@@ -463,10 +463,24 @@ and in the renders. J1's reference moved below the jack, beside C5.
 **P-10 — CPL rotations.** `tools/export_fab.py` adds −90° to SOT-23 (Q2,
 D4, D5) and 270° to SOIC (U1–U3), from the community table that
 `kicad-jlcpcb-tools` also uses. Both values are for KiCad 6+ footprints;
-the +180° quoted for SOT-23 dates from KiCad 5. C5's CP_Elec_5x5.4 is not
-in that table, and every listed CP_Elec size is 180°, so C5 gets 180°.
-These are not JLCPCB's numbers. JLCPCB's placement preview is where each
-polarised part gets checked (README, footprint orientation).
+the +180° quoted for SOT-23 dates from KiCad 5. These are not JLCPCB's
+numbers. JLCPCB's placement preview is where each polarised part gets
+checked (README, footprint orientation).
+
+*Revised 2026-10-11 (Daniel), after JLCPCB's preview:*
+- **C5: the +180° is removed.** CP_Elec_5x5.4 is not in the table, and C5
+  got +180° by analogy with the sizes that are. JLCPCB's preview drew the
+  substituted C5 (C47023118) with its "+" on pad 2, GNDPWR: reversed. **No
+  correction is taken by analogy.** A package with no entry gets 0, which is
+  itself an assumption the preview has to confirm.
+- **Through-hole parts: +90° and body centre.** At KiCad's rotation JLCPCB
+  drew TO-126 (Q1), the 1×2 and 2×3 headers and the 2×19 sockets 90° off
+  their outlines, each centred on pin 1. The CPL now places every
+  through-hole part at its F.Fab body centre and turns those packages +90°.
+  The source is JLCPCB's own preview, not a table. For Q1 the sign decides
+  which way the tab faces, and the preview has to show it.
+- "Confirm Parts Placement: Yes" is set on the order, so a JLCPCB engineer
+  checks placement independently of the viewer.
 
 **P-11 — J1 reverse-polarity protection: high-side P-FET Q3** (Daniel,
 2026-10-06). Q3's drain is on J1's centre pin (net VIN) and its source on

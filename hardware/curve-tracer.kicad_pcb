@@ -6664,7 +6664,7 @@
 				)
 			)
 		)
-		(property "MPN" "RVT1H100M0505"
+		(property "MPN" "RVT50V10M5X5"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -6676,7 +6676,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "ROQANG"
+		(property "Manufacturer" "jieerrui"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -6688,7 +6688,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C72487"
+		(property "LCSC" "C47023118"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)

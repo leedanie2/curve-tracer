@@ -6,7 +6,7 @@ not settled by this file; they are listed under *Verify yourself* at the end.
 
 | Vendor | What | Subtotal | Shipping | Total |
 |---|---|---|---|---|
-| JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB, test loops included | $157.65 | $31.23 ⚠ | **$188.88** |
+| JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB, test loops included | $157.33 | $31.23 ⚠ | **$188.56** |
 | LCSC | Contingency parts and jumper shunts | $11.66 | not quoted ⚠ | $11.66 + shipping |
 | DigiKey | TO-126 heatsink | $3.52 | not quoted ⚠ | $3.52 + shipping |
 
@@ -18,7 +18,7 @@ accident, a reversed supply or a blown op-amp, with no second spin.
 ## JLCPCB: fab and PCBA (one order)
 
 **Upload** from `hardware/fab/jlc/` (regenerate with
-`python3 hardware/tools/export_fab.py` after any change):
+`hardware/tools/export_fab.py`, with KiCad's Python, after any change):
 
 | Step | File |
 |---|---|
@@ -42,10 +42,10 @@ prices:
 | SMT joints | 100 per board × 5 × $0.0016 | $0.80 |
 | Through-hole labour | per order | $3.58 |
 | Through-hole joints | 127 per board × 5 × $0.0164 | $10.41 |
-| Parts | table below, with JLCPCB's minimums and attrition | $46.40 |
-| **Subtotal** | | **$157.65** |
+| Parts | table below, with JLCPCB's minimums and attrition | $46.08 |
+| **Subtotal** | | **$157.33** |
 | Shipping | DHL, 2026-10-06 bare-board quote ⚠ | $31.23 |
-| **Total** | | **$188.88** |
+| **Total** | | **$188.56** |
 
 The through-hole parts account for $21.49 of the fees (7 parts), $3.58 +
 $10.41 of the labour and $17.03 of the parts. The test loops alone are
@@ -58,7 +58,7 @@ plus its attrition, or its minimum if that is larger. Stock is JLCPCB's.
 |---|---|---|---|---|---|---|---|---|---|
 | C2, C6, C7, C8 | CC0603KRX7R9BB104 | YAGEO | C14663 | 4 | 30 | $0.0140 | $0.42 | basic | 56,357,634 |
 | C3, C4 | 0603B103K500NT | FH | C57112 | 2 | 20 | $0.0108 | $0.22 | basic | 6,126,055 |
-| C5 | RVT1H100M0505 | ROQANG | C72487 | 1 | 20 | $0.0268 | $0.54 | extended | 7,557 |
+| C5 | RVT50V10M5X5 | jieerrui | C47023118 | 1 | 6 | $0.0360 | $0.22 | extended | 31,607 |
 | D1 | 1N4148W | ST | C81598 | 1 | 15 | $0.0123 | $0.18 | basic | 4,877,572 |
 | D2, D6 | BZT52C12 | MDD | C173429 | 2 | 20 | $0.0162 | $0.32 | extended | 346,157 |
 | D3 | SMAJ12A | MDD | C113957 | 1 | 9 | $0.0429 | $0.39 | extended | 78,060 |
@@ -92,6 +92,17 @@ plus its attrition, or its minimum if that is larger. Stock is JLCPCB's.
 
 The through-hole lines (J1–J8, Q1, the RH-5001 loops) are all assembly
 process THT, mode `manualWeld`, in JLCPCB's part records.
+
+**C5 substituted at the BOM step (Daniel, 2026-10-11).** C72487 (ROQANG
+RVT1H100M0505) is tagged "Standard Only" on JLCPCB's BOM page and would not
+be placed on an Economic order. C47023118 (jieerrui RVT50V10M5X5) replaces
+it: 10 µF 50 V aluminium electrolytic, SMD 5×5.4 mm, the same RVT series
+name, 2000 h at 105 °C, 17 mA at 120 Hz. It shows no "Standard Only" tag.
+**JLCPCB lists no ESR for it, nor for C72487**, so the match is on series,
+ripple and family, not a measured ESR. C5 damps the supply lead, and
+damping comes from ESR, so ESR is the parameter that matters and it is
+inferred. The quantities JLCPCB set at the BOM step differ a little from
+this table's for some basic parts; the quote is the figure to trust.
 
 **Thin stock:** Q1 BD139 has **81** at JLCPCB (128 on 2026-10-06), and R1/R9
 23.2 kΩ 0.1% has 857. Both cover this order. Recheck if the order slips.

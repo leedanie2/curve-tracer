@@ -20,7 +20,10 @@ and no CPL row. DNP lines are left out, and so are symbols excluded from the
 BOM (TP6 and TP28, bare pads).
 
 The CPL rotations are KiCad's plus a per-package correction (CORRECTIONS
-below). Those are community data, not JLCPCB's: check every polarised part in
+below), and through-hole parts are placed at their body centre (F.Fab), not
+their pin-1 origin. Run it with KiCad's Python, which has pcbnew. The
+corrections are community data or read off JLCPCB's preview, not JLCPCB's
+own numbers: check every polarised part in
 JLCPCB's placement preview before paying (README, footprint orientation).
 
 The script exits 1 without writing the JLC files if the CPL and the BOM
@@ -54,12 +57,53 @@ LAYERS = ('F.Cu,B.Cu,F.Paste,B.Paste,F.Silkscreen,B.Silkscreen,'
 # 2024-09-11), which Bouni/kicad-jlcpcb-tools also ships as its default. Both
 # give SOT-23 as -90 for KiCad 6+ footprints; the +180 often quoted dates from
 # KiCad 5, whose SOT-23 had pin 3 at the top.
+#
+# A package with no entry gets 0, which is an assumption, not data. CP_Elec
+# had +180 "by analogy" with the sizes the table lists, and JLCPCB's preview
+# showed C5 reversed with it (2026-10-11), so it was removed: no correction is
+# taken by analogy. The through-hole entries come from JLCPCB's own preview
+# (2026-10-11): at KiCad's rotation each of those models was drawn 90° off its
+# footprint outline. Every polarised part is checked in the preview anyway
+# (README, footprint orientation).
 CORRECTIONS = [
     (r'^SOT-23', -90, 'cpl_rotations_db'),
     (r'^SOIC-', 270, 'cpl_rotations_db'),
-    # 5x5.4 is not in the table; every CP_Elec size that is listed is 180.
-    (r'^CP_Elec_', 180, 'by analogy: every listed CP_Elec size'),
+    (r'^TO-126-3_Vertical', 90, 'JLCPCB preview 2026-10-11'),
+    (r'^PinHeader_\d+x\d+_P2\.54mm_Vertical', 90, 'JLCPCB preview 2026-10-11'),
+    (r'^PinSocket_\d+x\d+_P2\.54mm_Vertical', 90, 'JLCPCB preview 2026-10-11'),
 ]
+
+
+def body_centres(refs):
+    """Centre of each footprint's F.Fab outline, in the CPL's coordinates.
+
+    JLCPCB draws a part centred on the CPL point. KiCad's through-hole
+    footprints have their origin on pin 1, so at the origin a 2x19 socket is
+    drawn half off its pads (preview, 2026-10-11). The F.Fab outline is the
+    body. Needs KiCad's Python (pcbnew).
+    """
+    try:
+        import pcbnew
+    except ImportError:
+        sys.exit('export_fab: through-hole body centres need pcbnew; run with '
+                 "KiCad's Python, e.g. /Applications/KiCad/KiCad.app/Contents/"
+                 'Frameworks/Python.framework/Versions/3.9/bin/python3')
+    board = pcbnew.LoadBoard(PCB)
+    out = {}
+    for ref in refs:
+        fp = board.FindFootprintByReference(ref)
+        items = [it for it in fp.GraphicalItems()
+                 if it.GetLayer() == pcbnew.F_Fab and not isinstance(it, pcbnew.PCB_TEXT)]
+        if not items:
+            items = list(fp.Pads())
+        xs, ys = [], []
+        for it in items:
+            bb = it.GetBoundingBox()
+            xs += [bb.GetLeft(), bb.GetRight()]
+            ys += [bb.GetTop(), bb.GetBottom()]
+        # pos export flips y; match it.
+        out[ref] = ((min(xs) + max(xs)) / 2e6, -(min(ys) + max(ys)) / 2e6)
+    return out
 
 # Through-hole parts JLCPCB will assemble. Each was read from JLCPCB's part
 # detail (cart.jlcpcb.com .../getComponentDetail) on 2026-10-11: assembly
@@ -178,6 +222,7 @@ def main():
     if errors:
         sys.exit('export_fab: not writing the JLC files:\n  ' + '\n  '.join(errors))
 
+    centres = body_centres(tht_refs)
     rot_report = {}
     with open(os.path.join(JLC, 'curve-tracer_cpl_jlc.csv'), 'w', newline='') as f:
         w = csv.writer(f)
@@ -188,8 +233,8 @@ def main():
             rot = (float(p['Rot']) + deg) % 360
             if deg:
                 rot_report.setdefault((p['Package'], deg, src), []).append(ref)
-            w.writerow([ref, f"{float(p['PosX']):.4f}mm", f"{float(p['PosY']):.4f}mm",
-                        'Top', f'{rot:g}'])
+            x, y = centres.get(ref, (float(p['PosX']), float(p['PosY'])))
+            w.writerow([ref, f"{x:.4f}mm", f"{y:.4f}mm", 'Top', f'{rot:g}'])
 
     with open(os.path.join(JLC, 'curve-tracer_bom_jlc.csv'), 'w', newline='') as f:
         w = csv.writer(f)

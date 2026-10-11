@@ -150,7 +150,7 @@ crosses the ground split, and its distance to the star tie.
 
 ## Fab outputs
 
-`python3 hardware/tools/export_fab.py` regenerates everything in `fab/`
+`hardware/tools/export_fab.py`, run with KiCad's Python (it needs pcbnew: `/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/3.9/bin/python3`), regenerates everything in `fab/`
 from the saved schematic and board. Re-run it after any change, after DRC.
 It refuses to write the JLCPCB files if the BOM and CPL disagree.
 

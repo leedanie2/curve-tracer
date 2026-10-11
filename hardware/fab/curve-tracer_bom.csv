@@ -2,7 +2,7 @@
 "C1","3.3p C0G (DNP)","Capacitor_SMD:C_0603_1608Metric","0603CG3R3B500NT","FH (Guangdong Fenghua)","C2836771","DNP","DNP","1"
 "C2,C6-C8","100n X7R 50V","Capacitor_SMD:C_0603_1608Metric","CC0603KRX7R9BB104","Yageo","C14663","PCBA","","4"
 "C3,C4","10n X7R 50V","Capacitor_SMD:C_0603_1608Metric","0603B103K500NT","FH (Guangdong Fenghua)","C57112","PCBA","","2"
-"C5","10u 50V","Capacitor_SMD:CP_Elec_5x5.4","RVT1H100M0505","ROQANG","C72487","PCBA","","1"
+"C5","10u 50V","Capacitor_SMD:CP_Elec_5x5.4","RVT50V10M5X5","jieerrui","C47023118","PCBA","","1"
 "D1","1N4148W","Diode_SMD:D_SOD-123","1N4148W","ST(Semtech)","C81598","PCBA","","1"
 "D2,D6","BZT52C12 12V","Diode_SMD:D_SOD-123","BZT52C12","MDD(Microdiode Semiconductor)","C173429","PCBA","","2"
 "D3","SMAJ12A","Diode_SMD:D_SMA","SMAJ12A","MDD(Microdiode Semiconductor)","C113957","PCBA","","1"
