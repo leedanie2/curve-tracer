@@ -157,9 +157,9 @@ It refuses to write the JLCPCB files if the BOM and CPL disagree.
 | File | What it is for |
 |---|---|
 | `fab/jlc/curve-tracer_gerbers.zip` | The quote page upload: Gerbers (Protel names) and Excellon PTH/NPTH, in JLCPCB's documented KiCad settings |
-| `fab/jlc/curve-tracer_bom_jlc.csv` | PCBA BOM upload. 32 lines, one per LCSC part, every one assembled by JLCPCB, the six through-hole parts included. No hand-solder lines |
-| `fab/jlc/curve-tracer_cpl_jlc.csv` | PCBA placement upload: 48 rows, PCBA parts only (nine through-hole), rotations corrected per `DECISIONS.md` P-10 |
-| `fab/curve-tracer_bom.csv` | Engineering BOM: every line including DNP. The bare test-point pads are not in it |
+| `fab/jlc/curve-tracer_bom_jlc.csv` | PCBA BOM upload. 33 lines, one per LCSC part, every one assembled by JLCPCB, through-hole parts and test loops included. No hand-solder lines |
+| `fab/jlc/curve-tracer_cpl_jlc.csv` | PCBA placement upload: 74 rows, PCBA parts only (35 through-hole: J1–J8, Q1 and 26 test loops), rotations corrected per `DECISIONS.md` P-10 |
+| `fab/curve-tracer_bom.csv` | Engineering BOM: every line including DNP. TP6 and TP28, bare pads, are not in it |
 | `fab/gerbers/` | The same Gerbers unzipped, for review |
 
 ### Contingency parts: order with the boards, not after
@@ -227,8 +227,9 @@ order; there is none between arrival and the Nov 16 freeze.
       ST's pin numbers, which run the other way (`DECISIONS.md` L-1)
 - [ ] Everything in [`ORDER.md`](ORDER.md) ordered, and its **Verify
       yourself** list cleared
-- [ ] In JLCPCB's BOM step all 32 lines match. The nine through-hole parts
-      (J1–J8, Q1) show as hand-soldered by JLCPCB; nothing is unmatched
+- [ ] In JLCPCB's BOM step all 33 lines match. The through-hole parts
+      (J1–J8, Q1, the RH-5001 loops) show as hand-soldered by JLCPCB;
+      nothing is unmatched
 - [ ] `tools/check_topology.py --self-test` passes on the frozen schematic
 - [ ] BAT54S ADC clamps and gate Zener placed; output-clamp footprint at the
       DUT socket for §3.6's +48% short-recovery overshoot, unstuffed is fine

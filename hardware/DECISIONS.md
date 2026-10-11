@@ -114,7 +114,7 @@ entry). Read every Sim figure below with that in mind.
 | <a id="c6"></a>C6, <a id="c7"></a>C7, <a id="c8"></a>C8 | Op-amp decoupling | **100 nF** X7R 50 V | Blueprint §8, §14.5(3) | One per OPA2197 V+, within ~5 mm | — |
 | <a id="nt2"></a>NT2 | Star point | — | **Capture C-2** | §14.5(4) | — |
 | <a id="j7"></a>J7, <a id="j8"></a>J8 | Nucleo CN7 / CN10 | 2×19 sockets | Blueprint §14.4. `firmware/README.md` pin table | PA0 = CN7-28 (ADC1_IN1), PA4 = CN7-32 (DAC1_OUT1), PC0 = CN7-38 (ADC2_IN6, default solder bridges), PA6 = CN10-13 (DAC2_OUT1). Verified against **UM1724 Rev 14 Table 26**. PA5 unused (LD2, §3.5). Nucleo is USB-powered: +15 V exceeds VIN max | — |
-| <a id="tp"></a>TP1–TP28 | Test points | **Bare pads, no loops** (Daniel, 2026-10-11): TP1–TP27 are the Keystone 5001 footprint's 1.0 mm plated hole with nothing fitted, out of the BOM and CPL; TP6 and TP28 bare SMD pads. A loop can still be fitted later: the footprint is unchanged | Blueprint §14.4. TP6: Capture C-4. TP28 (VIN): a 1 mm pad because a loop does not fit by J1 (P-11) | Every node §14.4 lists, plus every other named net except Q3's gate (RP_GATE), the op-amp input nodes DA_P, DA_N, GATE_IN- and the per-shunt pads SH1–3_TOP, which SHUNT_HI reaches when selected | — |
+| <a id="tp"></a>TP1–TP28 | Test points | **RH-5001 loops (ronghe, C5199801), assembled by JLCPCB** on TP1–TP27 except TP6, in the Keystone 5001 footprint (1.0 mm hole). TP6 and TP28 bare SMD pads. Dropped and restored the same day (Daniel, 2026-10-11; Assembly) | Blueprint §14.4. TP6: Capture C-4. TP28 (VIN): a 1 mm pad because a loop does not fit by J1 (P-11) | Every node §14.4 lists, plus every other named net except Q3's gate (RP_GATE), the op-amp input nodes DA_P, DA_N, GATE_IN- and the per-shunt pads SH1–3_TOP, which SHUNT_HI reaches when selected | — |
 
 `BD139_C` from the README routing table is not a separate net: the collector
 is tied directly to +15 V (§3.1), so it is net `+15V`, probed at TP7.
@@ -621,6 +621,21 @@ it is fed. **That condition is not verified**: it is an H4 measurement (TP8,
 Kelvin leads unplugged). The routes are unchanged: unplugged Kelvin leads on
 any range, and over-range on ranges 2–3.
 
+## Rev 2 items
+
+Changes for a second board, if there is one. None blocks this order.
+
+**R2-1 — No safe scope spring-ground point near TP3** (Daniel, 2026-10-11).
+TP3 (BD139 emitter) is where the oscillation and step measurements are
+taken (H4 Blocks 1 and 2, step 14c; CONTINGENCY A1, A2, A5, A6). The nearest ground is C2's
+GNDPWR pad, 4.8 mm away. It sits 1.6 mm from C2's +15 V pad, so a spring
+ground slipping there shorts the rail. TP27 is 50 mm away. A VHF
+measurement on this node therefore has to use a clip lead, whose inductance
+can make ringing that is not in the circuit (a long ground lead rings near
+100 MHz by itself). **Rev 2: a dedicated ground pad or via within a few mm
+of TP3, on GNDPWR, with nothing at another potential within reach of a
+spring-ground tip.** TP19 (step 15) is better placed: TP27 is 6.5 mm from it.
+
 ## Assembly — JLCPCB assembles everything; nothing is hand-soldered
 
 **Decision, 2026-10-11 (Daniel): zero hand-soldering.** The 2026-10-06
@@ -630,8 +645,8 @@ block, J7/J8 2×19 sockets, Q1 BD139. JLCPCB solders them by hand. Each was
 checked in JLCPCB's part record on 2026-10-11: assembly process THT, mode
 `manualWeld`, status available. They are listed in `tools/export_fab.py`
 `THT_VERIFIED`, which stops the export if a through-hole PCBA part is not on
-that list. The seventh hand line, the 26 test loops, is dropped, not moved
-(TP row above).
+that list. The seventh hand line, the 26 test loops, goes to PCBA too, as
+the RH-5001 clone (below).
 
 **Cost of the reversal**, at JLCPCB's price page and part prices read on
 2026-10-11, for 5 assembled boards:
@@ -643,25 +658,34 @@ that list. The seventh hand line, the 26 test loops, is dropped, not moved
 - the six parts move from the LCSC hand order to JLCPCB: **$7.87**.
 
 The per-part loading fee is now $3.07, not the $3 used below, and the JLC BOM
-has one line per LCSC part (J2/J5, J3/J4 and J7/J8 were separate lines):
-**32 lines, 6 Basic, 2 Preferred, 24 extended, $73.68**. Totals are in
-`hardware/ORDER.md`.
+has one line per LCSC part (J2/J5, J3/J4 and J7/J8 were separate lines).
+With the loops: **33 lines, 6 Basic, 2 Preferred, 25 extended, $76.75**.
+Totals are in `hardware/ORDER.md`.
 
 **Correction to the record below.** "Keystone 5001 test loops (not stocked at
 LCSC)" is wrong as of 2026-10-11. JLCPCB's library carries Keystone 5001
-(C238122, 21,003 in stock, $0.32) and the ronghe RH-5001 (C5199801, 167,868,
-$0.083), both THT / `manualWeld`. Re-adding the loops as PCBA would cost one
-extended fee plus 130 parts and 130 joints: about $16 with RH-5001, $47 with
-Keystone, for 5 boards. Not done: Daniel's decision is bare pads.
+(C238122, 21,003 in stock, $0.32) and the ronghe RH-5001 (C5199801, 167,868),
+both THT / `manualWeld`.
 
-**What bare pads cost at the bench.** DMM readings are unaffected: a tip
-seats in a 1.0 mm hole. The scope is not. H4 holds a probe on TP3 for Blocks
-1, 2 and 4, and on TP19 at step 15, with both hands busy. A hole gives a hook
-nothing to grip, so the card now needs a **probe holder**, and the scope
-ground clips to J2's GND pin. Step 13a moved its clips to the supply post
-and J6. CONTINGENCY A2 lost its spring-ground option. That option never
-existed in fact: TP27 is 50 mm from TP3, and the one ground pad near TP3
-(C2's, 4.8 mm) is 1.6 mm from C2's +15 V pad.
+**Test loops: dropped, then restored (Daniel, 2026-10-11).** The loops were
+dropped first, leaving bare 1.0 mm holes. That made the H4 card depend on a
+probe holder Daniel does not own. It also left the scope no grip at TP3,
+the node for the most important measurement in the project, where there is
+no safe spring-ground point either (R2-1). Daniel reversed it: "Dropping
+them was my call and it was wrong." The loops are the **RH-5001 clone,
+assembled by JLCPCB**. It has the Keystone 5001's form: 2.5 mm body, 1.25 mm
+loop, two 0.25 mm legs that spring to 1.4 mm. Its drawing gives no hole size;
+Keystone's for the 5001 is ~1.02 mm, against the footprint's 1.0 mm drill.
+The cost for 5 boards is one extended fee ($3.07), 130 joints ($2.13) and
+134 loops at $0.0683 ($9.15): **$14.36**. The card and CONTINGENCY are back
+to clip leads on loops. One change from before is kept: the scope ground is
+a clip lead on TP27, not a spring ground (R2-1).
+
+**All 5 boards assembled (Daniel, 2026-10-11).** Not 2. With the loops the
+difference is **$27.80** ($188.88 against $161.08), not the $21.19 quoted
+before the loops were restored. It buys spares against a soldering accident
+in the C_f sweep, a reversed supply or a blown op-amp. All three have
+happened before in this project, and there is no second spin.
 
 ### Superseded 2026-10-11: the 2026-10-06 hand-solder decision
 

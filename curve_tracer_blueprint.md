@@ -835,7 +835,7 @@ no assembly, no shipping. The real project cost is that plus:
 
 | Item | Note |
 |---|---|
-| PCB fab + PCBA | Assembly is the §14.3 decision. Every part, through-hole included, is fitted by JLCPCB (Oct 11). **$174.52** for 5 boards, all assembled, with DHL; itemised in `hardware/ORDER.md` |
+| PCB fab + PCBA | Assembly is the §14.3 decision. Every part, through-hole included, is fitted by JLCPCB (Oct 11). **$188.88** for 5 boards, all assembled, test loops included, with DHL; itemised in `hardware/ORDER.md` |
 | **Express fab shipping** | **Bought deliberately.** See below |
 | Stencil / setup fees, if the fab charges them | Quote at order time |
 

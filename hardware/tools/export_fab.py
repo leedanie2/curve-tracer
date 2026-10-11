@@ -17,7 +17,7 @@ CPL; since 2026-10-11 that includes the through-hole parts, which JLCPCB
 solders by hand. `hand` lines, if any come back, stay in the JLC BOM so the
 order lists every part, but are marked HAND-SOLDER and carry no LCSC number
 and no CPL row. DNP lines are left out, and so are symbols excluded from the
-BOM (the bare test-point pads).
+BOM (TP6 and TP28, bare pads).
 
 The CPL rotations are KiCad's plus a per-package correction (CORRECTIONS
 below). Those are community data, not JLCPCB's: check every polarised part in
@@ -73,6 +73,7 @@ THT_VERIFIED = {
     'C474882': 'KF301-5.0-3P terminal block (J6)',
     'C2897420': 'PM254-2-19-Z-8.5 2x19 socket (J7, J8)',
     'C27866': 'BD139 TO-126 (Q1)',
+    'C5199801': 'RH-5001 test loop (TP1-TP27 but TP6)',
 }
 
 

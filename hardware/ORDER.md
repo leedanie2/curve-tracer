@@ -6,11 +6,12 @@ not settled by this file; they are listed under *Verify yourself* at the end.
 
 | Vendor | What | Subtotal | Shipping | Total |
 |---|---|---|---|---|
-| JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB | $143.29 | $31.23 ⚠ | **$174.52** |
+| JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB, test loops included | $157.65 | $31.23 ⚠ | **$188.88** |
 | LCSC | Contingency parts and jumper shunts | $11.66 | not quoted ⚠ | $11.66 + shipping |
 | DigiKey | TO-126 heatsink | $3.52 | not quoted ⚠ | $3.52 + shipping |
 
-With **2 of the 5 boards assembled**, JLCPCB is $122.10 + $31.23 = $153.33 ⚠.
+All 5 boards are assembled (Daniel, 2026-10-11): spares against a soldering
+accident, a reversed supply or a blown op-amp, with no second spin.
 
 ---
 
@@ -22,12 +23,12 @@ With **2 of the 5 boards assembled**, JLCPCB is $122.10 + $31.23 = $153.33 ⚠.
 | Step | File |
 |---|---|
 | PCB quote | `curve-tracer_gerbers.zip` |
-| PCBA BOM | `curve-tracer_bom_jlc.csv`: 32 lines, one per part, all matched |
-| PCBA CPL | `curve-tracer_cpl_jlc.csv`: 48 rows |
+| PCBA BOM | `curve-tracer_bom_jlc.csv`: 33 lines, one per part, all matched |
+| PCBA CPL | `curve-tracer_cpl_jlc.csv`: 74 rows |
 
 **PCB:** 2 layers, FR-4, 1.6 mm, 135 × 92 mm, qty 5, green, HASL, 2-day
 build. **Express shipping** (blueprint §14.3a). **PCBA:** Economic ⚠, top
-side, 5 assembled ⚠.
+side, **5 assembled**.
 
 **Cost, 5 assembled.** From JLCPCB's price page (2026-10-11) and live part
 prices:
@@ -37,17 +38,18 @@ prices:
 | Board | 2026-10-06 quote, qty 5 (`DECISIONS.md` P-5) ⚠ | $10.00 |
 | PCBA setup | Economic | $8.18 |
 | Stencil | Economic | $1.53 |
-| Extended-part loading fees | 24 extended × $3.07 (6 Basic and 2 Preferred have none) | $73.68 |
+| Extended-part loading fees | 25 extended × $3.07 (6 Basic and 2 Preferred have none) | $76.75 |
 | SMT joints | 100 per board × 5 × $0.0016 | $0.80 |
 | Through-hole labour | per order | $3.58 |
-| Through-hole joints | 101 per board × 5 × $0.0164 | $8.28 |
-| Parts | table below, with JLCPCB's minimums and attrition | $37.24 |
-| **Subtotal** | | **$143.29** |
+| Through-hole joints | 127 per board × 5 × $0.0164 | $10.41 |
+| Parts | table below, with JLCPCB's minimums and attrition | $46.40 |
+| **Subtotal** | | **$157.65** |
 | Shipping | DHL, 2026-10-06 bare-board quote ⚠ | $31.23 |
-| **Total** | | **$174.52** |
+| **Total** | | **$188.88** |
 
-The six through-hole parts account for $18.42 of the fees, $3.58 + $8.28 of
-the labour and $7.87 of the parts (`DECISIONS.md`, Assembly).
+The through-hole parts account for $21.49 of the fees (7 parts), $3.58 +
+$10.41 of the labour and $17.03 of the parts. The test loops alone are
+$14.36 of that (`DECISIONS.md`, Assembly).
 
 **Parts JLCPCB buys.** "Buy" is the quantity JLCPCB charges for: 5 boards
 plus its attrition, or its minimum if that is larger. Stock is JLCPCB's.
@@ -85,10 +87,11 @@ plus its attrition, or its minimum if that is larger. Stock is JLCPCB's.
 | R20 | RT0603BRD07300KL | YAGEO | C705762 | 1 | 20 | $0.0390 | $0.78 | extended | 120,049 |
 | R21 | RT0603BRD07100KL | YAGEO | C122538 | 1 | 20 | $0.0321 | $0.64 | extended | 1,378,984 |
 | R25 | 0603WAF1002T5E | UNI-ROYAL | C25804 | 1 | 20 | $0.0022 | $0.04 | basic | 33,702,315 |
+| TP1–TP27 except TP6 | RH-5001 | ronghe | C5199801 | 26 | 134 | $0.0683 | $9.15 | extended | 167,868 |
 | U1, U2, U3 | OPA2197IDR | Texas Instruments | C139363 | 3 | 15 | $1.1141 | $16.71 | extended | 19,993 |
 
-The through-hole lines (J1–J8, Q1) are all assembly process THT, mode
-`manualWeld`, in JLCPCB's part records.
+The through-hole lines (J1–J8, Q1, the RH-5001 loops) are all assembly
+process THT, mode `manualWeld`, in JLCPCB's part records.
 
 **Thin stock:** Q1 BD139 has **81** at JLCPCB (128 on 2026-10-06), and R1/R9
 23.2 kΩ 0.1% has 857. Both cover this order. Recheck if the order slips.
@@ -130,7 +133,7 @@ if the tube stock goes.
 
 13.20 × 19.81 mm with 8.13 mm fins, against the 17.5 × 14.5 mm keep-out
 (`DECISIONS.md` P-8). Required before any short test (H4 Block 4). Two
-covers one board and a spare; order 5 for every assembled board.
+covers the board in use and one spare board; order 5 to fit every board.
 
 ---
 
@@ -148,22 +151,21 @@ covers one board and a spare; order 5 for every assembled board.
    page lists the hand-soldering fees under both tiers. The quote was not
    run here, because it needs the files uploaded. If the quote forces
    Standard PCBA, the totals barely move: setup $25.56, stencil $8.21 and
-   $1.53 per part on all 32 parts come to $82.73, against Economic's $83.39.
-2. **Assembled quantity: 5 or 2.** All the figures above are for 5; 2 is
-   $21.19 less.
-3. **Board price and shipping** are the 2026-10-06 bare-board quote. PCBA
+   $1.53 per part on all 33 parts come to $84.26, against Economic's $86.46.
+2. **Board price and shipping** are the 2026-10-06 bare-board quote. PCBA
    adds weight, and shipping is set at checkout.
-4. **The fees** ($3.07 per extended part, $3.58 labour, $0.0164 per joint)
+3. **The fees** ($3.07 per extended part, $3.58 labour, $0.0164 per joint)
    are from the price page, not a quote. Confirm them on the quote.
-5. **Through-hole orientation in JLCPCB's preview:** Q1 (reversed, it swaps
+4. **Through-hole orientation in JLCPCB's preview:** Q1 (reversed, it swaps
    emitter and base) and J6 (wire entries to the board edge). See
    `README.md`, *Footprint orientation*. The CPL gives through-hole parts
    at their pin-1 origin, so the preview may draw them offset.
+5. **RH-5001 in a 1.0 mm hole.** Its drawing shows the Keystone 5001 form
+   (two 0.25 mm legs sprung to 1.4 mm) but gives no hole size. Keystone's
+   is ~1.02 mm, and the footprint is drilled 1.0 mm. If JLCPCB's DFM flags
+   it, that is where.
 6. **Heatsink fit.** Which way the 19.81 mm runs comes from DigiKey's
    dimension names, not a drawing. Check the datasheet against the keep-out
-   before ordering.
-7. **A probe holder for H4.** The test points are bare holes now, so the
-   scope probe needs a holder for Blocks 1, 2 and 4. It is not on this
-   order.
-8. **Shipping for LCSC and DigiKey** was not quoted.
-9. **The on-hand items** above.
+   before ordering. Also the quantity, 2 or 5.
+7. **Shipping for LCSC and DigiKey** was not quoted.
+8. **The on-hand items** above.
