@@ -7,8 +7,8 @@ not settled by this file; they are listed under *Verify yourself* at the end.
 | Vendor | What | Subtotal | Shipping | Total |
 |---|---|---|---|---|
 | JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB, test loops included | $137.98 | $31.59 DHL Express (DDP), plus $55.82 duties and $9.66 sales tax | **$235.05 paid** |
-| LCSC | Contingency parts and jumper shunts | $11.66 | not quoted ⚠ | $11.66 + shipping |
-| DigiKey | TO-126 heatsink | $3.52 | not quoted ⚠ | $3.52 + shipping |
+| LCSC | H4 parts, contingency parts and jumper shunts. **Not yet ordered** | $13.72 | not quoted ⚠ | $13.72 + shipping |
+| DigiKey | TO-126 heatsink and insulator. **Not yet ordered** | $5.37 | not quoted ⚠ | $5.37 + shipping |
 
 All 5 boards are assembled (Daniel, 2026-10-11): spares against a soldering
 accident, a reversed supply or a blown op-amp, with no second spin.
@@ -158,49 +158,124 @@ this table's for some basic parts; the quote is the figure to trust.
 
 ---
 
-## LCSC: contingency parts and jumper shunts (one order)
+## LCSC: H4 parts, contingency parts and shunts (one order)
 
-The C_f kit, the R_iso and U1 fallbacks, D3 spares (`README.md`, Contingency
-parts; `CONTINGENCY.md`), and the J3/J4 jumper shunts. Stock is LCSC's own.
+**Not yet ordered.** Stock and prices checked 2026-10-11, after the JLCPCB
+order; LCSC's own stock. Order now: the boards ship Oct 14 and arrive
+Oct 16–20, and the blocking rows are needed on arrival day. **Blocking**
+means H4 as written cannot proceed past that step without it; **contingency
+only** means it is needed only if CONTINGENCY.md sends you there.
 
-| For | MPN | Maker | LCSC | Qty | Unit | Cost | Stock |
-|---|---|---|---|---|---|---|---|
-| C_f 1.5 pF, C0G 0603 ±0.1 pF | 0603CG1R5B500NT | FH | C507055 | 100 (min 100) | $0.0066 | $0.66 | 1,800 |
-| C_f 2.2 pF | 0603CG2R2B500NT | FH | C313085 | 50 (min 50) | $0.0118 | $0.59 | 12,150 |
-| C_f 2.7 pF | 0603CG2R7B500NT | FH | C2836769 | 50 (min 50) | $0.0129 | $0.65 | 2,300 |
-| C_f 3.3 pF; H4 P3 fits it as C1 | 0603CG3R3B500NT | FH | C2836771 | 50 (min 50) | $0.0127 | $0.64 | 3,250 |
-| C_f 3.9 pF | GRM1885C1H3R9BA01D | Murata | C162229 | 10 (min 5) | $0.1428 | $1.43 | 925 |
-| C_f 4.7 pF | 0603CG4R7B500NT | FH | C313086 | 100 (min 100) | $0.0095 | $0.95 | 2,800 |
-| R_iso raise, 47 Ω 1 W axial (R8) | RN1WS47ΩFT/BA1 | TyoHM | C385394 | 20 (min 20) | $0.0269 | $0.54 | 740 |
-| U1 fallback | OPA2196ID | TI | C2878263 | 2 | $2.4414 | $4.88 | **21** |
-| D3 spares | SMAJ12A | MDD | C113957 | 20 (min 20) | $0.0432 | $0.86 | 78,060 |
-| J3/J4 jumper shunts, 2.54 mm closed top | 2.54 short-circuit cap | BOOMELE | C100114 | 50 (min 50) | $0.0094 | $0.47 | 500,950 |
-| **Subtotal** | | | | | | **$11.66** | |
+| For | MPN | Maker | LCSC | Qty | Unit | Cost | Stock | Missing when the boards arrive? |
+|---|---|---|---|---|---|---|---|---|
+| J3/J4 jumper shunts, 2.54 mm closed top | 2.54 short-circuit cap | BOOMELE | C100114 | 50 | $0.0094 | $0.47 | 500,950 | **Blocking.** Prep P2 puts both on RNG1; without a shunt there is no sweep current path past the rail checks. Skip only if 2.54 mm shunts are already in the cabinet |
+| C_f 3.3 pF, C0G 0603 ±0.1 pF; P3 fits it as C1 | 0603CG3R3B500NT | FH | C2836771 | 50 | $0.0127 | $0.64 | 3,250 | **Blocking.** P3 fits it before first power-up; the board ships with C1 empty |
+| C_f 1.5 pF | 0603CG1R5B500NT | FH | C507055 | 100 | $0.0066 | $0.66 | 1,800 | **Blocks H4 Block 2** (the C_f sweep, always run) |
+| C_f 2.2 pF | 0603CG2R2B500NT | FH | C313085 | 50 | $0.0118 | $0.59 | 12,150 | **Blocks H4 Block 2** |
+| C_f 2.7 pF | 0603CG2R7B500NT | FH | C2836769 | 50 | $0.0129 | $0.65 | 2,300 | **Blocks H4 Block 2** |
+| C_f 3.9 pF | GRM1885C1H3R9BA01D | Murata | C162229 | 10 | $0.1428 | $1.43 | 925 | **Blocks H4 Block 2** |
+| C_f 4.7 pF | 0603CG4R7B500NT | FH | C313086 | 100 | $0.0095 | $0.95 | 2,800 | **Blocks H4 Block 2** |
+| L1 test load resistor: 200 Ω, **1 W**, 1%, metal film, axial | MFR1WSFTE52-200R | YAGEO | C172930 | 20 | $0.0303 | $0.61 | 3,080 | **Blocking** (L1, Blocks 1–2). Cabinet checklist below |
+| L1 test load capacitor: 100 nF **X7R** 50 V, leaded | C317C104K5R5TA7301 | KEMET | C1882781 | 5 | $0.5240 | $2.62 | 1,314 | **Blocking** (L1). Cabinet checklist below |
+| R_iso raise, 47 Ω 1 W axial (R8) | RN1WS47ΩFT/BA1 | TyoHM | C385394 | 20 | $0.0269 | $0.54 | 740 | Contingency only (CONTINGENCY A6) |
+| R_B lower, 330 Ω **1 W** axial (R4) | MFR1WSFTE52-330R | YAGEO | C172941 | 20 | $0.0319 | $0.64 | 16,960 | Contingency only (CONTINGENCY A5). Cabinet checklist below |
+| U1 fallback op-amp, cut tape | OPA2196IDR | TI | C2057972 | 2 | $1.5405 | $3.08 | 215 | Contingency only (CONTINGENCY A7, off-bench) |
+| D3 spares (JLCPCB fits D3) | SMAJ12A | MDD | C113957 | 20 | $0.0432 | $0.86 | 77,700 | Contingency only (removal for ranges 2–3, or a damaged D3) |
+| **Subtotal** | | | | | | **$13.72** | | |
 
-**The shunts are here, not at DigiKey.** LCSC stocks them, so they ship with
-the contingency parts. The board needs 2 per assembled board.
+**OPA2196: IDR, not ID.** The tube part (OPA2196ID, C2878263) was down to
+21. The cut-tape OPA2196IDR is the same die and package: 215 in stock and
+$1.54 against $2.44.
 
-**OPA2196ID has 21 left.** OPA2196IDR (C2057972, cut tape) is the same part
-if the tube stock goes.
-
----
-
-## DigiKey: heatsink
-
-| For | MPN | Maker | DigiKey | Qty | Unit | Cost | Stock |
-|---|---|---|---|---|---|---|---|
-| Q1 heatsink, TO-126 slide-on, 26 °C/W | 577500B00000G | Boyd | HS216-ND | 2 ⚠ | $1.76 | $3.52 | 5,546 |
-
-13.20 × 19.81 mm with 8.13 mm fins, against the 17.5 × 14.5 mm keep-out
-(`DECISIONS.md` P-8). Required before any short test (H4 Block 4). Two
-covers the board in use and one spare board; order 5 to fit every board.
+The 3.3 pF line covers both P3 and the 3.3 pF row of Block 2. The C_f sweep
+does not have to finish before Blocks 3–4 electrically; the card runs it
+first.
 
 ---
 
-## Not on this order (on hand, blueprint §8) ⚠
+## DigiKey: heatsink and its insulator
 
-330 Ω and 10 Ω axial (R4, R6 contingency), the 10 kΩ for H4 step 13a, L1's
-100 nF and 200 Ω 1 W, the Nucleo-F303RE, insulating pad for the heatsink.
+**Not yet ordered.** Checked 2026-10-11.
+
+| For | MPN | Maker | DigiKey | Qty | Unit | Cost | Stock | Missing when the boards arrive? |
+|---|---|---|---|---|---|---|---|---|
+| Q1 heatsink, TO-126 slide-on, 26 °C/W | 577500B00000G | Boyd | HS216-ND | 2 ⚠ | $1.76 | $3.52 | 5,546 | **Blocks H4 Block 4 only** (steps 14–15); the card's rule is no held short without it. Blocks 1–3 run without it |
+| Insulator between Q1's tab and the heatsink: Sil-Pad K-10, Kapton-based, 0.152 mm, cut for TO-220 | SPK10-0.006-00-54 | Bergquist | BER114-ND | 5 | $0.37 | $1.85 | 55,835 | **Blocks H4 Block 4** with the heatsink. Cabinet checklist below |
+| **Subtotal** | | | | | | **$5.37** | | |
+
+Heatsink quantity: two covers the board in use and one spare; order 5 to
+fit every board. 13.20 × 19.81 mm with 8.13 mm fins, against the 17.5 ×
+14.5 mm keep-out (`DECISIONS.md` P-8).
+
+---
+
+## Lab cabinet checklist: assumed on hand
+
+Take this to the cabinet before the boards arrive. **Order** means the
+part is on the LCSC or DigiKey list above, because a substitute from the
+cabinet is likely to be the wrong spec. **Cabinet** means a common item; use
+it if it meets the spec exactly.
+
+- [ ] **Nucleo-F303RE** (STMicroelectronics), with its USB Mini-B cable.
+  - **Without it, nothing runs:** it is the MCU, both DACs, both ADCs and
+    the host link.
+  - **Cabinet:** it is the board the firmware was written for. If it is not
+    there: DigiKey **497-15105-ND**, $20.13, 1,111 in stock (2026-10-11).
+- [ ] **L1 resistor: 200 Ω, genuinely rated 1 W**, 1%, metal film, axial
+  (D3.3 × L9 mm class).
+  - **Why 1 W:** it dissipates 0.18 W at the card's 6 V and **0.60 W at the
+    10.96 V full scale**, so a quarter-watt part is overloaded. An
+    underrated 200 Ω already smoked on this project (Daniel, 2026-10-11).
+    Check the marking or datasheet, not the body size alone.
+  - **Without it:** no resistive load for H4 Blocks 1–2 (oscillation and
+    step tests), and no full-scale ADC check against `11_q3.csv`.
+  - **Order:** YAGEO MFR1WSFTE52-200R, LCSC **C172930**.
+- [ ] **L1 capacitor: 100 nF, X7R or C0G, ≥ 25 V, leaded ceramic.**
+  - **Not Y5V or Z5U.** Those are rated −20%/+80% and lose much of their
+    capacitance under bias, so the "100 nF" stability load would not be
+    100 nF. It is the top of the range R_iso was simulated clean for
+    (100 pF–100 nF, sim 03).
+  - **Without it:** no capacitive load, so H4 Blocks 1–2 cannot test
+    stability.
+  - **Order:** KEMET C317C104K5R5TA7301, LCSC **C1882781**. Cabinet only if
+    you can confirm the dielectric.
+- [ ] **Q1 heatsink insulator: TO-126 insulating pad**, polyimide-backed
+  silicone, about 0.15–0.25 mm.
+  - **Why:** the TO-126 tab is Q1's collector, tied to **+15 V**. Without
+    the pad the heatsink is live at +15 V, and anything grounded touching
+    it shorts the +15 V rail straight to ground, bypassing the limiter.
+    Only the bench supply's current limit is left to protect the board.
+  - **Without it:** H4 Block 4 (held short and short recovery) cannot run
+    safely.
+  - **Order:** Bergquist Sil-Pad K-10 SPK10-0.006-00-54, DigiKey
+    **BER114-ND**. It is cut for TO-220, so trim it to the tab with
+    scissors. The TO-126 shape (Bergquist 1009AC-60) is no longer stocked
+    at DigiKey.
+  - ⚠ **Check that the slide-on heatsink still grips with the pad in
+    place.** Then check the pad with the DMM: heatsink to **TP7 (+15 V)**
+    must read **OL**. H4 step P4 only checks heatsink to TP27 (ground), which
+    a live heatsink also passes when nothing grounded touches it.
+- [ ] **10 kΩ resistor**, any tolerance, ≥ 1/8 W.
+  - Dissipates at most ~20 mW (+15 V across it with D3 reversed).
+  - **Without it:** H4 step 13a cannot run, so D3's presence and
+    orientation go unverified before the overshoot test.
+  - **Cabinet:** the §8 0.1% assortment includes 10 kΩ.
+- [ ] **330 Ω axial, 1 W**, for R4 (CONTINGENCY A5 only).
+  - **Why 1 W:** it sits in parallel with R_B, itself a 1 W part. At the R_B
+    voltage limit the card allows (14.85 V, step 14b) a 330 Ω carries
+    **0.67 W**, so a quarter-watt part is overloaded.
+  - **Order:** YAGEO MFR1WSFTE52-330R, LCSC **C172941**. Cabinet only if
+    yours is genuinely 1 W; §8's on-hand 330 Ω does not state a rating.
+- [ ] **10 Ω axial**, ≥ 1/4 W, for R6 (contingency only).
+  - In parallel with R_sense it carries at most ~0.03 W.
+  - **Cabinet:** §8 lists 10 Ω × 5.
+- [ ] **Bench and assembly items** for the card (`H4_CARD.md` S1–S3, P5–P8):
+  - bench supply, 15.00 V with a settable current limit;
+  - scope with a 10× probe; DMM; thermometer for step 14d;
+  - a 5.5 × 2.1 mm barrel plug for the reversed J1 lead (P7);
+  - wire for the J6 D–S jumper and the Kelvin pair (P5, P6);
+  - IPA, brush, a fine iron (C_f swaps), mini-grabbers.
+  - **Cabinet.**
 
 ---
 

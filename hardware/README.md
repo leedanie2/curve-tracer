@@ -179,7 +179,7 @@ checked at LCSC on 2026-10-07.
 | | 3.9 pF | Murata GRM1885C1H3R9BA01D | C162229 | 1,035 | 10 |
 | | 4.7 pF | FH 0603CG4R7B500NT | C313086 | 3,400 | 100 (min) |
 | R_iso up, axial 1 W 1% | 47 Ω | TyoHM RN1WS47ΩFT/BA1 | C385394 | 740 | 20 (min) |
-| U1 fallback | OPA2196 | TI OPA2196ID | C2878263 | 21 | 2 |
+| U1 fallback | OPA2196 | TI OPA2196IDR (cut tape) | C2057972 | 215 (2026-10-11) | 2 |
 | D3 spares: refit after removing it for ranges 2–3, or replace a failed one | TVS 12 V standoff, SMA, unidirectional | MDD SMAJ12A | C113957 | 78,080 (JLC 126,199) | 20 (min) |
 
 - **Tolerance.** FH's "B" code and Murata's "B" are both ±0.1 pF (FH
@@ -193,8 +193,9 @@ checked at LCSC on 2026-10-07.
   - If an intermediate value is ever wanted: 39 Ω 1 W 1% (UNI-ROYAL
     MFR01SF390JA10, C58700, 3.5 × 9.5 mm) had 2,850 in stock on
     2026-10-09.
-- **OPA2196IDR** (C2057972, cut tape, 275 in stock) is the same part if
-  the tube stock goes.
+- **OPA2196IDR** (C2057972, cut tape) replaces the tube part OPA2196ID
+  (C2878263), which was down to 21 on 2026-10-11. Same die and package,
+  and cheaper ($1.54 against $2.44).
 - **SMAJ12A** is fitted by JLCPCB since 2026-10-11. It clamps at ~13.3–14.8 V
   at this circuit's ≤ ~0.1 A, its breakdown voltage, not at 12 V
   (`DECISIONS.md` D3). Cathode (band) to DUT_D, which is D3's pad 1: the +y
