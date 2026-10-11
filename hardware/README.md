@@ -47,8 +47,10 @@ python3 hardware/tools/check_topology.py --self-test
 
 `check_topology.py` exports the netlist through kicad-cli and asserts every
 connection §3 depends on: each op-amp pin, the three gains and the ÷4, the
-§14.5(5) tap position, limiter and clamp polarity, the Nucleo pin map, star
-ground, and test-point coverage. `--self-test` also plants eleven faults that
+§14.5(5) tap position, limiter and clamp polarity (D3 included), the Nucleo
+pin map, star ground, and test-point coverage. It also fixes the list of
+parts on the DUT node (blueprint §3.3), so a part added there fails until its
+current has been checked against range 3. `--self-test` also plants fourteen faults that
 ERC passes, and fails if any goes uncaught. Change a value on purpose →
 change the matching assertion in the same commit.
 
@@ -154,14 +156,14 @@ It refuses to write the JLCPCB files if the BOM and CPL disagree.
 | File | What it is for |
 |---|---|
 | `fab/jlc/curve-tracer_gerbers.zip` | The quote page upload: Gerbers (Protel names) and Excellon PTH/NPTH, in JLCPCB's documented KiCad settings |
-| `fab/jlc/curve-tracer_bom_jlc.csv` | PCBA BOM upload. 25 PCBA lines with LCSC numbers. Seven more are marked **HAND-SOLDER** and have no LCSC number, so they cannot be matched |
-| `fab/jlc/curve-tracer_cpl_jlc.csv` | PCBA placement upload: 38 rows, PCBA parts only, rotations corrected per `DECISIONS.md` P-10 |
+| `fab/jlc/curve-tracer_bom_jlc.csv` | PCBA BOM upload. 26 PCBA lines with LCSC numbers. Seven more are marked **HAND-SOLDER** and have no LCSC number, so they cannot be matched |
+| `fab/jlc/curve-tracer_cpl_jlc.csv` | PCBA placement upload: 39 rows, PCBA parts only, rotations corrected per `DECISIONS.md` P-10 |
 | `fab/curve-tracer_bom.csv` | Engineering BOM: every line including DNP. The LCSC hand-solder order is its `hand` lines |
 | `fab/gerbers/` | The same Gerbers unzipped, for review |
 
 ### Contingency parts: order with the boards, not after
 
-For `CONTINGENCY.md`. None of these is on hand or on the PCBA BOM. Stock was
+For `CONTINGENCY.md`. None of these is on hand, and only D3 is on the PCBA BOM (spares). Stock was
 checked at LCSC on 2026-10-07.
 
 | Part | Value | MPN | LCSC | Stock | Qty |
@@ -174,7 +176,7 @@ checked at LCSC on 2026-10-07.
 | | 4.7 pF | FH 0603CG4R7B500NT | C313086 | 3,400 | 100 (min) |
 | R_iso up, axial 1 W 1% | 47 Ω | TyoHM RN1WS47ΩFT/BA1 | C385394 | 740 | 20 (min) |
 | U1 fallback | OPA2196 | TI OPA2196ID | C2878263 | 21 | 2 |
-| D3, if H4 step 15 fails | TVS 12 V standoff, SMA, unidirectional | MDD SMAJ12A | C113957 | 78,080 (JLC 126,199) | 20 (min) |
+| D3 spares: refit after removing it for ranges 2–3, or replace a failed one | TVS 12 V standoff, SMA, unidirectional | MDD SMAJ12A | C113957 | 78,080 (JLC 126,199) | 20 (min) |
 
 - **Tolerance.** FH's "B" code and Murata's "B" are both ±0.1 pF (FH
   datasheet code table). FH's own 3.9 pF (C2836772) is out of stock, hence
@@ -189,9 +191,10 @@ checked at LCSC on 2026-10-07.
     2026-10-09.
 - **OPA2196IDR** (C2057972, cut tape, 275 in stock) is the same part if
   the tube stock goes.
-- **SMAJ12A** clamps at ~13.3–14.8 V at this circuit's ≤ ~0.1 A, its
-  breakdown voltage, not at 12 V (`DECISIONS.md` D3). Cathode (band) to
-  DUT_D, which is D3's pad 1: the +y pad, at y = 78 mm.
+- **SMAJ12A** is fitted by JLCPCB since 2026-10-11. It clamps at ~13.3–14.8 V
+  at this circuit's ≤ ~0.1 A, its breakdown voltage, not at 12 V
+  (`DECISIONS.md` D3). Cathode (band) to DUT_D, which is D3's pad 1: the +y
+  pad, at y = 78 mm. A refit is checked with H4 step 13a.
 
 ---
 
@@ -278,6 +281,10 @@ from the top-left corner.
       show this one
 - [ ] **D6 BZT52C12 (SOD-123), beside Q3.** The band is at −y, on the
       +15V source trace; the anode goes to Q3's gate
+- [ ] **D3 SMAJ12A TVS (SMA), between J6 and TP19.** The cathode band is at
+      +y (y = 78 mm), on DUT_D, the pad whose trace runs to J6; the anode
+      goes to GNDPWR. Reversed, it is forward-biased by every sweep point
+      and holds DUT_D near 0.7 V. H4 step 13a also catches it
 - [ ] **C5 10 µF electrolytic.** "+" (pad 1, +15 V) is at −x; the can's dark
       stripe is at +x (GNDPWR)
 - [ ] **U1–U3 OPA2197 (SOIC-8).** The pin-1 dot is top-left on all three
@@ -285,7 +292,7 @@ from the top-left corner.
       entries face the left board edge
 
 **Then again in JLCPCB's placement preview**, for the PCBA parts in that
-list: C5, D1, D2, D4, D5, D6, Q2, Q3, U1–U3. The CPL rotations are community data
+list: C5, D1, D2, D3, D4, D5, D6, Q2, Q3, U1–U3. The CPL rotations are community data
 (`DECISIONS.md` P-10), not JLCPCB's. A rotation that is wrong there is the
 PCBA version of L-2: every file checks out and the board does not. Fix any
 rotation in the preview, then copy the fix into `CORRECTIONS` in

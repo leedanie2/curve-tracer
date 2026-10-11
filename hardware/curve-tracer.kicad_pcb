@@ -3752,7 +3752,7 @@
 				)
 			)
 		)
-		(property "Value" "DNP (R_sense alt)"
+		(property "Value" "10 1% (DNP)"
 			(at 6.35 2.72 270)
 			(layer "F.Fab")
 			(uuid "2932d33e-c675-4937-800b-a56360962fbf")
@@ -3774,7 +3774,7 @@
 				)
 			)
 		)
-		(property "Description" "R_sense alternate-value footprint"
+		(property "Description" "R_sense alternate. 10 ohm axial IN PARALLEL with R5 = 5 ohm, only for a trip that reads low (CONTINGENCY.md §4). On hand, blueprint §8: no MPN"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
@@ -7115,7 +7115,7 @@
 				)
 			)
 		)
-		(property "Value" "SMAJ12A (DNP)"
+		(property "Value" "SMAJ12A"
 			(at 0 2.6 90)
 			(layer "F.Fab")
 			(uuid "5e3ab663-3927-4018-806c-7096c0b747fe")
@@ -7139,7 +7139,7 @@
 				)
 			)
 		)
-		(property "Description" "Output clamp TVS at DUT socket; fit only if H4 step 15 fails (blueprint §3.6)"
+		(property "Description" "Output clamp TVS at DUT socket, fitted (blueprint §3.6)"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -7188,7 +7188,7 @@
 				)
 			)
 		)
-		(property "Assembly" "DNP"
+		(property "Assembly" "PCBA"
 			(at 0 0 90)
 			(layer "F.SilkS")
 			(hide yes)
@@ -7213,7 +7213,7 @@
 			)
 		)
 		(path "/b2e24e42-3b7a-5499-9147-2b4af692ae3d")
-		(attr smd dnp)
+		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -3.51 -1.65)
@@ -14011,7 +14011,7 @@
 				)
 			)
 		)
-		(property "Value" "DNP (C_f)"
+		(property "Value" "3.3p C0G (DNP)"
 			(at 0 1.43 0)
 			(layer "F.Fab")
 			(uuid "183eb140-30f5-46db-b230-556a922ee00c")
@@ -14033,7 +14033,7 @@
 				)
 			)
 		)
-		(property "Description" "C_f across R_f"
+		(property "Description" "C_f across R_f. 3.3 pF hand-fitted at H4 P3; the C_f sweep may change it (CONTINGENCY.md §2)"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -14056,7 +14056,7 @@
 				)
 			)
 		)
-		(property "MPN" ""
+		(property "MPN" "0603CG3R3B500NT"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -14068,7 +14068,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" ""
+		(property "Manufacturer" "FH (Guangdong Fenghua)"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -14080,7 +14080,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "C2836771"
 			(at 0 0 0)
 			(layer "F.SilkS")
 			(hide yes)
@@ -18023,7 +18023,7 @@
 				)
 			)
 		)
-		(property "Value" "DNP (R_iso alt)"
+		(property "Value" "47 1% 1W (DNP)"
 			(at 6.35 2.72 270)
 			(layer "F.Fab")
 			(uuid "e3fa5156-0bf0-47c2-b31c-525a32305bb4")
@@ -18045,7 +18045,7 @@
 				)
 			)
 		)
-		(property "Description" "R_iso alternate-value footprint"
+		(property "Description" "R_iso alternate. 47 ohm fitted ALONE, R7 removed first; in parallel it lowers R_iso (CONTINGENCY.md A6)"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
@@ -18068,7 +18068,7 @@
 				)
 			)
 		)
-		(property "MPN" ""
+		(property "MPN" "RN1WS47ΩFT/BA1"
 			(at 0 0 270)
 			(layer "F.SilkS")
 			(hide yes)
@@ -18080,7 +18080,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" ""
+		(property "Manufacturer" "TyoHM"
 			(at 0 0 270)
 			(layer "F.SilkS")
 			(hide yes)
@@ -18092,7 +18092,7 @@
 				)
 			)
 		)
-		(property "LCSC" ""
+		(property "LCSC" "C385394"
 			(at 0 0 270)
 			(layer "F.SilkS")
 			(hide yes)
@@ -19058,7 +19058,7 @@
 				)
 			)
 		)
-		(property "Value" "DNP (R_B alt)"
+		(property "Value" "330 1% (DNP)"
 			(at 6.35 2.72 90)
 			(layer "F.Fab")
 			(uuid "28918ada-3dce-40e8-aafe-8d180397aa8f")
@@ -19080,7 +19080,7 @@
 				)
 			)
 		)
-		(property "Description" "R_B alternate-value footprint"
+		(property "Description" "R_B alternate. 330 ohm axial IN PARALLEL with R3 = 165 ohm (CONTINGENCY.md A5). On hand, blueprint §8: no MPN"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)

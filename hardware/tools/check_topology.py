@@ -261,6 +261,25 @@ def run_checks(nl, report, fw=None):
     chk('Q3 gate: D6 12 V Zener cathode at source, anode at gate; R25 gate to GNDPWR',
         on('D6', 1) == '+15V' and on('D6', 2) == 'RP_GATE' and 'C12' in nl.comps['D6']['value']
         and between('R25', 'RP_GATE', 'GNDPWR'))
+    # Output clamp (DECISIONS.md D3), fitted since 2026-10-11. Unidirectional:
+    # reversed, it is forward-biased by every positive sweep point and holds
+    # the DUT node near 0.7 V with the limiter's full current through it.
+    chk('D3 SMAJ12A TVS: cathode (pin 1) on DUT_D, anode on GNDPWR, fitted (PCBA)',
+        on('D3', 1) == 'DUT_D' and on('D3', 2) == 'GNDPWR'
+        and nl.comps['D3']['value'] == 'SMAJ12A'
+        and nl.comps['D3']['fields'].get('Assembly') == 'PCBA')
+    # Blueprint §3.3: everything on the DUT node is read as DUT current. The
+    # census is fixed so that anything added there fails here until its
+    # current has been checked against range 3 and this list updated.
+    dut_node = {
+        'DUT_D': {'D3', 'J6', 'NT1', 'R12', 'R13', 'R14', 'TP19'},
+        'SHUNT_LO': {'NT1', 'TP11', 'U2'},
+        'KELVIN_HI': {'J5', 'R20', 'TP13'},
+    }
+    for net, want in dut_node.items():
+        have = {r for r, _ in nl.nets.get(net, [])}
+        chk(f'DUT node {net}: only {sorted(want)} (§3.3); extra {sorted(have - want) or "none"}',
+            have == want)
     for u, c in (('U1', 'C6'), ('U2', 'C7'), ('U3', 'C8')):
         chk(f'{u} decoupled by {c}', between(c, '+15V', 'GND'))
     chk('BD139 collector decoupling C2', between('C2', '+15V', 'GNDPWR'))
@@ -305,6 +324,9 @@ FAULTS = [
     ('stock (mirrored) socket footprint on the Nucleo', [('J7', 'fp', 'Connector_PinSocket_2.54mm:PinSocket_2x19_P2.54mm_Vertical')]),
     ('reverse-polarity FET drain and source swapped', [('Q3', 3, '+15V'), ('Q3', 2, 'VIN')]),
     ('Q3 gate Zener reversed', [('D6', 1, 'RP_GATE'), ('D6', 2, '+15V')]),
+    ('output clamp D3 reversed', [('D3', 1, 'GNDPWR'), ('D3', 2, 'DUT_D')]),
+    ('output clamp D3 back to DNP', [('D3', 'field:Assembly', 'DNP')]),
+    ('a pull-down added to the DUT node, unreviewed (§3.3)', [('R24', 1, 'DUT_D')]),
 ]
 
 
@@ -334,6 +356,8 @@ def main():
             for ref, pin, net in moves:
                 if pin == 'fp':
                     nl.comps[ref]['footprint'] = net
+                elif isinstance(pin, str) and pin.startswith('field:'):
+                    nl.comps[ref]['fields'][pin[6:]] = net
                 elif pin is None:
                     nl.set_value(ref, net)
                 else:

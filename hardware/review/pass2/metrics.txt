@@ -2,7 +2,7 @@ Pass 2 — routed board, 2026-10-06 (hardware/curve-tracer.kicad_pcb)
 Updated 2026-10-06 for J1 reverse-polarity protection (Q3, D6, R25, TP28; DECISIONS.md P-11)
 
 Board            135.0 x 92.0 mm, 2 layers, 1.6 mm (was 160 x 92 at Pass 1)
-Footprints       88 (incl. H1-H4, NT1, NT2, 7 DNP)
+Footprints       88 (incl. H1-H4, NT1, NT2, 6 DNP; D3 fitted 2026-10-11)
 Copper           F.Cu 1222.9 mm in 361 segments; B.Cu 61.5 mm in 20 segments
 Vias             31
 Track widths     0.19 mm 47 | 0.20 17 | 0.25 852 | 0.30 5 | 0.40 70 | 0.50 158 | 0.60 21 | 0.80 115 (mm of track)
