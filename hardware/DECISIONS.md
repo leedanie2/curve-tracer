@@ -479,6 +479,20 @@ checked (README, footprint orientation).
   through-hole part at its F.Fab body centre and turns those packages +90°.
   The source is JLCPCB's own preview, not a table. For Q1 the sign decides
   which way the tab faces, and the preview has to show it.
+- **SOT-23 (Q2, Q3, D4, D5): 180°, overriding the rotation table's −90°**
+  (Daniel, 2026-10-11). At −90° JLCPCB's preview drew all four SOT-23
+  models with the body turned across the pads. The lone lead pointed −y,
+  where the footprint has it on +x (Q2, D4, D5) or −x (Q3), and the pin-1
+  dot was off the footprint's pin 1. Another 90° clockwise, 180° in total,
+  puts both on the footprint's. **The reason is the source:** direct
+  evidence about this fab's own models beats a general reference, and the
+  same table's method (C5) was already wrong once today. The +180° the
+  table's notes dismiss as a KiCad 5 value is what this fab's preview wants
+  now. **Do not revert to the table's −90° without re-checking JLCPCB's
+  preview**; `tools/export_fab.py` carries the same warning.
+- **J1 stays at its pin-1 origin.** At its F.Fab body centre, JLCPCB drew
+  the DC-005 about 5 mm off the left board edge; at the origin it sat on its
+  outline. `ORIGIN_PLACED` in the export holds it there.
 - "Confirm Parts Placement: Yes" is set on the order, so a JLCPCB engineer
   checks placement independently of the viewer.
 

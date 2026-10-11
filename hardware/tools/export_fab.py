@@ -55,8 +55,11 @@ LAYERS = ('F.Cu,B.Cu,F.Paste,B.Paste,F.Silkscreen,B.Silkscreen,'
 # KiCad rotation + correction = JLCPCB rotation, matched on the footprint name.
 # Source: matthewlai/JLCKicadTools cpl_rotations_db.csv (last changed
 # 2024-09-11), which Bouni/kicad-jlcpcb-tools also ships as its default. Both
-# give SOT-23 as -90 for KiCad 6+ footprints; the +180 often quoted dates from
-# KiCad 5, whose SOT-23 had pin 3 at the top.
+# give SOT-23 as -90 for KiCad 6+ footprints. SOT-23 is overridden to 180
+# below (DECISIONS.md P-10, revised 2026-10-11): at -90 JLCPCB's preview drew
+# all four SOT-23 models 90 degrees off their pads, and at 180 their lone lead
+# and pin 1 land on the footprint's. Do not revert it to the table's value
+# without re-checking JLCPCB's preview.
 #
 # A package with no entry gets 0, which is an assumption, not data. CP_Elec
 # had +180 "by analogy" with the sizes the table lists, and JLCPCB's preview
@@ -66,12 +69,19 @@ LAYERS = ('F.Cu,B.Cu,F.Paste,B.Paste,F.Silkscreen,B.Silkscreen,'
 # footprint outline. Every polarised part is checked in the preview anyway
 # (README, footprint orientation).
 CORRECTIONS = [
-    (r'^SOT-23', -90, 'cpl_rotations_db'),
+    (r'^SOT-23', 180, 'JLCPCB preview 2026-10-11, overrides cpl_rotations_db -90'),
     (r'^SOIC-', 270, 'cpl_rotations_db'),
     (r'^TO-126-3_Vertical', 90, 'JLCPCB preview 2026-10-11'),
     (r'^PinHeader_\d+x\d+_P2\.54mm_Vertical', 90, 'JLCPCB preview 2026-10-11'),
     (r'^PinSocket_\d+x\d+_P2\.54mm_Vertical', 90, 'JLCPCB preview 2026-10-11'),
 ]
+
+
+# Through-hole parts whose JLCPCB model is drawn right at the KiCad origin
+# (pin 1), not at the body centre. J1: at its F.Fab centre JLCPCB drew the
+# DC-005 about 5 mm off the board edge; at the origin it sat on its outline
+# (preview, 2026-10-11).
+ORIGIN_PLACED = {'J1'}
 
 
 def body_centres(refs):
@@ -96,6 +106,10 @@ def body_centres(refs):
                  if it.GetLayer() == pcbnew.F_Fab and not isinstance(it, pcbnew.PCB_TEXT)]
         if not items:
             items = list(fp.Pads())
+        if ref in ORIGIN_PLACED:
+            p = fp.GetPosition()
+            out[ref] = (p.x / 1e6, -p.y / 1e6)
+            continue
         xs, ys = [], []
         for it in items:
             bb = it.GetBoundingBox()
