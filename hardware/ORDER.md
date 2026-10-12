@@ -7,8 +7,8 @@ not settled by this file; they are listed under *Verify yourself* at the end.
 | Vendor | What | Subtotal | Shipping | Total |
 |---|---|---|---|---|
 | JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB, test loops included | $137.98 | $31.59 DHL Express (DDP), plus $55.82 duties and $9.66 sales tax | **$235.05 paid** |
-| LCSC | H4 parts, contingency parts and jumper shunts. **Not yet ordered** | $13.72 | not quoted ⚠ | $13.72 + shipping |
-| DigiKey | TO-126 heatsink and insulator. **Not yet ordered** | $5.37 | not quoted ⚠ | $5.37 + shipping |
+| LCSC | H4 parts, contingency parts, jumper shunts, plus 10 kΩ and 10 Ω axial. **Ordered 2026-10-11, WM2610120117** | $15.12 | method not recorded ⚠ | $15.12 + shipping |
+| DigiKey | TO-126 heatsink and insulator. **Submitted 2026-10-11** | $5.37 | $4.99 USPS Ground Advantage, plus $0.70 tariff and $0.42 sales tax (estimates) | **$11.48** |
 
 All 5 boards are assembled (Daniel, 2026-10-11): spares against a soldering
 accident, a reversed supply or a blown op-amp, with no second spin.
@@ -160,8 +160,18 @@ this table's for some basic parts; the quote is the figure to trust.
 
 ## LCSC: H4 parts, contingency parts and shunts (one order)
 
-**Not yet ordered.** Stock and prices checked 2026-10-11, after the JLCPCB
-order; LCSC's own stock. Order now: the boards ship Oct 14 and arrive
+**Ordered 2026-10-11** (Daniel), LCSC order **WM2610120117**: the 13 lines
+below plus a 10 kΩ and a 10 Ω ¼ W axial (TyoHM RN1/4W10KFT/BA1, C410695;
+RN 1/4W 10R F T/B A1, C410692; 50 each, LCSC's minimum), 15 lines in all.
+Merchandise **$15.12**. The receipt is
+`hardware/orders/LCSC__WM2610120117_20261012094515.csv`. It lists parts and
+prices only, not the shipping method or the order total. ⚠ **Shipping
+method not recorded.** The cart offered Global Direct Standard Line ($10.85,
+7–15 business days, ~Oct 23 – Nov 3, after the boards) or DHL Express
+($38.71, 3–7 business days, ~Oct 16–23). Fill in which one was chosen.
+
+The table below is the plan written before ordering; stock and prices were
+checked 2026-10-11, LCSC's own stock. Order now: the boards ship Oct 14 and arrive
 Oct 16–20, and the blocking rows are needed on arrival day. **Blocking**
 means H4 as written cannot proceed past that step without it; **contingency
 only** means it is needed only if CONTINGENCY.md sends you there.
@@ -195,7 +205,19 @@ first.
 
 ## DigiKey: heatsink and its insulator
 
-**Not yet ordered.** Checked 2026-10-11.
+**Submitted 2026-10-11** (Daniel). Both lines were "Immediate" (shipped
+from stock, not on factory lead time). DigiKey flagged one extra day of
+processing, so it ships about Tue Oct 13. USPS Ground Advantage is
+typically 2–5 business days, so it arrives about **Oct 15–20**. That is fine
+because these parts are needed only for H4 Block 4, not on arrival day.
+
+| Line | Cost |
+|---|---|
+| Parts (below) | $5.37 |
+| Shipping, USPS Ground Advantage | $4.99 |
+| Tariff (heatsink), estimate | $0.70 |
+| Sales tax, estimate | $0.42 |
+| **Total** | **$11.48** |
 
 | For | MPN | Maker | DigiKey | Qty | Unit | Cost | Stock | Missing when the boards arrive? |
 |---|---|---|---|---|---|---|---|---|
@@ -259,7 +281,7 @@ it if it meets the spec exactly.
   - Dissipates at most ~20 mW (+15 V across it with D3 reversed).
   - **Without it:** H4 step 13a cannot run, so D3's presence and
     orientation go unverified before the overshoot test.
-  - **Cabinet:** the §8 0.1% assortment includes 10 kΩ.
+  - **Ordered** from LCSC anyway (C410695, 10 kΩ 1% ¼ W axial, WM2610120117), so the cabinet is a backup.
 - [ ] **330 Ω axial, 1 W**, for R4 (CONTINGENCY A5 only).
   - **Why 1 W:** it sits in parallel with R_B, itself a 1 W part. At the R_B
     voltage limit the card allows (14.85 V, step 14b) a 330 Ω carries
@@ -268,7 +290,7 @@ it if it meets the spec exactly.
     yours is genuinely 1 W; §8's on-hand 330 Ω does not state a rating.
 - [ ] **10 Ω axial**, ≥ 1/4 W, for R6 (contingency only).
   - In parallel with R_sense it carries at most ~0.03 W.
-  - **Cabinet:** §8 lists 10 Ω × 5.
+  - **Ordered** from LCSC anyway (C410692, 10 Ω 1% ¼ W axial, WM2610120117), so the cabinet is a backup.
 - [ ] **Bench and assembly items** for the card (`H4_CARD.md` S1–S3, P5–P8):
   - bench supply, 15.00 V with a settable current limit;
   - scope with a 10× probe; DMM; thermometer for step 14d;
@@ -297,5 +319,5 @@ Still open:
 3. **Heatsink fit.** Which way the 19.81 mm runs comes from DigiKey's
    dimension names, not a drawing. Check the datasheet against the keep-out
    before ordering. Also the quantity, 2 or 5.
-4. **Shipping for LCSC and DigiKey** was not quoted.
+4. **LCSC shipping method** is not on the receipt. Record which one was chosen; standard arrives after the boards (LCSC section).
 5. **The on-hand items** above.
