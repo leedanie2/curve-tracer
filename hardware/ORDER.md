@@ -9,6 +9,7 @@ not settled by this file; they are listed under *Verify yourself* at the end.
 | JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB, test loops included | $137.98 | $31.59 DHL Express (DDP), plus $55.82 duties and $9.66 sales tax | **$235.05 paid** |
 | LCSC | H4 parts, contingency parts, jumper shunts, plus 10 kΩ and 10 Ω axial. **Ordered 2026-10-11, WM2610120117** | $15.12 | Global Direct Standard Line ($10.85 quoted) ⚠ arrives after the boards | ~$25.97 |
 | DigiKey | TO-126 heatsink and insulator. **Submitted 2026-10-11** | $5.37 | $4.99 USPS Ground Advantage, plus $0.70 tariff and $0.42 sales tax (estimates) | **$11.48** |
+| DigiKey (2nd) | C_f set, 0603 C0G 1.5–4.7 pF, so H4 does not wait for LCSC. **Submitted 2026-10-11** | $4.84 | $4.99 USPS Ground Advantage, plus $0.40 tariff and $0.37 sales tax (estimates) | **~$10.60** |
 
 All 5 boards are assembled (Daniel, 2026-10-11): spares against a soldering
 accident, a reversed supply or a blown op-amp, with no second spin.
@@ -173,7 +174,10 @@ so about Oct 13–14, and **arrives about Oct 22 – Nov 4, after the boards
 the C_f set, L1's 200 Ω and 100 nF) are therefore late for H4. Options:
 ask LCSC to upgrade the order to DHL Express before it ships (about $28
 more, arriving ~Oct 16–23), or buy just the blocking parts domestically
-and let this order arrive late.
+and let this order arrive late. **Taken: the second option.** The C_f set
+including the 3.3 pF for C1 is on a second DigiKey order (section below).
+The shunts, the 200 Ω 1 W and the 100 nF X7R come from the cabinet; if the
+cabinet is short, the DigiKey part numbers are in that section.
 
 The table below is the plan written before ordering; stock and prices were
 checked 2026-10-11, LCSC's own stock. Order now: the boards ship Oct 14 and arrive
@@ -233,6 +237,53 @@ because these parts are needed only for H4 Block 4, not on arrival day.
 Heatsink quantity: two covers the board in use and one spare; order 5 to
 fit every board. 13.20 × 19.81 mm with 8.13 mm fins, against the 17.5 ×
 14.5 mm keep-out (`DECISIONS.md` P-8).
+
+---
+
+## DigiKey (2nd): C_f set, so H4 does not wait for LCSC
+
+**Submitted 2026-10-11** (Daniel). LCSC's standard line lands after the
+boards, and no lab cabinet stocks single-pF 0603 parts, so these were bought
+regardless. All six lines were "Immediate". Same shipping as the first
+DigiKey order: ships about Oct 12–13 (DigiKey added a processing day),
+USPS Ground Advantage arrives about **Oct 15–20**, the same window as the
+boards. A day or two late costs nothing: unpacking and P1–P2 come before P3
+fits C1. The LCSC C_f lines become spares.
+
+| Line | Cost |
+|---|---|
+| Parts (below) | $4.84 |
+| Shipping, USPS Ground Advantage | $4.99 |
+| Tariff, estimate | $0.40 |
+| Sales tax, estimate | $0.37 |
+| **Total** | **~$10.60** |
+
+All Murata GRM1885C1H…BA01D, 0603 C0G, **±0.1 pF**, 50 V, cut tape, the
+same series and tolerance as LCSC's 3.9 pF line. DigiKey lists them "Not For
+New Designs"; that matters for a production BOM, not for bench stock.
+
+| For | MPN | DigiKey | Qty | Unit | Cost | Stock |
+|---|---|---|---|---|---|---|
+| C_f 1.5 pF | GRM1885C1H1R5BA01D | 490-12716-1-ND | 10 | $0.079 | $0.79 | 36,620 |
+| C_f 2.2 pF | GRM1885C1H2R2BA01D | 490-12719-1-ND | 10 | $0.079 | $0.79 | 57,673 |
+| C_f 2.7 pF | GRM1885C1H2R7BA01D | 490-13346-1-ND | 10 | $0.084 | $0.84 | 23,441 |
+| C_f 3.3 pF; P3 fits it as C1 | GRM1885C1H3R3BA01D | 490-12720-1-ND | 10 | $0.084 | $0.84 | 199,602 |
+| C_f 3.9 pF | GRM1885C1H3R9BA01D | 490-12721-1-ND | 10 | $0.079 | $0.79 | 24,608 |
+| C_f 4.7 pF | GRM1885C1H4R7BA01D | 490-13350-1-ND | 10 | $0.079 | $0.79 | 33,897 |
+| **Subtotal** | | | | | **$4.84** | |
+
+**Not ordered: add only if the cabinet comes up short** (checked 2026-10-11,
+all in stock):
+
+| For | MPN | DigiKey | Stock | Price |
+|---|---|---|---|---|
+| J3/J4 jumper shunts, 2.54 mm closed top, gold | Sullins SPC02SYAN | S9001-ND | 1,063,070 | 10 for $0.29 |
+| L1 capacitor: 100 nF X7R 50 V, leaded, 5.08 mm | KEMET C317C104K5R5TA7301 (the LCSC part) | 399-C317C104K5R5TA7301CT-ND | 570 | $0.84 |
+| L1 resistor: 200 Ω **1 W** metal film, **±5%** | Vishay PR01000102000JR500 | 56-PR01000102000JR500CT-ND | 8,293 | $0.27 |
+
+DigiKey stocks no 1% 200 Ω 1 W part (Stackpole RSMF1FT200R is non-stock).
+±5% is enough because P5 measures R_L1 with a DMM and the off-bench check
+uses the measured value.
 
 ---
 
@@ -324,5 +375,5 @@ Still open:
 3. **Heatsink fit.** Which way the 19.81 mm runs comes from DigiKey's
    dimension names, not a drawing. Check the datasheet against the keep-out
    before ordering. Also the quantity, 2 or 5.
-4. **LCSC ships by the standard line and arrives after the boards.** Upgrade it or cover the blocking parts domestically (LCSC section).
+4. **LCSC ships by the standard line and arrives after the boards.** The C_f set is covered by the second DigiKey order; shunts, 200 Ω 1 W and 100 nF X7R must come from the cabinet, or add them from that section's list.
 5. **The on-hand items** above.
