@@ -7,7 +7,7 @@ not settled by this file; they are listed under *Verify yourself* at the end.
 | Vendor | What | Subtotal | Shipping | Total |
 |---|---|---|---|---|
 | JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB, test loops included | $137.98 | $31.59 DHL Express (DDP), plus $55.82 duties and $9.66 sales tax | **$235.05 paid** |
-| LCSC | H4 parts, contingency parts, jumper shunts, plus 10 kΩ and 10 Ω axial. **Ordered 2026-10-11, WM2610120117** | $15.12 | method not recorded ⚠ | $15.12 + shipping |
+| LCSC | H4 parts, contingency parts, jumper shunts, plus 10 kΩ and 10 Ω axial. **Ordered 2026-10-11, WM2610120117** | $15.12 | Global Direct Standard Line ($10.85 quoted) ⚠ arrives after the boards | ~$25.97 |
 | DigiKey | TO-126 heatsink and insulator. **Submitted 2026-10-11** | $5.37 | $4.99 USPS Ground Advantage, plus $0.70 tariff and $0.42 sales tax (estimates) | **$11.48** |
 
 All 5 boards are assembled (Daniel, 2026-10-11): spares against a soldering
@@ -165,10 +165,15 @@ below plus a 10 kΩ and a 10 Ω ¼ W axial (TyoHM RN1/4W10KFT/BA1, C410695;
 RN 1/4W 10R F T/B A1, C410692; 50 each, LCSC's minimum), 15 lines in all.
 Merchandise **$15.12**. The receipt is
 `hardware/orders/LCSC__WM2610120117_20261012094515.csv`. It lists parts and
-prices only, not the shipping method or the order total. ⚠ **Shipping
-method not recorded.** The cart offered Global Direct Standard Line ($10.85,
-7–15 business days, ~Oct 23 – Nov 3, after the boards) or DHL Express
-($38.71, 3–7 business days, ~Oct 16–23). Fill in which one was chosen.
+prices only, not the shipping method or the order total.
+**Shipping: Global Direct Standard Line** ($10.85 in the cart, 7–15
+business days). LCSC's confirmation says it ships within 1–2 business days,
+so about Oct 13–14, and **arrives about Oct 22 – Nov 4, after the boards
+(Oct 16–20)**. ⚠ The blocking parts in this order (shunts, 3.3 pF for C1,
+the C_f set, L1's 200 Ω and 100 nF) are therefore late for H4. Options:
+ask LCSC to upgrade the order to DHL Express before it ships (about $28
+more, arriving ~Oct 16–23), or buy just the blocking parts domestically
+and let this order arrive late.
 
 The table below is the plan written before ordering; stock and prices were
 checked 2026-10-11, LCSC's own stock. Order now: the boards ship Oct 14 and arrive
@@ -319,5 +324,5 @@ Still open:
 3. **Heatsink fit.** Which way the 19.81 mm runs comes from DigiKey's
    dimension names, not a drawing. Check the datasheet against the keep-out
    before ordering. Also the quantity, 2 or 5.
-4. **LCSC shipping method** is not on the receipt. Record which one was chosen; standard arrives after the boards (LCSC section).
+4. **LCSC ships by the standard line and arrives after the boards.** Upgrade it or cover the blocking parts domestically (LCSC section).
 5. **The on-hand items** above.
