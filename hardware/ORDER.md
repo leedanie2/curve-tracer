@@ -7,9 +7,9 @@ not settled by this file; they are listed under *Verify yourself* at the end.
 | Vendor | What | Subtotal | Shipping | Total |
 |---|---|---|---|---|
 | JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB, test loops included | $137.98 | $31.59 DHL Express (DDP), plus $55.82 duties and $9.66 sales tax | **$235.05 paid** |
-| LCSC | H4 parts, contingency parts, jumper shunts, plus 10 kΩ and 10 Ω axial. **Ordered 2026-10-11, WM2610120117** | $15.12 | Global Direct Standard Line ($10.85 quoted) ⚠ arrives after the boards | ~$25.97 |
-| DigiKey | TO-126 heatsink and insulator. **Submitted 2026-10-11** | $5.37 | $4.99 USPS Ground Advantage, plus $0.70 tariff and $0.42 sales tax (estimates) | **$11.48** |
-| DigiKey (2nd) | C_f set, 0603 C0G 1.5–4.7 pF, so H4 does not wait for LCSC. **Submitted 2026-10-11** | $4.84 | $4.99 USPS Ground Advantage, plus $0.40 tariff and $0.37 sales tax (estimates) | **~$10.60** |
+| LCSC | H4 parts, contingency parts, jumper shunts, plus 10 kΩ and 10 Ω axial. **Ordered 2026-10-11, WM2610120117**; in transit 2026-10-15 | $15.12 | Global Direct Standard Line ($10.85 quoted) ⚠ arrives Oct 22 – Nov 4, after the boards: spares | ~$25.97 |
+| DigiKey | TO-126 heatsink and insulator. Submitted 2026-10-11, **received 2026-10-15** | $5.37 | $4.99 USPS Ground Advantage, plus $0.70 tariff and $0.42 sales tax (estimates) | **$11.48** |
+| DigiKey (2nd) | C_f set, 0603 C0G 1.5–4.7 pF, so H4 does not wait for LCSC. Submitted 2026-10-11, **received 2026-10-15** | $4.84 | $4.99 USPS Ground Advantage, plus $0.40 tariff and $0.37 sales tax (estimates) | **~$10.60** |
 
 All 5 boards are assembled (Daniel, 2026-10-11): spares against a soldering
 accident, a reversed supply or a blown op-amp, with no second spin.
@@ -25,6 +25,34 @@ arrive **Fri 16 – Tue 20 Oct**. Paid on 11 Oct, so both dates stand.
 **Confirm Parts Placement is on**: JLCPCB's engineer checks the placement
 and Daniel has **72 hours** to approve it, after which the order goes into
 production automatically. Approving promptly keeps the ship date.
+**Placement confirmed 2026-10-13** (Daniel), after JLCPCB rotated Q1 so its
+tab faces the top edge and the heatsink silkscreen.
+
+## Blocking items for H4: status 2026-10-15
+
+Both DigiKey packages arrived on **2026-10-15** (Daniel). Check each against
+its packing slip when you unpack: 2 heatsinks and 5 Sil-Pads; six bags of
+10 capacitors each.
+
+| Item | Blocks | Status |
+|---|---|---|
+| C_f 3.3 pF, fitted as C1 | P3, before first power-up | **In hand** (DigiKey 2nd) |
+| C_f 1.5 / 2.2 / 2.7 / 3.9 / 4.7 pF | H4 Block 2 (the C_f sweep) | **In hand** (DigiKey 2nd) |
+| Q1 heatsink, Boyd 577500B00000G | P4; H4 Block 4 | **In hand** (DigiKey) |
+| Sil-Pad K-10 insulator | P4; H4 Block 4 | **In hand** (DigiKey) |
+| The boards | Everything | **Outstanding.** JLCPCB, due Oct 16–20 |
+| Nucleo-F303RE and USB Mini-B cable | P1 onward | **Outstanding:** cabinet, not yet checked |
+| J3/J4 jumper shunts, 2.54 mm | P2 | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
+| L1 resistor: 200 Ω, genuinely 1 W | H4 Blocks 1–2 | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
+| L1 capacitor: 100 nF X7R or C0G, leaded | H4 Blocks 1–2 | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
+| 10 kΩ resistor, ≥ 1/8 W | Step 13a | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
+
+**Before H4 can start:** the boards arrive, and the cabinet check
+(*Lab cabinet checklist* below) turns up the Nucleo, the shunts, a true 1 W
+200 Ω and a 100 nF X7R/C0G. Anything the cabinet lacks comes from DigiKey:
+the part numbers are in the checklist and under *Not ordered*. The 10 kΩ is needed only by step 13a, in
+Block 3. The LCSC order is still in transit and arrives Oct 22 – Nov 4; its
+blocking lines become spares.
 
 ---
 
@@ -214,7 +242,7 @@ first.
 
 ## DigiKey: heatsink and its insulator
 
-**Submitted 2026-10-11** (Daniel). Both lines were "Immediate" (shipped
+**Submitted 2026-10-11** (Daniel). **Received 2026-10-15.** Both lines were "Immediate" (shipped
 from stock, not on factory lead time). DigiKey flagged one extra day of
 processing, so it ships about Tue Oct 13. USPS Ground Advantage is
 typically 2–5 business days, so it arrives about **Oct 15–20**. That is fine
@@ -242,7 +270,7 @@ fit every board. 13.20 × 19.81 mm with 8.13 mm fins, against the 17.5 ×
 
 ## DigiKey (2nd): C_f set, so H4 does not wait for LCSC
 
-**Submitted 2026-10-11** (Daniel). LCSC's standard line lands after the
+**Submitted 2026-10-11** (Daniel). **Received 2026-10-15.** LCSC's standard line lands after the
 boards, and no lab cabinet stocks single-pF 0603 parts, so these were bought
 regardless. All six lines were "Immediate". Same shipping as the first
 DigiKey order: ships about Oct 12–13 (DigiKey added a processing day),
@@ -325,8 +353,8 @@ it if it meets the spec exactly.
     Only the bench supply's current limit is left to protect the board.
   - **Without it:** H4 Block 4 (held short and short recovery) cannot run
     safely.
-  - **Order:** Bergquist Sil-Pad K-10 SPK10-0.006-00-54, DigiKey
-    **BER114-ND**. It is cut for TO-220, so trim it to the tab with
+  - **Received** 2026-10-15: Bergquist Sil-Pad K-10 SPK10-0.006-00-54,
+    DigiKey **BER114-ND**. It is cut for TO-220, so trim it to the tab with
     scissors. The TO-126 shape (Bergquist 1009AC-60) is no longer stocked
     at DigiKey.
   - ⚠ **Check that the slide-on heatsink still grips with the pad in
@@ -368,12 +396,12 @@ Settled at the quote, 2026-10-11:
   (`DECISIONS.md` P-10, revised), and Q1's tab faces the heatsink side.
 
 Still open:
-1. **Approve the placement confirmation within 72 hours**, or it
-   auto-confirms.
+1. ~~Approve the placement confirmation within 72 hours.~~ Confirmed
+   2026-10-13.
 2. **RH-5001 in a 1.0 mm hole.** Its drawing gives no hole size. If
    JLCPCB's DFM flags it, that is where.
-3. **Heatsink fit.** Which way the 19.81 mm runs comes from DigiKey's
-   dimension names, not a drawing. Check the datasheet against the keep-out
-   before ordering. Also the quantity, 2 or 5.
-4. **LCSC ships by the standard line and arrives after the boards.** The C_f set is covered by the second DigiKey order; shunts, 200 Ω 1 W and 100 nF X7R must come from the cabinet, or add them from that section's list.
+3. **Heatsink fit.** Which way the 19.81 mm runs came from DigiKey's
+   dimension names, not a drawing. Two heatsinks are now in hand (2026-10-15):
+   measure one against the 17.5 × 14.5 mm keep-out before P4.
+4. **LCSC ships by the standard line and arrives after the boards** (Oct 22 – Nov 4, in transit 2026-10-15). The C_f set is in hand from the second DigiKey order; shunts, 200 Ω 1 W, 100 nF X7R and 10 kΩ must come from the cabinet, or add them from that section's list. See *Blocking items for H4* at the top.
 5. **The on-hand items** above.
