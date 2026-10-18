@@ -6,7 +6,7 @@ not settled by this file; they are listed under *Verify yourself* at the end.
 
 | Vendor | What | Subtotal | Shipping | Total |
 |---|---|---|---|---|
-| JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB, test loops included | $137.98 | $31.59 DHL Express (DDP), plus $55.82 duties and $9.66 sales tax | **$235.05 paid** |
+| JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB, test loops included. **Shipped, DHL 3074485864; delivery estimated Wed Oct 21** | $137.98 | $31.59 DHL Express (DDP), plus $55.82 duties and $9.66 sales tax | **$235.05 paid** |
 | LCSC | H4 parts, contingency parts, jumper shunts, plus 10 kΩ and 10 Ω axial. **Ordered 2026-10-11, WM2610120117**; in transit 2026-10-15 | $15.12 | Global Direct Standard Line ($10.85 quoted) ⚠ arrives Oct 22 – Nov 4, after the boards: spares | ~$25.97 |
 | DigiKey | TO-126 heatsink and insulator. Submitted 2026-10-11, **received 2026-10-15** | $5.37 | $4.99 USPS Ground Advantage, plus $0.70 tariff and $0.42 sales tax (estimates) | **$11.48** |
 | DigiKey (2nd) | C_f set, 0603 C0G 1.5–4.7 pF, so H4 does not wait for LCSC. Submitted 2026-10-11, **received 2026-10-15** | $4.84 | $4.99 USPS Ground Advantage, plus $0.40 tariff and $0.37 sales tax (estimates) | **~$10.60** |
@@ -21,12 +21,18 @@ accident, a reversed supply or a blown op-amp, with no second spin.
 `fab/jlc/` files under new names (JLCPCB ignored a re-upload with the same
 name). The cart gives an **estimated ship date of
 Wed 14 Oct**; DHL Express (DDP) takes 2–4 business days, so the boards
-arrive **Fri 16 – Tue 20 Oct**. Paid on 11 Oct, so both dates stand.
+arrive **Fri 16 – Tue 20 Oct**. Those were the estimates at payment; the
+actual shipment is below.
 **Confirm Parts Placement is on**: JLCPCB's engineer checks the placement
 and Daniel has **72 hours** to approve it, after which the order goes into
 production automatically. Approving promptly keeps the ship date.
 **Placement confirmed 2026-10-13** (Daniel), after JLCPCB rotated Q1 so its
 tab faces the top edge and the heatsink silkscreen.
+**Shipped** (status 2026-10-17): JLCPCB packed both items (PCB and PCBA,
+5 pcs each) for DHL Express Priority (DDP), **waybill 3074485864**. DHL
+reports it on its way with an estimated delivery of **Wed 21 Oct, end of
+day**, one day after the quoted window. Track it in JLCPCB's order history
+or on DHL's site.
 
 ## Blocking items for H4: status 2026-10-15
 
@@ -40,7 +46,7 @@ its packing slip when you unpack: 2 heatsinks and 5 Sil-Pads; six bags of
 | C_f 1.5 / 2.2 / 2.7 / 3.9 / 4.7 pF | H4 Block 2 (the C_f sweep) | **In hand** (DigiKey 2nd) |
 | Q1 heatsink, Boyd 577500B00000G | P4; H4 Block 4 | **In hand** (DigiKey) |
 | Sil-Pad K-10 insulator | P4; H4 Block 4 | **In hand** (DigiKey) |
-| The boards | Everything | **Outstanding.** JLCPCB, due Oct 16–20 |
+| The boards | Everything | **Outstanding:** shipped, DHL 3074485864, delivery estimated Wed Oct 21 |
 | Nucleo-F303RE and USB Mini-B cable | P1 onward | **Outstanding:** cabinet, not yet checked |
 | J3/J4 jumper shunts, 2.54 mm | P2 | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
 | L1 resistor: 200 Ω, genuinely 1 W | H4 Blocks 1–2 | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
@@ -198,7 +204,7 @@ prices only, not the shipping method or the order total.
 **Shipping: Global Direct Standard Line** ($10.85 in the cart, 7–15
 business days). LCSC's confirmation says it ships within 1–2 business days,
 so about Oct 13–14, and **arrives about Oct 22 – Nov 4, after the boards
-(Oct 16–20)**. ⚠ The blocking parts in this order (shunts, 3.3 pF for C1,
+(Oct 16–20 as quoted; Oct 21 by DHL's estimate)**. ⚠ The blocking parts in this order (shunts, 3.3 pF for C1,
 the C_f set, L1's 200 Ω and 100 nF) are therefore late for H4. Options:
 ask LCSC to upgrade the order to DHL Express before it ships (about $28
 more, arriving ~Oct 16–23), or buy just the blocking parts domestically

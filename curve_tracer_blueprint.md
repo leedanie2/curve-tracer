@@ -600,7 +600,7 @@ rather than naming one day.
 | ~~Tue Oct 20~~ | ~~PCBA ordered — no later than this~~ Not needed | — |
 | ~~Mon Oct 26~~ | ~~Checkpoint: abandon the PCB if not ordered~~ Not needed: the order is paid | — |
 | **Wed Oct 14** | **JLCPCB ships** (cart estimate: PCB 24 h + assembly 2–3 days). Assumes payment on Oct 11 and the 72-hour placement confirmation approved promptly | A slip moves the arrival row by the same days |
-| **Fri Oct 16 – Tue Oct 20** | **Boards arrive** (DHL Express DDP, 2–4 business days). **27–31 days to the Nov 16 freeze, about four weeks, against 13 days on the Nov 3 backstop** | Re-check against the Nov 16 freeze the day the slip is known |
+| **Fri Oct 16 – Tue Oct 20** | **Boards arrive** (DHL Express DDP, 2–4 business days). **27–31 days to the Nov 16 freeze, about four weeks, against 13 days on the Nov 3 backstop** | **Slip known Oct 17:** DHL estimates **Wed Oct 21** (waybill 3074485864), one day late: **26 days** to the Nov 16 freeze |
 | ~~Tue Nov 3~~ | ~~**Boards expected — backstop arrival.** Derived from the Oct 20 backstop order plus 14 days of standard fab + assembly + shipping. The target path beats it twice over: **7 days** from ordering on Oct 13 instead, plus whatever express saves on the shipping leg. Take the real number from the fab's quote at order time rather than trusting either figure here~~ **Superseded Oct 11** by the quote's Oct 16–20 arrival, above | — |
 | **Mon Nov 16** | **Repo freeze** | — |
 
@@ -612,7 +612,8 @@ nothing at all: every day held is a day subtracted from bring-up.
 
 **Where this plan is tight: the window from arrival to Nov 16.** Against the
 Nov 3 backstop that was **13 days**. With the board ordered on Oct 11 and
-arriving Oct 16–20, it is **27–31 days, roughly four weeks instead of two**,
+arriving Oct 16–20, it is **27–31 days, roughly four weeks instead of two**
+(**26 days** at DHL's Oct 21 estimate, known Oct 17),
 carrying board bring-up (H4), phases 2 and 3, and phases 4, 5, 7, 8 and 9.
 The reasoning below was written against 13 days and still holds; the margin
 is now about twice as large. The front half of the schedule has 6 days of
@@ -666,7 +667,7 @@ The "what I'd do differently" section is the one interviewers respond to. Write 
 | Composite amp oscillates | Simulated first (Phase 0). The breadboard GO/NO-GO (Phase 1) was **dropped** on Oct 8, 2026, as an accepted risk (§9). The first test is at H4, with the `C_f` footprint and the parallel alternates on the board and `hardware/CONTINGENCY.md` as the response |
 | Noise floor limits low range | Star-ground, short leads, decoupling at every op-amp — §14.5 makes these layout constraints rather than breadboard hygiene. Range 3 is outside MVP scope (§14.2); if it is reached and unusable, report the measured limitation honestly — that's a legitimate finding |
 | **One PCB revision, and the analog front end goes to layout validated in simulation only** | `R_iso`, `R_B` and `R_sense` get alternate-value footprints; `C_f` gets a footprint and is fitted after measuring; test points on every §3 node (§14.4). The Oct 26 checkpoint (§9) is the abandon path |
-| **Fab slips, or arrival lands late** | Ordered Oct 11; arrival Oct 16–20 leaves 27–31 days to the Nov 16 freeze (was 13 against the Nov 3 backstop), and they carry bring-up plus phases 2–9. Three mitigations, all already decided: order **event-driven** the moment layout is DRC-clean (target Oct 13, §9); pay for **express shipping** (§14.3a); and finish phases 4, 5 and 7 against the simulated DUT *during* the fab window, not after |
+| **Fab slips, or arrival lands late** | Ordered Oct 11; arrival Oct 16–20 leaves 27–31 days to the Nov 16 freeze (26 at DHL's Oct 21 estimate; was 13 against the Nov 3 backstop), and they carry bring-up plus phases 2–9. Three mitigations, all already decided: order **event-driven** the moment layout is DRC-clean (target Oct 13, §9); pay for **express shipping** (§14.3a); and finish phases 4, 5 and 7 against the simulated DUT *during* the fab window, not after |
 | STM32 ADC noisier than spec | Oversample; if still poor, add an external ADC (ADS1115) as phase 2 |
 | Scope creep into BJT/auto-ranging | Phases 0–9 first. Phase 2 is optional |
 | Blown parts stall progress | Duplicates of every active component on hand from day one |
@@ -785,7 +786,7 @@ Hand-soldering SOIC is **not a skill I have, and acquiring it on the critical
 path is the wrong place to learn it** — a cold joint on an op-amp supply pin
 presents as a stability or offset problem, i.e. as a *design* fault, and
 debugging it would burn the arrival-to-freeze window — 13 days against the
-Nov 3 backstop, now 27–31 days with arrival on Oct 16–20 (§9) — diagnosing the
+Nov 3 backstop, now 26 days with DHL's Oct 21 arrival estimate (§9) — diagnosing the
 assembly instead of the circuit.
 
 **The SOIC-8 adapters are off the critical path.** An earlier draft of this
