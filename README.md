@@ -8,9 +8,17 @@ Status: in progress.
 
 ## Cost
 
-**About $30 per instrument in parts.** This is a result of the design, not a
-target. It counts the assembled board and the parts to run it, from the
-5-board JLCPCB order of 2026-10-11:
+**The first build cost about $283, not $30.** That is the four orders in
+`hardware/ORDER.md`, shipping, duty and tax included: JLCPCB $235.05 (five
+assembled boards), LCSC ~$25.97, DigiKey $11.48 and ~$10.60. It excludes the
+Nucleo-F303RE and any earlier prototype parts. Most of it is one-time or
+shared across five boards: setup, stencil and extended-part fees, and
+shipping and duty.
+
+**Marginal cost is about $31 per additional instrument.** This is a result of
+the design, not a target. It counts the assembled board and the parts to run
+it, from the 5-board JLCPCB order of 2026-10-11, and is only a fair number if
+you already have the one-time costs behind you:
 
 | Item | Per instrument |
 |---|---|
@@ -24,7 +32,7 @@ target. It counts the assembled board and the parts to run it, from the
 It excludes the one-time costs of a first order: setup, stencil and
 extended-part loading fees, shipping and import duty
 (`hardware/ORDER.md`). Commercial curve tracers cost hundreds to thousands
-of dollars.
+of dollars, so even the $283 first build is below that.
 
 **Low per-unit cost is not a project goal.** Do not use it to argue against
 the accuracy parts. The 0.1% resistors and the three OPA2197s add only a few
