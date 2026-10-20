@@ -1,0 +1,17 @@
+{
+  "generated": "2026-10-20T00:04:10-0700",
+  "tasks": 510,
+  "workers": 7,
+  "elapsed_s": 3089.8,
+  "argv": [
+    "--reps",
+    "10",
+    "--workers",
+    "7",
+    "--no-report",
+    "--out",
+    "../docs/adaptive"
+  ],
+  "blas_threads": "1",
+  "note": "host compute was measured with this many workers sharing the machine; treat compute times as conservative"
+}

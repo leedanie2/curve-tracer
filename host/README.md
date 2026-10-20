@@ -19,7 +19,21 @@ ct_host/
   spice.py       .model cards
   plot.py        live family plot, static plots, series-drop diagnostic
   cli.py         python -m ct_host capture | plot | extract | model | ports
-tests/           119 tests, every one against the simulator
+  adaptive/      adaptive sampling: offline study, closed after phase 1
+    devices.py   synthetic devices that depart from the fitted models
+    frontend.py  the signal chain in Python, held to ct_sim count for count
+    timing.py    serial link, TX ring and round trips
+    oracle.py    synthetic device, or a dense CSV as a pool (the bench path)
+    noise.py     per-point noise, with the dither condition
+    models.py    square law and diode as GP means, with Jacobians
+    gp.py        GP with a physical mean and a residual that shows mismatch
+    estimate.py  parameters via the unchanged extractors; stopping rule
+    acquire.py   uncertainty sampling, EIG on theta, EIG on the extractor's
+                 outputs, weighted A; greedy batches; safety filter
+    loop.py      the capture loop and the fixed designs it is compared with
+    evaluate.py  the study; --from-csv for dense bench sweeps
+    report.py    tables and figures from the results file
+tests/           183 tests, every one against the simulator
 ```
 
 `parse_cmrr_log.py`, `parse_current_limit.py` and `parse_tran_overshoot.py`
@@ -262,6 +276,89 @@ Nucleo has no RTC time source). All host-added keys are prefixed `host_` and
 inserted after the instrument's own header; **no firmware field is ever
 rewritten**, and the transcript is otherwise saved byte-for-byte, flagged rows
 included.
+
+---
+
+## Adaptive sampling (phase 1: offline evaluation only; closed 2026-10-20)
+
+Closed after phase 1: the results below recommend against the firmware
+session. The code stays so the work can be resumed if points become
+expensive (ranges 2–3, pulsed mode), or if the region of interest is narrow
+and unknown in advance. See `docs/adaptive_sampling_plan.md`, *Resuming this
+work*.
+
+`ct_host/adaptive/` asks whether the instrument should pick each next point
+where it is most informative and stop once the parameters are known well
+enough, instead of running a fixed 200-point ramp. The plan, with its open
+decisions, is `docs/adaptive_sampling_plan.md`. The results are
+`docs/adaptive_sampling.md`, with every table generated in
+`docs/adaptive/report.md`. **Nothing here talks to the firmware or changes
+the CSV.** The points session it models (`POINTS` / `PT` / `END`) does not
+exist on the instrument.
+
+What it does:
+
+- **A GP whose mean is the device model** (square law with λ; the diode's
+  `V = a ln I + b + c I`), with a GP on the residual. The residual shows
+  where the device departs from the model. The parameter uncertainty is
+  computed with the residual included, so mismatch inflates it rather than
+  being absorbed silently.
+- **Per-point noise** from ADC quantisation done properly: oversampling only
+  helps when there is dither. It includes the voltage channel's error,
+  carried through the curve's slope, which dominates in triode.
+- **Reported parameters come from the existing extractors.** GP posterior
+  samples are pushed through `extract_mosfet` / `extract_diode` on the dense
+  sweep's own grid, so the adaptive answer estimates exactly what a dense
+  capture would. The standard error and fit-range spread are reported in the
+  same form as for a dense capture. The extractors are also run on the raw
+  points, as a model-free cross-check that can block stopping.
+- **Four ways to choose points:** uncertainty sampling, D-optimal / EIG on the
+  model's θ, EIG on the extractor's outputs, and weighted A-optimal. They are
+  compared against a sparse `SWEEP` (raw, and with the GP) and the dense
+  ramp, in batches of k per round trip.
+- **The stopping rule** as briefed: every gated parameter's standard error
+  and half-spread under target, or the point budget. The stop reason is
+  recorded.
+- **A timing model that counts the link.** Rendered row and header bytes, the
+  firmware's 4 KB TX ring, command uploads, USB latency (assumed 1 ms), and
+  host compute measured with the wall clock.
+
+How it is checked: the Python model of the signal chain is held to `ct_sim`
+count for count (`test_adaptive_oracle.py`). Every synthetic departure is
+tested to move the curve, because of the §11 failure mode. The linearisation
+used for design is held to finite differences of the real extractors. The
+greedy batch update is held to refitting with the point added.
+
+```sh
+python -m ct_host.adaptive.evaluate --out ../docs/adaptive          # the study, ~2 h
+python -m ct_host.adaptive.evaluate --quick --out /tmp/adaptive    # a smoke run
+python -m ct_host.adaptive.evaluate --timing --out ../docs/adaptive # uncontended compute
+# later, with hardware: subsample a dense bench sweep instead of a model
+python -m ct_host.adaptive.evaluate --from-csv data/2n7000_dense.csv --kind mosfet \
+    --noise-lsb <measured> --out ../docs/adaptive-bench
+```
+
+**Result (simulated, 2026-10-20): don't build the firmware session.** A raw
+sparse `SWEEP` of 5–6 points per gate step reaches the dense sweep's values
+within their stated uncertainty in ~0.2 s, against 4.8 s for the dense
+family. No adaptive criterion beats it: host compute is ~0.5 s per round
+even uncontended. Worth keeping:
+
+- **The GP estimate.** Its uncertainty is calibrated: 96–98% of estimates
+  fall within 2σ of the truth on the control devices, at every noise level.
+- **The MOSFET mismatch statistic.** Every departure tested is flagged,
+  with a 10% held-out false-positive rate. It does not work for the diode,
+  whose law absorbs the departures.
+- **What it found about the dense ramp.** Its self-heating biases λ and the
+  diode's R_s, and point order moves KP by up to ~18 u.
+
+Full numbers are in `docs/adaptive_sampling.md`. Results are written gzipped
+(`results.csv.gz`, `traces.csv.gz`); pandas reads them as they are.
+
+**Verified in simulation only.** The device models, thermal constants, USB
+latency and noise floor are assumptions, swept where it matters. Subsampling
+a bench file inherits that capture's thermal history, so only a live session
+on hardware can test point order. That needs phase 2, which is not built.
 
 ---
 

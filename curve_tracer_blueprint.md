@@ -442,6 +442,16 @@ Fit `I = I_S(exp(V/nV_T) − 1)` on a semilog plot. Slope gives ideality factor 
 
 **Subthreshold slope needs the low current range** — this is the measurement that justifies building three ranges instead of one.
 
+### Adaptive sampling: evaluated offline, not built (Oct 19–20, 2026)
+
+The question: should the instrument choose each next point where it is most informative and stop once the parameters are known, instead of running a fixed 200-point ramp? The approach was a GP with the device model as its mean and a residual GP for mismatch, plus Bayesian design to choose points. It was evaluated in simulation only, against synthetic devices that depart from the square law and the diode law. Plan: `docs/adaptive_sampling_plan.md`. Results: `docs/adaptive_sampling.md`. Code: `host/ct_host/adaptive/`. **Nothing has run on hardware, and the firmware and CSV contract are unchanged.**
+
+- **Closed after phase 1 (Oct 20, 2026).** Revisit only if points become expensive (current ranges 2–3, pulsed mode) or the region of interest is narrow and unknown in advance (subthreshold slope, a breakdown knee, choosing `vgs_list`). See `docs/adaptive_sampling_plan.md`, *Resuming this work*.
+- **The verdict is not to build it.** A sparse `SWEEP` of 5–6 points per gate step, which needs no firmware change, reaches the dense sweep's values within their stated uncertainty in ~0.2 s. The dense family takes 4.8 s; the fastest adaptive method took 0.5–7.9 s. Host computation is the cost: ~0.5 s per round.
+- **Under model mismatch, the extractor's answer depends on where the points are.** The slice fit, the per-curve λ line, the R_DS(on) window and the diode least squares all weight by point density, so a sparse design and the dense design estimate different quantities. Comparisons between captures at different `n` must allow for this. The GP estimate avoids it by evaluating the unchanged extractor on the dense grid.
+- **In the thermal model, the dense ramp's self-heating biases its own answer.** The part heats ~36 K; λ moves +3.1 u; the diode's R_s reads −7.5 u (0.50 Ω against ~0.6 Ω). Measuring the same points in an interleaved order rather than ascending moves KP by ~18 u. The thermal constants are assumed (§7, point-order test).
+- **The residual GP flags every MOSFET departure tested but none of the diode's.** The diode law absorbs a second ideality component and heating. Heating then appears as a lower R_s, with nothing left over to flag.
+
 ---
 
 ## 6. The closed-loop validation (the payoff)
@@ -472,6 +482,9 @@ If the numbers agree within a few percent, you have demonstrated the entire chip
 | Linearity | Sweep across a precision resistor, fit residuals | Report INL |
 | Self-heating | DC vs. pulsed sweep, same device | Visible droop difference |
 | Known-device check | 2N7000, 2N3904, 1N4148 vs. datasheet curves | Qualitative match |
+| Point-order A/B (adaptive plan B1) | Same points, same part: ascending, descending, interleaved, and sparse with idle gaps. Needs arbitrary point order, which `SWEEP` cannot do. Compare at matched bias | Report the shift in KP, λ, R_s against the ascending order; the simulation predicts several u on a TO-92 (§5, *Adaptive sampling*) |
+| Serial round trip (B2) | Time `SET` → `# ok:` over the ST-LINK VCP, 100 repeats | Replaces the 1 ms per direction the adaptive study assumed |
+| Noise floor feeds the noise model (B3) | The noise-floor test above, per channel, in rms LSB ahead of the quantiser | Input to `ct_host/adaptive/noise.py`. Below ~0.3 LSB, oversampling does not reduce quantisation error |
 
 ---
 
@@ -672,6 +685,9 @@ The "what I'd do differently" section is the one interviewers respond to. Write 
 | Scope creep into BJT/auto-ranging | Phases 0–9 first. Phase 2 is optional |
 | Blown parts stall progress | Duplicates of every active component on hand from day one |
 | A model parameter is documented but never applied | Check that changing a parameter changes the output before trusting a result that depends on it — see below |
+| **Self-heating changes the measured curve, and point order changes the self-heating** | Modelled, not measured (§5, *Adaptive sampling*). Measure it with the point-order A/B test (§7) before trusting λ or a diode R_s at high power. Keep sweeps ascending; fewer points per ramp heat less |
+| **A flexible model absorbs a real departure.** The diode law fits self-heating as a lower R_s and leaves no residual | Do not read a clean diode fit as evidence of no heating. Compare a low-power capture against a high-power one |
+| Comparing captures taken at different `n` under model mismatch | The extractor's estimand moves with point density (§5, *Adaptive sampling*); compare at the same design, or through the GP estimate on a common grid |
 
 **A recurring failure mode: the parameter that is accepted but not applied.** Twice now a model has carried a parameter that was documented, accepted, and silently ignored, and both times the simulation output looked correct. In Phase 0 a MODPEX-generated BD139 model had `CJE = CJC = 1e-11` exactly — placeholders standing in for real junction capacitances — and with it the composite amplifier appeared unconditionally stable, hiding the `C_comp` error that the ST model exposed immediately (§12.2). In September 2026 the host simulator's `--rs` flag was parsed, stored, listed in `firmware/README.md`, and never read by the diode current function; the diode nevertheless showed a convincing high-current roll-off from the ideal line, so nothing looked wrong.
 

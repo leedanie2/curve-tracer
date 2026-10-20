@@ -3,6 +3,10 @@ numpy>=1.24
 pandas>=2.0
 matplotlib>=3.7
 
+# ct_host.adaptive only: L-BFGS-B for the GP's hyperparameters and triangular
+# solves. Nothing outside that package imports it. 1.13.1 verified 2026-10-19.
+scipy>=1.10
+
 # Only needed to talk to a real instrument. Everything else -- capture from
 # the simulator, plotting, extraction, model generation and the whole test
 # suite -- works without it.
