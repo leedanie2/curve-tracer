@@ -187,7 +187,7 @@ footprints cost nothing. **The value is open**, and they ship unstuffed.
 | ~~O-1~~ | D2 | Gate Zener voltage | **Closed 2026-10-06: 12 V**, see [D2](#d2) |
 | ~~O-2~~ | R19, R22 | ADC isolation resistance | **Closed 2026-10-06: 51 Ω**, then raised to **1 kΩ** the same day (F-2), see [R19](#r19) |
 | ~~O-3~~ | D3 | Output clamp type and voltage | **Closed 2026-10-09: SMAJ12A TVS**, see [D3](#d3). Fitted by default since 2026-10-11 |
-| O-4 | R23, R24 | Pull-down value | Ships unstuffed (C-6) |
+| O-4 | R23, R24 | Pull-down value | Ships unstuffed (C-6). A possible second use, not designed: pulling the buffered DAC's floor toward ground (blueprint §3.5, *Range*). Measure first (H4 P1b) |
 
 ## Substitutions — what the blueprint names vs what JLCPCB can fit
 

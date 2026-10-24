@@ -449,8 +449,10 @@ unchanged):
 **Range.** Both channels run with the output buffer on, for the same
 low-impedance reason. Buffered, the F3's DAC output is guaranteed only from
 **0.2 V to VDDA − 0.2 V**, 0.66 V to 10.29 V after the ×3.32 gain, not
-0–10.96 V. Better parts get closer to the rails. P1b measures where this one
-reaches.
+0–10.96 V. Better parts get closer to the rails. The floor matters more
+than the ceiling: sweeps start at V_DS = 0, and the diode fit lives at the
+low end. H4 prep P1b records this part's actual minimum and maximum, and
+those decide it (blueprint §3.5, *Range*).
 
 ### "USB CDC" is the ST-LINK VCP
 

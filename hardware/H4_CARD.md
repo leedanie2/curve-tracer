@@ -44,8 +44,8 @@ printout is the step's clock**. No stopwatch. `--vgs` defaults to 0.
 |---|---|---|
 | P1 | Flash the firmware: in `firmware/stm32/`, `make drivers` (once), `make`, then `make flash` with the Nucleo on USB (it copies the .bin to the NODE_F303RE drive). `python -m ct_host ports` lists the Nucleo; write the port in the header | fw version ____ |
 | P1a | **Nucleo mod: SB21 off, PA5–PA6 shunt on.** USB unplugged, Nucleo not seated. **(a)** On the Nucleo's underside, remove solder bridge **SB21**: wick off the blob, or lift the 0 Ω part. DMM continuity across SB21's two pads: **OL**. **(b)** On the top-side morpho pins, fit a 2.54 mm shunt across **CN10-11 (PA5)** and **CN10-13 (PA6)**. *The F303RE has no DAC2: the sweep DAC is DAC1_OUT2 on PA5, and the board takes it at PA6. With SB21 fitted, LD2 loads PA5 (blueprint §3.5)* | SB21 OL ☐ ; shunt ☐ |
-| P1b | **Nucleo check, off the board.** USB in, Nucleo **not seated**: on the board, an unpowered op-amp's inputs would load the DAC. `HOLD --vds 10.96 --seconds 20 --i-limit 165 -o h4/p1b_full.csv`. At **t = 10 s**, DMM black on **CN10-9 (GND)**, red on **CN7-16 (+3V3)**, then **CN10-11 (PA5)**, then **CN10-13 (PA6)**. Watch LD2 throughout. Then `HOLD --vds 0 --seconds 20 --i-limit 165 -o h4/p1b_zero.csv`; at t = 10 s, CN10-13 again. *`--i-limit 165`: PA0 floats off the board, and 165 mA is the ADC ceiling, so no floating reading can end the hold* | V_3V3 = ____ ; PA5 full = ____ ; PA6 full = ____ ; PA6 zero = ____ ; LD2 dark ☐ |
-| P1b pass | **LD2 dark** throughout; **PA5 full ≥ V_3V3 − 0.20 V**, the top of the buffered DAC's guaranteed range; **PA6 within 5 mV of PA5**; **PA6 zero ≤ 0.20 V**. Fail: LD2 lit or PA5 low → SB21 still conducting, redo P1a(a). PA6 ≠ PA5 → shunt not seated, redo P1a(b). Record the readings either way: they are where this DAC actually reaches (blueprint §3.5, *Range*) | pass ☐ |
+| P1b | **Nucleo check, off the board.** USB in, Nucleo **not seated**: on the board, an unpowered op-amp's inputs would load the DAC. `HOLD --vds 10.96 --seconds 20 --i-limit 165 -o h4/p1b_full.csv`. At **t = 10 s**, DMM black on **CN10-9 (GND)**, red on **CN7-16 (+3V3)**, then **CN10-11 (PA5)**, then **CN10-13 (PA6)**. Watch LD2 throughout. Then `HOLD --vds 0 --seconds 20 --i-limit 165 -o h4/p1b_zero.csv`; at t = 10 s, **CN10-11 (PA5)**, **CN10-13 (PA6)** and **CN7-32 (PA4, the gate DAC)**. Read every value to the mV (0.1 mV if the DMM has it). *`--i-limit 165`: PA0 floats off the board, and 165 mA is the ADC ceiling, so no floating reading can end the hold* | V_3V3 = ____ V ; PA5 full (**DAC max**) = ____ V ; PA6 full = ____ V ; PA5 zero (**DAC min**) = ____ mV ; PA6 zero = ____ mV ; PA4 zero = ____ mV ; LD2 dark ☐ |
+| P1b pass | **LD2 dark** throughout; **PA5 full ≥ V_3V3 − 0.20 V**, the top of the buffered DAC's guaranteed range; **PA6 within 5 mV of PA5** at both levels; **PA5 zero ≤ 0.20 V**. Fail: LD2 lit or PA5 low → SB21 still conducting, redo P1a(a). PA6 ≠ PA5 → shunt not seated, redo P1a(b). **The pass is only the datasheet guarantee. The figures are the result:** DAC min and max decide the buffer question (blueprint §3.5, *Range*), and the floor matters more than the ceiling. Write both, and the floor × 3.32 at the feedback node | pass ☐ ; floor × 3.32 = ____ V |
 | P2 | Seat the Nucleo on J7/J8; check against README *Footprint orientation*. The CN10-11/13 shunt stays on. J3 and J4 jumpers on **RNG1** | done ☐ |
 | P3 | **Practise on board 5; board 1's C1 stays empty.** On **board 5**, unpowered: fit a 3.3 pF to C1, remove it, fit it, remove it: the Block 2 swap, twice. Clean with IPA. Loupe: both C1 pads intact and flat, none lifted. Leave board 5's C1 empty. **Board 1 powers up with C1 empty**: Block 1 is the bare run (CONTINGENCY Part B §2B) | board 5 pads OK ☐ ; board 1 C1 empty ☐ |
 | P4 | **Pad, then heatsink on Q1.** Trim the Sil-Pad K-10 (cut for TO-220) to Q1's TO-126 tab. Fit it between the tab and the heatsink (Boyd 577500B00000G, slide-on); the heatsink must still grip firmly with the pad in place. Board unpowered. DMM: **(a)** heatsink to **TP7 (+15 V)**: expect **OL**, which proves the pad insulates. **(b)** heatsink to **TP27**: expect **OL**. Either reading not OL, or a loose heatsink: refit, re-measure; no Block 4 until both pass | grips ☐ ; (a) ____ ; (b) ____ |
@@ -117,9 +117,17 @@ oscillating value: record it and move on. It is data, not a stop.
    2.7, 4.7, 2.2, 1.5. None left → **step 7**.
 3. Otherwise, take the best's neighbours in kit order,
    none · 1.5 · 2.2 · 2.7 · 3.3 · 3.9 · 4.7 (none and 4.7 have one each).
-   A neighbour not yet run → fit it, the larger first. All run → **step 7**.
+   A neighbour not yet run → fit it, the larger first. All run → rule 4.
+4. **Broad-minimum guard, once** (CONTINGENCY §3). Take the spread,
+   max O − min O, over the best and its neighbours. An oscillating row
+   counts as 8 or more. **8 points or more → step 7.** Under 8 → fit any not
+   yet run of the **five** kit values nearest the best (one beyond each
+   neighbour; beside none or 4.7, two on the open side), then go back to
+   rule 3, since the best may have moved. When rule 3 stops again, go to
+   step 7 without repeating this rule.
 
-If 3.3 pF is best, that is three fits: 3.3, 3.9, 2.7.
+If 3.3 pF is best, that is three fits: 3.3, 3.9, 2.7. Five if the guard
+widens it: 2.2 and 4.7 as well.
 
 | C1 | Run | File | O (%) | dev @ 5 µs (mV) | p-p +20…100 µs (mV) |
 |---|---|---|---|---|---|
@@ -136,7 +144,7 @@ output OFF, USB. Leave the last C1 fitted and note it: ____
 
 | # | min | Do | Pass | Record | Fail → |
 |---|---|---|---|---|---|
-| 7 | 6 | **Fit the best C1** (no swap if it is already fitted; for none, remove C1). Re-run the step test on **L1** (`h4/07_best_L1.csv`) and on **open** (`h4/07_best_open.csv`) | L1: O ≤ 25%, dev ≤ 1.0 mV, p-p < 5 mV. Open: p-p < 5 mV | C_f = ____ pF; O_L1 = ____ %; O_open = ____ %; best at an end (none or 4.7)? Y/N ____; rows run ____; max O − min O over them = ____ points | No row with p-p < 5 mV → **CONTINGENCY A4**. Otherwise → **CONTINGENCY A3** |
+| 7 | 6 | **Fit the best C1** (no swap if it is already fitted; for none, remove C1). Re-run the step test on **L1** (`h4/07_best_L1.csv`) and on **open** (`h4/07_best_open.csv`) | L1: O ≤ 25%, dev ≤ 1.0 mV, p-p < 5 mV. Open: p-p < 5 mV | C_f = ____ pF; O_L1 = ____ %; O_open = ____ %; best at an end (none or 4.7)? Y/N ____; rows run ____; spread over the best and its neighbours = ____ points; widened (rule 4)? Y/N ____; spread over the five nearest the best = ____ points | No row with p-p < 5 mV → **CONTINGENCY A4**. Otherwise → **CONTINGENCY A3** |
 
 ■ **STOP POINT C** (~20 min): output OFF, USB. The loop result is now on
 paper.

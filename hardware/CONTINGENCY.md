@@ -167,16 +167,22 @@ board. Fewer solder operations on that pad are worth more than the extra
 data points. A bracketed minimum still varies C_f both ways, which is what
 §3.1 asks. What is lost is the shape of the curve away from the minimum.
 
-Read the "max O − min O" row below with that in mind. Over three adjacent
-values the spread is smaller than over six, so a broad but genuine minimum
-can look like a loop short of margin.
+**Broad-minimum guard** (Daniel, 2026-10-24). Over three adjacent values
+the spread is smaller than over six. A three-point spread under 8 points is
+therefore ambiguous: it can be a broad but genuine minimum, or a loop
+genuinely short of margin. So before anything is concluded, the sweep
+widens by one value in each direction, to the five kit values nearest the
+best (beside none or 4.7, two on the open side). **Only a spread still under
+8 points across those five indicates low margin.** An oscillating row
+(p-p ≥ 5 mV) counts as a spread of 8 or more. H4 Block 2's rule 4 runs it,
+once.
 
 The step-7 numbers that H4 records, and what they mean (§3.1 diagnostic):
 
 | On the sheet | Meaning |
 |---|---|
 | A clear minimum, O falling to **10–15%** at one value | C_f was mis-fitted. Not a marginal loop |
-| max O − min O **< 8 points**, all near 25% | The loop itself is short of margin. That is why A3 goes on to R_B or R_iso |
+| max O − min O **< 8 points across five values** (after the broad-minimum guard), all near 25% | The loop itself is short of margin. That is why A3 goes on to R_B or R_iso. Under 8 across only three is not this row: the guard widens it first |
 | Best at **none** | C_in < ~3.5 pF: the over-compensated side |
 | Best at **4.7 pF** | The node holds more than ~11 pF, more than the op-amp plus a clean layout. Clean it; do §2C |
 
