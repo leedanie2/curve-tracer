@@ -27,20 +27,20 @@
 
 ```
                     ┌──────────── STM32 ────────────┐
-                    │  DAC1 ──► gate/step source    │
-                    │  DAC2 ──► sweep source        │
+                    │  DAC1_OUT1 ──► gate/step src  │
+                    │  DAC1_OUT2 ──► sweep source   │
                     │  ADC1 ◄── current sense       │
                     │  ADC2 ◄── voltage sense       │
                     │  USB CDC ──► host             │
                     └───────────────────────────────┘
 
-  DAC2 ──► [scale ×3.32] ──► [composite power buffer] ──► [shunt] ──┬──► DUT drain
+  OUT2 ──► [scale ×3.32] ──► [composite power buffer] ──► [shunt] ──┬──► DUT drain
                                                           │         │
                                                     [diff amp]   [Kelvin sense
                                                           │        + divider + buffer]
                                                         ADC1          │
                                                                     ADC2
-  DAC1 ──► [scale ×3.32] ──► [buffer] ──────────────────────────► DUT gate
+  OUT1 ──► [scale ×3.32] ──► [buffer] ──────────────────────────► DUT gate
 
                                                    DUT source ──► GND
 ```
@@ -280,9 +280,17 @@ So extracting anything at a fixed `V_DS` — `V_th` and `β` from a `√I_D` fit
 
 **Board:** Nucleo-F303RE (2× 12-bit DAC, 4× fast ADC, plentiful RAM) or Nucleo-G474RE. Both have the DAC peripheral — many STM32 lines do not. Verify before ordering.
 
-**PA5 cannot be used as a DAC output on a Nucleo-64 — it drives LD2.** The obvious mapping for two DAC channels is the two channels of peripheral DAC1, `DAC1_OUT1` on **PA4** and `DAC1_OUT2` on **PA5**. PA5 is unusable here: on every Nucleo-64 board it also drives **LD2, the green user LED**, so the LED and its series resistor sit directly on the DAC output as an uncontrolled load. Use the F303RE's *second* DAC peripheral instead — the sweep source goes to **`DAC2_OUT1` on PA6**, the gate/step source stays on `DAC1_OUT1` / PA4.
+**The sweep DAC is `DAC1_OUT2` on PA5, jumpered on the Nucleo to PA6** (Daniel, 2026-10-24). The F303RE has one DAC peripheral, DAC1, with two outputs: `DAC1_OUT1` on **PA4**, the gate/step source, and `DAC1_OUT2` on **PA5**. The design first put the sweep source on `DAC2_OUT1`, PA6, to keep it off PA5, which on a Nucleo-64 also drives **LD2**, the green user LED, through solder bridge SB21. **The F303RE has no DAC2.** DAC2 exists only on the F303x6/x8, F328 and F334. The first build against ST's own device header found this on 2026-10-23, after the board had been built with DAC_SWEEP on PA6 (CN10-13) and PA5 (CN10-11) left open. The fix is on the Nucleo, not the board:
 
-**The cost of that choice:** DAC1 and DAC2 are separate peripherals, so they cannot perform a **synchronised dual-channel update** the way DAC1's two channels could (`DUALTRIG` / a shared trigger). The sweep engine (§4) sets gate and then drain sequentially, so this costs nothing in DC mode. **It would matter if pulsed mode is ever restored**, where gate and drain ideally step together on one trigger to keep the measurement window tight; that would need either both channels on DAC1 — reworking around LD2, e.g. by lifting solder bridge SB21 — or accepting the skew between two software writes. Record the constraint now rather than rediscovering it when pulsed mode is built.
+- a 2.54 mm shunt joins CN10-11 (PA5) to CN10-13 (PA6), on the Nucleo's top-side morpho pins;
+- the firmware holds PA6 analog, so it has no output driver and cannot fight PA5;
+- SB21 is removed, so LD2 and its resistor no longer load PA5.
+
+H4 prep P1a and P1b fit and check it. The alternative, a Nucleo-F334R8 with a real DAC2 on PA6, was rejected; the reasons are in `firmware/README.md` (*The sweep DAC*) and `hardware/DECISIONS.md` (J7/J8). §11 records how the mistake survived until the board was built.
+
+**Synchronised update restored.** With both sources on DAC1, the two channels can again take a **synchronised dual-channel update** (`DUALTRIG` / a shared trigger), which the move to PA6 had given up. The DC sweep sets gate and then drain sequentially and does not need it. Pulsed mode, if it is restored, can use it with no further rework.
+
+**Range (open).** Both channels run with the output buffer on, which holds each op-amp's IN+ at low impedance. Buffered, the F3's DAC output is guaranteed only from **0.2 V to VDDA − 0.2 V**: **0.66 V to 10.29 V** at the feedback node after ×3.32, not the 0–10.96 V the full-scale figures in this document assume. Better parts reach closer to the rails, and H4 prep P1b measures where this one does. Whether the bottom of the range matters for the lowest sweep points, and whether the 10.96 V figures should be restated, is not decided.
 
 **ADC config:** 12-bit, longest sampling time, VREF from the board's 3.3 V rail. Add a `10 nF` cap at each ADC pin and clamp diodes (BAT54S) to rails for protection. Each pin is driven from its op-amp through **1 kΩ**. 10 nF is ten times what an OPA2197 at unity gain is rated to drive directly (§3.7), and 1 kΩ also bounds what an op-amp at its rail can push through the BAT54S into the Nucleo's 3.3 V rail: (15 − 3.3 − 0.4) V / 1 kΩ ≈ **11 mA** per channel. Before, the op-amp's own ~65 mA limit was the only bound. It happens on unplugged Kelvin leads, which leave the buffer input floating, and on any over-range on ranges 2–3.
 
@@ -357,22 +365,22 @@ It appears twice in this design, found independently each time:
 
 ```
 for each V_GS in step_list:
-    set DAC1 = V_GS
+    set DAC_GATE = V_GS
     for V_DS from 0 to V_max in N steps:
-        set DAC2 = V_DS
+        set DAC_SWEEP = V_DS
         delay(settle_us)
         I = oversample(ADC1, 64)
         V = oversample(ADC2, 64)
         if I > i_limit_ma:              # DUT protection — see §3.6
-            set DAC2 = 0
+            set DAC_SWEEP = 0
             emit_csv_error("ilimit", V_GS, V, I)
             break out of both loops
         emit_csv(V_GS, V, I, range)
-        if pulsed_mode: set DAC2 = 0; delay(duty_off_us)
-    set DAC2 = 0
+        if pulsed_mode: set DAC_SWEEP = 0; delay(duty_off_us)
+    set DAC_SWEEP = 0
 ```
 
-**The current check is not optional and belongs before `emit_csv`, not after.** Every sweep point already measures current, so the check costs one comparison. Zeroing DAC2 must happen before the point is emitted and before the next `set DAC2`, or the sweep walks one further up the curve into a DUT that is already over its ceiling.
+**The current check is not optional and belongs before `emit_csv`, not after.** Every sweep point already measures current, so the check costs one comparison. Zeroing the sweep DAC must happen before the point is emitted and before the next `set DAC_SWEEP`, or the sweep walks one further up the curve into a DUT that is already over its ceiling.
 
 **Key parameters to expose and tune:**
 
@@ -382,7 +390,7 @@ for each V_GS in step_list:
 | `N` (points/sweep) | 200 | Tradeoff: resolution vs. total sweep time vs. heating |
 | `duty_off_us` | 10 ms | Pulsed mode: lets the DUT cool between points |
 | `oversample_n` | 64 | Noise floor vs. speed |
-| `i_limit_ma` | 60 | **DUT protection ceiling, per device, from the sweep config.** Exceeded → zero DAC2 and abort the sweep. The default sits above the 50 mA full-scale spec so a legitimate sweep cannot trip it, and below the analog limiter so firmware acts first on anything it can catch (§3.6). Fragile parts want a much lower value — set it per DUT, not once |
+| `i_limit_ma` | 60 | **DUT protection ceiling, per device, from the sweep config.** Exceeded → zero the sweep DAC and abort the sweep. The default sits above the 50 mA full-scale spec so a legitimate sweep cannot trip it, and below the analog limiter so firmware acts first on anything it can catch (§3.6). Fragile parts want a much lower value — set it per DUT, not once |
 
 **Pulsed vs. DC mode is a headline feature.** In DC mode a power device self-heats during the sweep, and its curves visibly droop in saturation — you're measuring thermal effects, not the device. Pulsed mode (bias applied only during the measurement window, ~1% duty cycle) suppresses this. **Overlaying a DC sweep and a pulsed sweep of the same device on one plot is one of the best figures in the project.**
 
@@ -672,12 +680,26 @@ The "what I'd do differently" section is the one interviewers respond to. Write 
 | Scope creep into BJT/auto-ranging | Phases 0–9 first. Phase 2 is optional |
 | Blown parts stall progress | Duplicates of every active component on hand from day one |
 | A model parameter is documented but never applied | Check that changing a parameter changes the output before trusting a result that depends on it — see below |
+| A check passes against a stand-in for the real thing | Before trusting a check, state what real thing it exercised — see below |
 
 **A recurring failure mode: the parameter that is accepted but not applied.** Twice now a model has carried a parameter that was documented, accepted, and silently ignored, and both times the simulation output looked correct. In Phase 0 a MODPEX-generated BD139 model had `CJE = CJC = 1e-11` exactly — placeholders standing in for real junction capacitances — and with it the composite amplifier appeared unconditionally stable, hiding the `C_comp` error that the ST model exposed immediately (§12.2). In September 2026 the host simulator's `--rs` flag was parsed, stored, listed in `firmware/README.md`, and never read by the diode current function; the diode nevertheless showed a convincing high-current roll-off from the ideal line, so nothing looked wrong.
 
 The tell was the same both times: **a physical effect appeared, and it was attributed to the wrong cause.** The placeholder `Cjc` did not remove the follower's pole, it just made a different circuit that happened to be stable. The missing `rs` did not remove the roll-off, because `R_iso`'s drop was producing one — the front-end series resistance masquerading as device bulk resistance, and the two are only distinguishable by remembering that the Kelvin sense sits between them.
 
 Neither bug is detectable by reading the output, because the output is plausible. Both are detectable in one step: **sweep the parameter and confirm the result moves.** A parameter that changes nothing is either irrelevant to the question being asked, in which case it should not be in the model, or it is not wired up. The host's diode tests now parametrise over four devices with different `rs` values for exactly this reason, and a zero `rs` is required to come back as *unresolved* rather than as a small number.
+
+**A second recurring failure mode: the check that ran against a stand-in.** Four times now a verification has passed, and been reported as passing, without ever touching the thing it was meant to verify.
+
+- **The BD139 model (Phase 0, §12.2).** A MODPEX-generated model had `CJE = CJC = 1e-11` exactly, placeholders for the junction capacitances. The stability simulation exercised those placeholders, not the transistor. It passed: the loop looked unconditionally stable until ST's model oscillated.
+- **The Nucleo sockets (`hardware/DECISIONS.md` L-2).** KiCad's stock 2×19 socket would have put every morpho pin in the wrong column, and ERC and DRC would both have passed it. They check the schematic against its symbols and the copper against itself; neither exercises a Nucleo plugging into the board. It was caught by comparing against KiCad's Nucleo template and UM1724.
+- **Q1 in JLCPCB's preview (2026-10-12).** Q1's orientation was checked in JLCPCB's 2D placement preview. It draws a TO-126 as the same black rectangle whichever way the tab faces, and JLCPCB's 3D model put its pin-1 dot at the wrong end. The check exercised JLCPCB's renderer, not the placement. JLCPCB's engineer queried the part; tilted, the 3D view showed the tab facing the board centre, and Q1 was rotated before production.
+- **DAC2 in the firmware (2026-10-23).** The STM32 sources had been compile-checked only against stub headers, and the stubs defined `DAC2`. The F303RE has none. The first build against ST's own device header failed on it, after the board had been built with the sweep input on PA6, where no DAC exists (§3.5).
+
+The tell is the same each time: **the check never touched the real artifact.** It touched a model, a library drawing, a renderer or a stub. Each of those stands in for the real thing exactly as far as whoever made it took it, and no further. Nothing in the output warns you: the stand-in passes because it was built to pass.
+
+This is not the failure mode above. There, a real parameter was carried, accepted and silently ignored, and sweeping it exposes that. Here the check itself may be sound, but it is aimed at a substitute; sweeping a parameter of the stub proves nothing about the chip. The MODPEX model is an instance of both: a placeholder (a stand-in) and a value no one checked was doing anything (accepted but unapplied).
+
+**Countermeasure: before trusting a check, state what real thing it exercised.** "ERC passes" exercises the schematic against its own symbols. "It compiles" exercises the code against whatever headers it was given. "The preview looks right" exercises the fab's renderer. If the honest answer names a stand-in, the check has not yet verified the real thing. Name what would (the vendor's model, the mating part's drawing, the vendor's device header, the assembled board itself) and run that before writing "verified".
 
 ---
 
@@ -768,10 +790,10 @@ why the board carries the `C_f` footprint and the alternate values, and why
 - **DC sweep only.**
 - **No auto-ranging.** No relays. §3.3's relay auto-ranging stays Phase 2.
 - **No pulsed mode.** Phase 6 is dropped from the MVP (§9). Note the §3.5
-  consequence: with the sweep DAC on `DAC2_OUT1`/PA6 and the gate on
-  `DAC1_OUT1`/PA4, the two channels cannot take a synchronised dual-channel
-  update, so restoring pulsed mode later needs rework around LD2 regardless.
-  Dropping it now costs nothing that was reachable anyway.
+  consequence: both sources are on DAC1 (the sweep on `DAC1_OUT2`/PA5,
+  jumpered to PA6, since 2026-10-24), so the synchronised dual-channel
+  update pulsed mode wants is available again without further rework. It
+  stays out of the MVP for scope, not hardware.
 
 Anything not on this list is not on the board. Scope creep here does not cost
 timeline, it costs a **board revision**, and there is only one.

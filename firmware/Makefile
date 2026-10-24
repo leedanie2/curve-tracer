@@ -5,7 +5,7 @@
 #   make demo       a short MOSFET sweep to stdout
 #   make clean
 #
-# The STM32 build is a CubeIDE project under stm32/; see README.md.
+# The STM32 build is stm32/Makefile, with an ARM toolchain; see README.md.
 
 CC      ?= cc
 CFLAGS  ?= -std=c11 -O1 -g -Wall -Wextra -Wpedantic -Wshadow \

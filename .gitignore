@@ -9,3 +9,7 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# STM32 build: ST drivers are fetched by `make drivers`, not vendored
+firmware/stm32/STM32CubeF3/
+firmware/stm32/build/

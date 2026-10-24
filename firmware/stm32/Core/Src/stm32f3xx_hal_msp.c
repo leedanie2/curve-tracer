@@ -46,20 +46,12 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef *hdac)
         __HAL_RCC_DAC1_CLK_ENABLE();
         __HAL_RCC_GPIOA_CLK_ENABLE();
 
-        /* PA4 — DAC1_OUT1, gate / step source (Arduino A2) */
-        gpio.Pin  = GPIO_PIN_4;
-        gpio.Mode = GPIO_MODE_ANALOG;
-        gpio.Pull = GPIO_NOPULL;
-        HAL_GPIO_Init(GPIOA, &gpio);
-
-    } else if (hdac->Instance == DAC2) {
-        __HAL_RCC_DAC2_CLK_ENABLE();
-        __HAL_RCC_GPIOA_CLK_ENABLE();
-
-        /* PA6 — DAC2_OUT1, sweep source (Arduino D12).
-         * NOT PA5: that pin drives LD2, whose LED and series resistor would
-         * load the DAC output. See blueprint §3.5. */
-        gpio.Pin  = GPIO_PIN_6;
+        /* PA4 — DAC1_OUT1, gate / step source (Arduino A2).
+         * PA5 — DAC1_OUT2, sweep source (Arduino D13, CN10-11). The board
+         * takes it at PA6 (CN10-13) through a jumper on the Nucleo; PA6 is
+         * set analog in MX_GPIO_Init. SB21 must be removed: with it fitted,
+         * LD2 and its resistor load this output. See blueprint §3.5. */
+        gpio.Pin  = GPIO_PIN_4 | GPIO_PIN_5;
         gpio.Mode = GPIO_MODE_ANALOG;
         gpio.Pull = GPIO_NOPULL;
         HAL_GPIO_Init(GPIOA, &gpio);

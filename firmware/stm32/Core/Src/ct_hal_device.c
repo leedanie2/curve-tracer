@@ -9,7 +9,6 @@
 extern ADC_HandleTypeDef  hadc1;
 extern ADC_HandleTypeDef  hadc2;
 extern DAC_HandleTypeDef  hdac1;
-extern DAC_HandleTypeDef  hdac2;
 extern UART_HandleTypeDef huart2;
 extern TIM_HandleTypeDef  htim6;
 
@@ -122,7 +121,7 @@ static void hal_set_sweep(void *ctx, uint16_t code)
     if (code > 4095u) {
         code = 4095u;
     }
-    HAL_DAC_SetValue(&hdac2, DAC_CHANNEL_1, DAC_ALIGN_12B_R, code);
+    HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, code);
 }
 
 static uint32_t accumulate(ADC_HandleTypeDef *h, uint16_t n)

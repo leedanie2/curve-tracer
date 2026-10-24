@@ -4,7 +4,9 @@
  * not something the blueprint specified — see firmware/README.md):
  *
  *   PA4   DAC1_OUT1   gate / step source
- *   PA6   DAC2_OUT1   sweep source        (NOT PA5: that drives LD2)
+ *   PA5   DAC1_OUT2   sweep source        (jumpered on the Nucleo, CN10-11
+ *                                         to CN10-13; SB21 removed, LD2 off)
+ *   PA6   analog      high-Z: where the board takes the sweep DAC
  *   PA0   ADC1_IN1    current sense
  *   PC0   ADC2_IN6    voltage sense
  *   PA2   USART2_TX   ST-LINK VCP

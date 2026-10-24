@@ -25,7 +25,7 @@ typedef struct ct_device {
     /* Write a 12-bit code to the gate/step DAC (DAC1_OUT1, PA4). */
     void (*set_gate_code)(void *ctx, uint16_t code);
 
-    /* Write a 12-bit code to the sweep DAC (DAC2_OUT1, PA6). */
+    /* Write a 12-bit code to the sweep DAC (DAC1_OUT2, PA5). */
     void (*set_sweep_code)(void *ctx, uint16_t code);
 
     /* Sum n conversions of the current-sense channel (ADC1_IN1, PA0). */

@@ -6,7 +6,10 @@
  *
  * Pin assignments are listed in ct_hal_device.h and justified in
  * firmware/README.md. Two are not obvious:
- *   - the sweep DAC is on PA6 (DAC2_OUT1), not PA5, because PA5 drives LD2
+ *   - the sweep DAC is DAC1_OUT2 on PA5. The board takes it at PA6
+ *     (CN10-13) through a jumper on the Nucleo from CN10-11, so PA6 is held
+ *     analog and never drives against PA5, and SB21 is removed so LD2 does
+ *     not load it. The F303RE has no DAC2.
  *   - "USB CDC" is USART2 through the ST-LINK VCP; there is no USB stack
  */
 
@@ -20,14 +23,12 @@
 ADC_HandleTypeDef  hadc1;
 ADC_HandleTypeDef  hadc2;
 DAC_HandleTypeDef  hdac1;
-DAC_HandleTypeDef  hdac2;
 UART_HandleTypeDef huart2;
 TIM_HandleTypeDef  htim6;
 
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DAC1_Init(void);
-static void MX_DAC2_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_USART2_UART_Init(void);
@@ -40,7 +41,6 @@ int main(void)
 
     MX_GPIO_Init();
     MX_DAC1_Init();
-    MX_DAC2_Init();
     MX_ADC1_Init();
     MX_ADC2_Init();
     MX_USART2_UART_Init();
@@ -54,12 +54,12 @@ int main(void)
     HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
 
     HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
-    HAL_DAC_Start(&hdac2, DAC_CHANNEL_1);
+    HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
 
     /* Both sources at zero before anything else. A DUT may already be in the
      * socket at power-up. */
     HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 0u);
-    HAL_DAC_SetValue(&hdac2, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 0u);
+    HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, 0u);
 
     /* Receive interrupt on, one byte at a time. */
     __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
@@ -95,7 +95,10 @@ static void SystemClock_Config(void)
     RCC_ClkInitTypeDef       clk = {0};
     RCC_PeriphCLKInitTypeDef per = {0};
 
-    /* HSI 8 MHz / 2 = 4 MHz into the PLL, x18 = 72 MHz, the F303's maximum.
+    /* HSI 8 MHz through PREDIV /1 into the PLL, x9 = 72 MHz, the F303's
+     * maximum. On the F303xD/E the HSI reaches the PLL through PREDIV; the
+     * fixed HSI/2 path, and its 64 MHz ceiling, is the F303xB/C. The PLL
+     * multiplier stops at x16 on every F3, so there is no x18.
      * HSI rather than HSE because the Nucleo's 8 MHz comes from the ST-LINK
      * MCO, which is absent if the board is powered standalone. */
     osc.OscillatorType      = RCC_OSCILLATORTYPE_HSI;
@@ -103,7 +106,8 @@ static void SystemClock_Config(void)
     osc.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
     osc.PLL.PLLState        = RCC_PLL_ON;
     osc.PLL.PLLSource       = RCC_PLLSOURCE_HSI;
-    osc.PLL.PLLMUL          = RCC_PLL_MUL18;   /* 4 MHz x 18 = 72 MHz */
+    osc.PLL.PREDIV          = RCC_PREDIV_DIV1;
+    osc.PLL.PLLMUL          = RCC_PLL_MUL9;    /* 8 MHz x 9 = 72 MHz */
     if (HAL_RCC_OscConfig(&osc) != HAL_OK) {
         Error_Handler();
     }
@@ -133,6 +137,17 @@ static void MX_GPIO_Init(void)
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_GPIOF_CLK_ENABLE();
     /* Analogue pins are configured by the ADC/DAC MSP init functions. */
+
+    /* PA6 (CN10-13) is where the board takes the sweep DAC, jumpered on the
+     * Nucleo to PA5, the real DAC1_OUT2. Analog mode: no output driver and
+     * no input Schmitt trigger, so it neither fights PA5 nor draws current
+     * at mid-rail. From reset until this line it is a floating digital
+     * input, also high-impedance. */
+    GPIO_InitTypeDef gpio = {0};
+    gpio.Pin  = GPIO_PIN_6;
+    gpio.Mode = GPIO_MODE_ANALOG;
+    gpio.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &gpio);
 }
 
 static void MX_DAC1_Init(void)
@@ -144,27 +159,19 @@ static void MX_DAC1_Init(void)
         Error_Handler();
     }
 
-    /* Output buffer on: the gate node is high impedance, but the buffer also
-     * lets the DAC reach closer to the rails. */
+    /* Channel 1 (PA4) is the gate source, channel 2 (PA5) the sweep source.
+     * Output buffer on, both: it holds each op-amp's IN+ at low impedance,
+     * which CONTINGENCY.md §2A relies on when it counts the OPA2197's
+     * differential input capacitance as landing on AC ground. The cost is
+     * range: buffered, the output is guaranteed only from 0.2 V to
+     * VDDA - 0.2 V, 0.66 to 10.29 V after the x3.32 gain. H4 prep P1b
+     * measures where this part actually reaches. */
     cfg.DAC_Trigger      = DAC_TRIGGER_NONE;
     cfg.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
     if (HAL_DAC_ConfigChannel(&hdac1, &cfg, DAC_CHANNEL_1) != HAL_OK) {
         Error_Handler();
     }
-}
-
-static void MX_DAC2_Init(void)
-{
-    DAC_ChannelConfTypeDef cfg = {0};
-
-    hdac2.Instance = DAC2;
-    if (HAL_DAC_Init(&hdac2) != HAL_OK) {
-        Error_Handler();
-    }
-
-    cfg.DAC_Trigger      = DAC_TRIGGER_NONE;
-    cfg.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
-    if (HAL_DAC_ConfigChannel(&hdac2, &cfg, DAC_CHANNEL_1) != HAL_OK) {
+    if (HAL_DAC_ConfigChannel(&hdac1, &cfg, DAC_CHANNEL_2) != HAL_OK) {
         Error_Handler();
     }
 }
@@ -289,6 +296,14 @@ void Error_Handler(void)
          * numbers that look valid and are not. */
     }
 }
+
+/* The build links with -nostartfiles, so newlib's crt0 and its exit() path,
+ * which would drag in stdio and its unimplemented syscalls, stay out. That
+ * also drops crti.o, which normally supplies these two for
+ * __libc_init_array, called from ST's startup file. There are no
+ * constructors, so both are empty. */
+void _init(void) { }
+void _fini(void) { }
 
 #ifdef USE_FULL_ASSERT
 void assert_failed(uint8_t *file, uint32_t line)

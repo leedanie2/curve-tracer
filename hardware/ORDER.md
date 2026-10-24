@@ -42,13 +42,13 @@ its packing slip when you unpack: 2 heatsinks and 5 Sil-Pads; six bags of
 
 | Item | Blocks | Status |
 |---|---|---|
-| C_f 3.3 pF, fitted as C1 | P3, before first power-up | **In hand** (DigiKey 2nd) |
+| C_f 3.3 pF, fitted as C1 | H4 Block 2, run 1. First power-up is now with C1 empty (2026-10-24) | **In hand** (DigiKey 2nd) |
 | C_f 1.5 / 2.2 / 2.7 / 3.9 / 4.7 pF | H4 Block 2 (the C_f sweep) | **In hand** (DigiKey 2nd) |
 | Q1 heatsink, Boyd 577500B00000G | P4; H4 Block 4 | **In hand** (DigiKey) |
 | Sil-Pad K-10 insulator | P4; H4 Block 4 | **In hand** (DigiKey) |
 | The boards | Everything | **Outstanding:** shipped, DHL 3074485864, delivery estimated Wed Oct 21 |
 | Nucleo-F303RE and USB Mini-B cable | P1 onward | **Outstanding:** cabinet, not yet checked |
-| J3/J4 jumper shunts, 2.54 mm | P2 | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
+| Jumper shunts, 2.54 mm: three, for J3, J4 and the Nucleo's CN10-11/13 (added 2026-10-24, `firmware/README.md`) | P1a, P2 | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
 | L1 resistor: 200 Ω, genuinely 1 W | H4 Blocks 1–2 | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
 | L1 capacitor: 100 nF X7R or C0G, leaded | H4 Blocks 1–2 | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
 | 10 kΩ resistor, ≥ 1/8 W | Step 13a | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |

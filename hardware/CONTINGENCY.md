@@ -22,16 +22,17 @@ and the parallel alternates.
 
 **Entry points:**
 
-- from H4 step 2, 2b or 3 (oscillation) → **A1**;
-- from H4 step 7 (gate failed at the best C_f) → **A3**.
+- from H4 step 2, 2b or 3 (oscillation, C1 empty) → **A1**;
+- from H4 step 7, no Block 2 row with p-p < 5 mV → **A4**;
+- from H4 step 7, gate failed at the best C_f → **A3**.
 
 | # | min | Condition (from the sheet) | Do | Record | Next |
 |---|---|---|---|---|---|
-| **A1** | 0 | Oscillation frequency f, recorded at H4 2/2b/3 | — | — | f ≥ 20 MHz → **A2**. 0.3 ≤ f < 20 MHz → **A4**. f < 0.3 MHz → **A1.1** |
+| **A1** | 0 | Oscillation frequency f, recorded at H4 2/2b/3 | — | — | f ≥ 20 MHz → **A2**. f < 0.3 MHz → **A1.1**. 0.3 ≤ f < 20 MHz: loop band, **expected with C1 empty** (§2B). Record it as Block 2's "none" row and go to the H4 step after the one that failed. It is data, not a goto into A4 |
 | A1.1 | 1 | f < 0.3 MHz | Is the supply in CC? | CC Y/N ____ | Y: output OFF → **STOP**. N: record → **STOP** (off-bench: §6) |
 | **A2** | 3 | VHF | Move the probe's ground lead from TP27 to **TP9**, dressed flat along the board. Re-run the H4 step that failed | p-p = ____ mV | < 20 mV: record "probe artefact", go to the H4 step after the failed one. ≥ 20 mV → **A2.1** |
 | A2.1 | 1 | VHF persists | Output OFF | — | **STOP** (off-bench: §5, the base stopper needs a prepared part) |
-| **A4** | 40 | Loop-band oscillation at C_f 3.3 pF | Run H4 Block 2 (the C_f sweep) exactly as written, recording p-p on every row | (on the H4 sheet) | Any row with p-p < 5 mV → **H4 step 7**. Every row ≥ 5 mV → **A5** |
+| **A4** | 0 | Every Block 2 row oscillates (p-p ≥ 5 mV), so no C_f in the kit stops it. Block 2 has then run every value (its rule 2) | — | — | **A5** |
 | **A3** | 0 | Gate failed at H4 step 7 | ΔO = O_L1 − O_open, both from step 7 | ΔO = ____ points | ΔO ≥ 10 → **A6**. ΔO < 10 → **A5** |
 | **A5** | 15 | Lower R_B | Output OFF. Fit **R4 = 330 Ω axial** (in parallel: R_B becomes 165 Ω). Output ON. Run the H4 step-5 test at the current C1, then at one kit value either side (at the kit's end, the two nearest) (3 runs, files `a5_<cf>.csv`; refit C1 between runs as in Block 2) | rows below | Any run passes the H4 step-7 rule → fit that C_f, record "R4 fitted", go to **H4 step 8**. None passes: A6 not yet done → **A6**; done → **A7** |
 | **A6** | 20 | Raise R_iso | Output OFF. Remove **R7** (2512). Fit **R8 = 47 Ω axial** alone. Output ON. Same 3 runs as A5, files `a6_<cf>.csv` | rows below | Any passes → fit that C_f, record "R_iso = 47 Ω", go to **H4 step 8**. None passes: A5 not yet done → **A5**; done → **A7** |
@@ -78,7 +79,7 @@ frequency. **This is analysis, not simulation.** §3.1 states that the stray
 input pole is not in sim 08, the sim behind every overshoot figure here.
 Treat everything about C_in in this document as analysis.
 
-## 2. C_in, and why the board is first powered with C_f = 3.3 pF
+## 2. C_in, and why the board is first powered with C1 empty
 
 ### 2A. Estimate
 
@@ -96,19 +97,38 @@ no copper pour under the node (§14.5(2)). Under ~1 pF, estimated.
 is per input**, which the datasheet does not say. Blueprint §3.1 records
 this as a design finding.
 
-### 2B. Why not power up with C1 empty
+### 2B. First power-up with C1 empty (Daniel, 2026-10-24)
 
 As assembled, C1 is empty (DNP). The uncancelled pole sits at
 1 / (2π · 6.99 kΩ · C_in): **4.5 MHz at 5 pF, 2.5 MHz at 9 pF.** Against
 ~3 MHz crossover that costs roughly **33–50°** of phase, from the ~59° sim 08
-implies. That leaves ~10–25°. §3.1 makes the same argument for the
-breadboard: "roughly 45° on its own".
+implies. That leaves ~10–25°, so the bare loop is predicted to ring hard,
+~50–75% overshoot as a second-order estimate, or to oscillate. §3.1 makes
+the same argument for the breadboard: "roughly 45° on its own".
 
-A first power-up with C1 empty is therefore predicted to ring hard or
-oscillate, and would send the card straight into Part A for a reason
-already known. So H4 prep P3 fits the predicted 3.3 pF first, and the sweep
-works outward from it. "None" stays in the sweep as a data point. If it
-oscillates, that is the pole confirming itself.
+The card used to fit the predicted 3.3 pF before first power-up, so that a
+known ringing would not send it into Part A. It now powers up bare, for
+three reasons:
+
+- **Nothing is at risk.** These are hand estimates, not simulation. At idle
+  the firmware holds both DACs at 0, so the follower is off and the loop has
+  no gain: nothing can oscillate until a sweep runs. During one, the
+  OPA2197's 20 V/µs slew limits a ~3 MHz swing to about 1 V peak, about
+  46 mA peak into L1 through R_iso on ~27 mA DC: normal sweep currents. The
+  limiter (~75 mA, sim 11) and the 100 mA supply limit (1.5 W for the whole
+  board) bound everything else. Q1's worst case is the held short it is
+  built for, 0.89 W, ~53 °C on the heatsink (`DECISIONS.md` P-8). D3 clamps
+  the DUT node, and the ADC inputs are clamped. P4 (heatsink) and S1
+  (100 mA limit) stay preconditions.
+- **The bare run is data, not a detour.** It is Block 2's "none" row, taken
+  first. A loop-band oscillation there is the pole confirming itself: A1
+  records it and moves on.
+- **The first solder operation on board 1 comes after the rails** (H4
+  steps 1–4) have shown the board is sound, and the bare result shows which
+  side of 3.3 pF the minimum is likely on.
+
+On its own, measuring "none" first saves no soldering: the swaps come from
+the sweep, whenever "none" is measured. §3 is where the count came down.
 
 ### 2C. Unpowered board-share measurement (optional; needs fast edges and an active probe)
 
@@ -134,9 +154,22 @@ and `docs/characterization.md`.
 
 ## 3. The C_f sweep, and reading it
 
-The values (E12, ~20% steps) bracket C_in from ~3.5 to ~11 pF. H4 runs them
-outward from 3.3 pF so a session that ends early has the most informative
-points.
+The values (E12, ~20% steps) bracket C_in from ~3.5 to ~11 pF. H4 starts at
+3.3 pF and moves toward the minimum.
+
+**The sweep stops once the minimum is bracketed** (Daniel, 2026-10-24). It
+used to run all six values every time. It now stops once the best value has
+a worse one on each side (at an end of the kit, its one neighbour), which is
+three fits when 3.3 pF is best. The reason is the pad. Every row is a
+remove-and-refit of an 0603 on the inverting node, the node §3.1's
+stability rests on, and a lifted pad there is the worst rework on the
+board. Fewer solder operations on that pad are worth more than the extra
+data points. A bracketed minimum still varies C_f both ways, which is what
+§3.1 asks. What is lost is the shape of the curve away from the minimum.
+
+Read the "max O − min O" row below with that in mind. Over three adjacent
+values the spread is smaller than over six, so a broad but genuine minimum
+can look like a loop short of margin.
 
 The step-7 numbers that H4 records, and what they mean (§3.1 diagnostic):
 

@@ -178,7 +178,8 @@ def run_checks(nl, report, fw=None):
     chk(f'one op-amp output per net {shared or ""}', not shared)
 
     # §3.1 sweep source
-    chk('DAC_SWEEP reaches PA6 (CN10-13)', ('J8', '13') in nl.nets.get('DAC_SWEEP', []))
+    chk('DAC_SWEEP reaches PA6 (CN10-13), shunted to PA5 = DAC1_OUT2 on the Nucleo',
+        ('J8', '13') in nl.nets.get('DAC_SWEEP', []))
     chk('R_f (R1) FB_SENSE-IN-, R_g (R2) IN- to GND',
         between('R1', 'FB_SENSE', 'OPA_SWEEP_IN-') and between('R2', 'OPA_SWEEP_IN-', 'GND'))
     g = 1 + val('R1') / val('R2')
@@ -286,7 +287,8 @@ def run_checks(nl, report, fw=None):
     chk('star ground: GND and GNDPWR distinct, joined only by NT2',
         'GND' in nl.nets and 'GNDPWR' in nl.nets and between('NT2', 'GNDPWR', 'GND'))
     chk('+15 V never reaches the Nucleo', not any(r in ('J7', 'J8') for r, _ in nl.nets['+15V']))
-    chk('PA5 (CN10-11, drives LD2) unconnected', (on('J8', 11) or 'unconnected').startswith('unconnected'))
+    chk('PA5 (CN10-11) unconnected on the board: the Nucleo shunt carries it to CN10-13',
+        (on('J8', 11) or 'unconnected').startswith('unconnected'))
 
     # the firmware converts with constants that must describe this board
     if fw is not None:

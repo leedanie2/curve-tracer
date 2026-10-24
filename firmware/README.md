@@ -9,7 +9,7 @@ DUT — see [Testing without hardware](#testing-without-hardware).
 core/    portable sweep and HOLD engines, CSV writer, parameters, command parser
 sim/     modelled DUT + a host binary that speaks the same protocol
 tests/   C suites for the engine and format, pytest for the CSV contract
-stm32/   CubeIDE project: HAL glue, peripheral init, interrupts
+stm32/   STM32 build: HAL glue, peripheral init, interrupts, Makefile
 ```
 
 ---
@@ -398,26 +398,59 @@ flashing.**
 
 | Signal | Pin | Peripheral | Arduino / connector | Why this pin |
 |---|---|---|---|---|
-| Gate / step source | **PA4** | `DAC1_OUT1` | A2 (CN8-3) | the only DAC1 channel not on PA5 |
-| Sweep source | **PA6** | `DAC2_OUT1` | D12 (CN10-13) | **avoids LD2 on PA5** — see below |
+| Gate / step source | **PA4** | `DAC1_OUT1` | A2 (CN8-3) | DAC1 channel 1 |
+| Sweep source | **PA5** | `DAC1_OUT2` | D13 (CN10-11), **jumpered to CN10-13** | the F303RE's only other DAC output; the board takes it at PA6. **SB21 removed** — see below |
+| (sweep, board side) | **PA6** | analog, high-Z | D12 (CN10-13) | where the board's DAC_SWEEP lands; held analog so it never drives against PA5 |
 | Current sense | **PA0** | `ADC1_IN1` | A0 (CN8-1) | §4 assigns current to ADC1 |
 | Voltage sense | **PC0** | `ADC2_IN6` | A5 (CN8-6) | §4 assigns voltage to ADC2; PA4–PA7 are taken |
 | Serial TX | **PA2** | `USART2_TX` | ST-LINK VCP | fixed by the board |
 | Serial RX | **PA3** | `USART2_RX` | ST-LINK VCP | fixed by the board |
 | Die temperature | — | `ADC1_IN16` | internal | not a DUT reading |
 
-### Why the sweep DAC is not on PA5
+### The sweep DAC: PA5, jumpered to PA6
 
-The obvious mapping for "two DACs" is the two channels of peripheral DAC1,
-`DAC1_OUT1` on PA4 and `DAC1_OUT2` on PA5. **PA5 also drives LD2, the green
-user LED, on every Nucleo-64** — the LED and its series resistor would hang
-directly off the DAC output as an uncontrolled load. The F303RE has a second
-DAC peripheral, so the sweep source uses `DAC2_OUT1` on PA6 instead.
+**The F303RE has one DAC peripheral, DAC1, with two outputs: PA4 and PA5.**
+This file used to put the sweep source on `DAC2_OUT1`, PA6. DAC2 exists only
+on the F303x6/x8, F328 and F334, and `stm32f303xe.h` defines no DAC2. The
+first build against ST's real headers failed on it (2026-10-23). The earlier
+compile check used stub headers that defined DAC2, so it could not catch
+this (blueprint §11). The board was already built with DAC_SWEEP on PA6
+(CN10-13) and CN10-11 left open.
 
-**Cost:** DAC1 and DAC2 are separate peripherals and cannot perform a
-synchronised dual-channel update. The DC sweep sets gate then drain
-sequentially, so this costs nothing today, but it would matter if pulsed mode
-is restored. Recorded in blueprint §3.5.
+**Option A, taken** (Daniel, 2026-10-24): the sweep source is `DAC1_OUT2`
+on PA5, carried to the board on the Nucleo itself.
+
+- A 2.54 mm shunt joins **CN10-11 (PA5) to CN10-13 (PA6)**, on the morpho
+  pins on the Nucleo's top side.
+- PA6 is set **analog** in `MX_GPIO_Init`, before any DAC starts, so it has
+  no output driver and cannot fight PA5. From reset until then it is a
+  floating digital input, also high-impedance.
+- **SB21 is removed** from the Nucleo's underside. With it fitted, LD2, the
+  green user LED, and its series resistor hang on PA5 and load the DAC
+  output.
+- H4 prep P1a and P1b do the mod and check it: LD2 stays dark, and PA5
+  reaches the top of the DAC's range at CN10-13.
+
+**Why not a Nucleo-F334R8** (which has DAC2 on PA6, so the board would work
+unchanged):
+
+- the F303RE is already in hand, and the F334R8 cost ~$11 and ~3 days;
+- the F334's DAC2 has no output buffer, up to 15 kΩ out. The DAC feeds IN+,
+  not the critical IN− node, so that RC is on the command path, outside the
+  loop. But it stops IN+ being held at AC ground above roughly 1.3–2.2 MHz,
+  around the ~3 MHz crossover. The 1.6 pF differential input capacitance,
+  which `hardware/CONTINGENCY.md` §2A counts at IN− as fixed, would become
+  frequency-dependent there: an unmodelled change to C_in, on the parameter
+  §3.1 treats as critical;
+- A puts both sources back on one peripheral, so the synchronised
+  dual-channel update that was lost on PA6 is available again if pulsed
+  mode returns.
+
+**Range.** Both channels run with the output buffer on, for the same
+low-impedance reason. Buffered, the F3's DAC output is guaranteed only from
+**0.2 V to VDDA − 0.2 V**, 0.66 V to 10.29 V after the ×3.32 gain, not
+0–10.96 V. Better parts get closer to the rails. P1b measures where this one
+reaches.
 
 ### "USB CDC" is the ST-LINK VCP
 
@@ -439,12 +472,12 @@ from it takes a few minutes.
 
 | Peripheral | Setting |
 |---|---|
-| Clock | HSI 8 MHz → /2 → PLL ×18 → **72 MHz**, Flash latency 2 |
+| Clock | HSI 8 MHz → PREDIV /1 → PLL ×9 → **72 MHz**, Flash latency 2. (Was written as /2 → ×18: the F3 PLL stops at ×16, and the fixed HSI/2 input is the F303xB/C, not the xE) |
 | | HSI not HSE: the Nucleo's 8 MHz comes from the ST-LINK MCO, absent when standalone |
 | AHB / APB1 / APB2 | ÷1 / ÷2 / ÷1 → 72 / 36 / 72 MHz |
 | ADC12 clock | PLL ÷1 → 72 MHz |
 | ADC1, ADC2 | 12-bit, single-ended, software trigger, scan off, **601.5-cycle sampling** |
-| DAC1, DAC2 | 12-bit right-aligned, trigger none, **output buffer enabled** |
+| DAC1, channels 1 and 2 | 12-bit right-aligned, trigger none, **output buffer enabled** on both |
 | USART2 | 115200 8N1, TX+RX, RXNE and TC interrupts, priority 1 |
 | TIM6 | prescaler 71 → 1 MHz free-running, for the µs delay |
 
@@ -484,20 +517,37 @@ Built with `-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Werror`.
 
 ### STM32
 
-`stm32/` contains hand-written sources and a **hand-written `.ioc`**, not a
-CubeMX export. `Drivers/` — the F3 HAL and CMSIS, tens of megabytes of vendor
-code — is deliberately not vendored into this repo.
+`stm32/` holds hand-written sources, a linker script and a Makefile. ST's
+HAL and CMSIS are not vendored: `make drivers` fetches them from ST's
+GitHub (STM32CubeF3 **v1.11.4**, the package the `.ioc` names, checked by
+commit) into `stm32/STM32CubeF3/`, which is gitignored.
 
-1. Open `stm32/curve-tracer.ioc` in STM32CubeIDE.
-2. Let it generate `Drivers/` and the project files.
-3. Add `core/` to the include path and the build (the sources reference it as
-   `../../core`).
-4. Build and flash.
+```sh
+cd stm32
+make drivers    # once
+make            # build/curve-tracer.elf, .bin, .hex
+make flash      # copies the .bin onto the Nucleo's ST-LINK USB drive
+```
 
-If CubeMX rejects the `.ioc`, recreate the project from the peripheral table
-above and copy in `Core/Src/main.c`, `ct_hal_device.c`, `stm32f3xx_hal_msp.c`
-and `stm32f3xx_it.c`. That path is fully specified and does not depend on my
-`.ioc` being right.
+Project sources (`stm32/Core/`, `core/`) build with the host's warning flags
+and `-Werror`; the HAL builds with `-Wall`, not fatal.
+
+**Toolchain:** Arm GNU Toolchain **14.3.Rel1** (GCC 14.3.1 with
+newlib-nano), the same GCC STM32CubeIDE 2.2.0 bundles. It was installed on
+2026-10-23 from Arm's darwin-arm64 tarball, whose SHA-256 matched Arm's
+published digest. It lives in
+`~/.local/opt/arm-gnu-toolchain-14.3.rel1-darwin-arm64-arm-none-eabi`, with
+its binaries symlinked into `~/.local/bin`. To upgrade, extract a newer
+tarball beside it and re-point the symlinks. Homebrew's `arm-none-eabi-gcc`
+formula ships without a C library and will not link this firmware.
+
+**Not through CubeIDE or CubeMX.** STM32CubeIDE 2.x no longer contains
+CubeMX, so it cannot open `curve-tracer.ioc` or generate code from it;
+that needs the standalone STM32CubeMX, which is not installed. Do not
+generate code into `stm32/` anyway: these sources have no `USER CODE`
+markers, and CubeMX rewrites `main.c`, `stm32f3xx_it.c` and
+`stm32f3xx_hal_msp.c` outside them. The `.ioc` is a record of the
+peripheral settings, unvalidated; the table above is authoritative.
 
 ---
 
@@ -515,4 +565,5 @@ and `stm32f3xx_it.c`. That path is fully specified and does not depend on my
 - **Nothing here has run on hardware.** As of 2026-09-28 the bench is blocked
   on a lab trainer fault (`docs/characterization.md`, 2026-09-24), so every
   figure in this file comes from the host simulation or from datasheets. The
-  pin assignments in particular have never been verified against a real board.
+  pin assignments have been checked against ST's device headers by a real
+  build (2026-10-23), but never against a running board.
