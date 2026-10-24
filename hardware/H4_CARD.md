@@ -118,16 +118,17 @@ oscillating value: record it and move on. It is data, not a stop.
 3. Otherwise, take the best's neighbours in kit order,
    none · 1.5 · 2.2 · 2.7 · 3.3 · 3.9 · 4.7 (none and 4.7 have one each).
    A neighbour not yet run → fit it, the larger first. All run → rule 4.
-4. **Broad-minimum guard, once** (CONTINGENCY §3). Take the spread,
-   max O − min O, over the best and its neighbours. An oscillating row
-   counts as 8 or more. **8 points or more → step 7.** Under 8 → fit any not
+4. **Broad-minimum guard, once** (CONTINGENCY §3). **Best O 20% or
+   below → step 7.** Otherwise take the spread, max O − min O, over the best
+   and its neighbours. An oscillating row counts as 8 or more. **8 points
+   or more → step 7.** Under 8 → fit any not
    yet run of the **five** kit values nearest the best (one beyond each
    neighbour; beside none or 4.7, two on the open side), then go back to
    rule 3, since the best may have moved. When rule 3 stops again, go to
    step 7 without repeating this rule.
 
 If 3.3 pF is best, that is three fits: 3.3, 3.9, 2.7. Five if the guard
-widens it: 2.2 and 4.7 as well.
+widens it (best O above 20% and spread under 8): 2.2 and 4.7 as well.
 
 | C1 | Run | File | O (%) | dev @ 5 µs (mV) | p-p +20…100 µs (mV) |
 |---|---|---|---|---|---|

@@ -177,6 +177,14 @@ best (beside none or 4.7, two on the open side). **Only a spread still under
 (p-p ≥ 5 mV) counts as a spread of 8 or more. H4 Block 2's rule 4 runs it,
 once.
 
+**The guard runs only when the best overshoot is above ~20%** (20% on the
+card; Daniel, 2026-10-24). If all three values sit near 10–13%, the loop has
+margin: the §3.1 gate is 25%, and the low-margin row of the table below
+needs every value near 25%. A narrow spread there reflects a flat optimum,
+not low margin. Widening would then buy two more fits on the
+inverting-input pad and no information. Fewer fits on that pad is itself
+worth protecting, which is why the sweep is bracketed at all.
+
 The step-7 numbers that H4 records, and what they mean (§3.1 diagnostic):
 
 | On the sheet | Meaning |
