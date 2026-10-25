@@ -9,13 +9,13 @@ Record column.
 |---|---|---|---|---|---|---|---|
 | ____ | ____ | ____ | ____ | ____ | ____ | ____ | ____ |
 
-Board **1** is the bring-up board. Board 5 is for soldering practice (P3).
-Boards 2–4 stay untouched.
+Board **1** is the bring-up board. Boards 2–5 stay untouched.
 
 **Rules:**
 
 - No held short (Block 4, steps 14–15) unless P4 is done.
-- No soldering on board 1 until P3's practice on board 5 is done.
+- **No soldering on any board.** C1 stays empty for the whole session
+  (Daniel, 2026-10-25; `DECISIONS.md` R2-2).
 - Nothing on TP6, ever.
 - Supply output OFF before touching any part.
 - Steps run in order. Stop only at a ■ STOP POINT.
@@ -47,12 +47,12 @@ printout is the step's clock**. No stopwatch. `--vgs` defaults to 0.
 | P1b | **Nucleo check, off the board.** USB in, Nucleo **not seated**: on the board, an unpowered op-amp's inputs would load the DAC. `HOLD --vds 10.96 --seconds 20 --i-limit 165 -o h4/p1b_full.csv`. At **t = 10 s**, DMM black on **CN10-9 (GND)**, red on **CN7-16 (+3V3)**, then **CN10-11 (PA5)**, then **CN10-13 (PA6)**. Watch LD2 throughout. Then `HOLD --vds 0 --seconds 20 --i-limit 165 -o h4/p1b_zero.csv`; at t = 10 s, **CN10-11 (PA5)**, **CN10-13 (PA6)** and **CN7-32 (PA4, the gate DAC)**. Read every value to the mV (0.1 mV if the DMM has it). *`--i-limit 165`: PA0 floats off the board, and 165 mA is the ADC ceiling, so no floating reading can end the hold* | V_3V3 = ____ V ; PA5 full (**DAC max**) = ____ V ; PA6 full = ____ V ; PA5 zero (**DAC min**) = ____ mV ; PA6 zero = ____ mV ; PA4 zero = ____ mV ; LD2 dark ☐ |
 | P1b pass | **LD2 dark** throughout; **PA5 full ≥ V_3V3 − 0.20 V**, the top of the buffered DAC's guaranteed range; **PA6 within 5 mV of PA5** at both levels; **PA5 zero ≤ 0.20 V**. Fail: LD2 lit or PA5 low → SB21 still conducting, redo P1a(a). PA6 ≠ PA5 → shunt not seated, redo P1a(b). **The pass is only the datasheet guarantee. The figures are the result:** DAC min and max decide the buffer question (blueprint §3.5, *Range*), and the floor matters more than the ceiling. Write both, and the floor × 3.32 at the feedback node | pass ☐ ; floor × 3.32 = ____ V |
 | P2 | Seat the Nucleo on J7/J8; check against README *Footprint orientation*. The CN10-11/13 shunt stays on. J3 and J4 jumpers on **RNG1** | done ☐ |
-| P3 | **Practise on board 5; board 1's C1 stays empty.** On **board 5**, unpowered: fit a 3.3 pF to C1, remove it, fit it, remove it: the Block 2 swap, twice. Clean with IPA. Loupe: both C1 pads intact and flat, none lifted. Leave board 5's C1 empty. **Board 1 powers up with C1 empty**: Block 1 is the bare run (CONTINGENCY Part B §2B) | board 5 pads OK ☐ ; board 1 C1 empty ☐ |
+| P3 | **Board 1's C1 is empty.** Loupe: both C1 pads bare and flat. Nothing is fitted to C1 at H4 (Block 2) | C1 empty ☐ |
 | P4 | **Pad, then heatsink on Q1.** Trim the Sil-Pad K-10 (cut for TO-220) to Q1's TO-126 tab. Fit it between the tab and the heatsink (Boyd 577500B00000G, slide-on); the heatsink must still grip firmly with the pad in place. Board unpowered. DMM: **(a)** heatsink to **TP7 (+15 V)**: expect **OL**, which proves the pad insulates. **(b)** heatsink to **TP27**: expect **OL**. Either reading not OL, or a loose heatsink: refit, re-measure; no Block 4 until both pass | grips ☐ ; (a) ____ ; (b) ____ |
 | P5 | Build **L1**: 100 nF ceramic ‖ 200 Ω 1 W, leads ≤ 3 cm, to J6 pins 2 (D) and 3 (S). DMM: L1's resistance (used off-bench for the full-scale ADC check against `11_q3.csv`). Build a **jumper** for J6 D–S | R_L1 = ____ Ω |
 | P6 | Build the **Kelvin pair**: J5 pin 1 → J6 D, J5 pin 2 → J6 S | done ☐ |
 | P7 | Build a **reversed barrel lead**: plug centre to supply −, sleeve to supply + | done ☐ |
-| P8 | Kit: C0G 1.5 / 2.2 / 2.7 / 3.3 / 3.9 / 4.7 pF (labelled, on their tape), 330 Ω and 47 Ω axial, IPA, brush, fine iron, thermometer for step 14. For step 13a: a **10 kΩ** resistor (§8 assortment) with a mini-grabber on each lead | done ☐ |
+| P8 | Kit: thermometer for step 14. For step 13a: a **10 kΩ** resistor (§8 assortment) with a mini-grabber on each lead. No soldering iron: nothing is soldered at H4. *The C0G kit on hand is 1.5 / 2.2 / 2.7 / 4.7 pF; the 3.3 and 3.9 pF parts are gone (2026-10-25). None of it is used at the bench* | done ☐ |
 | P9 | Laptop: `mkdir h4`, terminal in `host/`, `P=<port>` | done ☐ |
 
 **Why P4(a).** Q1's tab is its collector, tied to **+15 V**. Without the pad,
@@ -74,8 +74,11 @@ touches it. Only the reading to TP7 proves the pad insulates.
 
 ## Block 1: power and oscillation, C1 empty (≈ 20 min). Highest-information first.
 
-**This is the bare run** (Daniel, 2026-10-24; CONTINGENCY §2B). Steps 2, 3 and 5 are
-Block 2's "none" row, measured first. C1 is fitted only in Block 2.
+**This is the bare run** (Daniel, 2026-10-24; CONTINGENCY §2B), and with
+no C_f sweep it is the only loop measurement H4 makes. C1 stays empty.
+A loop-band oscillation at step 2, 2b or 3 goes to CONTINGENCY A3, which
+records it and returns here: Block 1 runs to the end either way, so the
+bare record is complete at both loads.
 
 | # | min | Do | Expect | Pass | Record | Fail → |
 |---|---|---|---|---|---|---|
@@ -85,70 +88,29 @@ Block 2's "none" row, measured first. C1 is fitted only in Block 2.
 | 2b | 2 | Same, **BW limit OFF**, 20 ns/div, trigger auto, persistence 3 s, run once | < 10 mV | < 20 mV | p-p = ____ mV | f = ____ → **CONTINGENCY A1** |
 | 3 | 3 | **Oscillation, open load.** Output OFF, remove L1 (Kelvin stays), ON. Repeat 2 → `h4/03_osc_open.csv` | < 2 mV | < 5 mV | p-p = ____ mV | f = ____ → **CONTINGENCY A1** |
 | 4 | 3 | **Rails.** DMM: TP7 to TP27; TP8 to TP9; TP9 to TP27; TP28 to TP7 | 15.00; 3.30; 0.0; < 2 mV | 14.90–15.05 V; 3.20–3.40 V; ±1.0 mV; ≤ 2 mV | ____ ; ____ ; ____ ; ____ | Output OFF → **STOP** |
-| 5 | 4 | **Step test, C1 empty, L1.** Output OFF, refit L1, ON. Scope back to S2 settings, averaging 16. `CAP --vds-max 6 --n 61 --settle-us 50000 -o h4/05_step_none.csv`. **(a)** Overshoot, automatic, mean. **(b)** 2 mV/div, offset −100 mV, cursor at +5 µs: deviation from the level at +50 µs | (a) ~50–75% (10–25° of phase margin, CONTINGENCY §2B; hand estimate); (b) — | None: it is data, Block 2's "none" row | O = ____ % ; dev = ____ mV | Record → STOP POINT A |
+| 5 | 4 | **Step test, C1 empty, L1.** Output OFF, refit L1, ON. Scope back to S2 settings, averaging 16. `CAP --vds-max 6 --n 61 --settle-us 50000 -o h4/05_step_none.csv`. **(a)** Overshoot, automatic, mean. **(b)** 2 mV/div, offset −100 mV, cursor at +5 µs: deviation from the level at +50 µs | (a) ~50–75% (10–25° of phase margin, CONTINGENCY §2B; hand estimate); (b) — | None: it is data, the bare result. Not a stability result (blueprint §3.1: none from C_f empty) | O = ____ % ; dev = ____ mV | Record → STOP POINT A |
 
-■ **STOP POINT A** (~20 min): supply output OFF, then USB. Blocks 2–4
-still to do.
+■ **STOP POINT A** (~20 min): supply output OFF, then USB.
 
-## Block 2: the C_f sweep (≈ 20–40 min). It stops once the best value is bracketed.
+- **CONTINGENCY A3 was entered** (loop-band oscillation): **STOP. Session
+  complete.** Hand back this sheet and `h4/`. Blocks 2–4 do not run on an
+  oscillating loop.
+- **Otherwise:** Block 2 does not run. Next is Block 3.
 
-**Changed 2026-10-24 (Daniel): Block 2 no longer runs every value.** It
-stops once the best value has a worse one on each side. Every row is a
-remove-and-refit of an 0603 at C1, whose pads sit on the op-amp's inverting
-input, the node §3.1's stability rests on. Fewer solder operations on that
-pad are worth more than the extra data points. §3.1's rule still holds (no
-stability result from one C_f): a bracketed minimum still varies C_f both
-ways (CONTINGENCY §3).
+## Block 2: no C_f sweep (Daniel, 2026-10-25)
 
-For each row: supply output OFF, remove the old C1 (none on run 1), fit the
-new one, clean with IPA, wait 2 min, output ON. Run
-`CAP --vds-max 6 --n 61 --settle-us 50000 -o h4/06_cf_<value>.csv`
-(`06_cf_3p3.csv`, `06_cf_3p9.csv`, …). Measure (a) and (b) as in step 5,
-and the step-2 envelope (p-p, +20…100 µs). Write the run number in the row.
+**If Block 1 showed no oscillation, Block 2 does not run and C1 stays
+empty.** Go to Block 3.
 
-**Best so far:** the lowest O among rows with p-p < 5 mV; on a tie within 2
-points, the smaller C1 (the step-7 rule). A row whose p-p is ≥ 5 mV is an
-oscillating value: record it and move on. It is data, not a stop.
+**If Block 1 showed oscillation, there is no C_f sweep either.** CONTINGENCY
+A3 has recorded the frequency and amplitude, and the session has stopped at
+STOP POINT A. The predicted C_f is computed off-bench from that record
+(CONTINGENCY §3). How it is resolved is Daniel's call, off-bench.
 
-**Next row, after every row:**
-
-1. Run 1 is **3.3 pF**.
-2. No row yet with p-p < 5 mV: the first value not yet run from 3.3, 3.9,
-   2.7, 4.7, 2.2, 1.5. None left → **step 7**.
-3. Otherwise, take the best's neighbours in kit order,
-   none · 1.5 · 2.2 · 2.7 · 3.3 · 3.9 · 4.7 (none and 4.7 have one each).
-   A neighbour not yet run → fit it, the larger first. All run → rule 4.
-4. **Broad-minimum guard, once** (CONTINGENCY §3). **Best O 20% or
-   below → step 7.** Otherwise take the spread, max O − min O, over the best
-   and its neighbours. An oscillating row counts as 8 or more. **8 points
-   or more → step 7.** Under 8 → fit any not
-   yet run of the **five** kit values nearest the best (one beyond each
-   neighbour; beside none or 4.7, two on the open side), then go back to
-   rule 3, since the best may have moved. When rule 3 stops again, go to
-   step 7 without repeating this rule.
-
-If 3.3 pF is best, that is three fits: 3.3, 3.9, 2.7. Five if the guard
-widens it (best O above 20% and spread under 8): 2.2 and 4.7 as well.
-
-| C1 | Run | File | O (%) | dev @ 5 µs (mV) | p-p +20…100 µs (mV) |
-|---|---|---|---|---|---|
-| none | 0 (Block 1) | 05_step_none.csv | (from 5) | (from 5) | (from 2) |
-| 1.5 pF | ____ | 06_cf_1p5.csv | ____ | ____ | ____ |
-| 2.2 pF | ____ | 06_cf_2p2.csv | ____ | ____ | ____ |
-| 2.7 pF | ____ | 06_cf_2p7.csv | ____ | ____ | ____ |
-| 3.3 pF | 1 | 06_cf_3p3.csv | ____ | ____ | ____ |
-| 3.9 pF | ____ | 06_cf_3p9.csv | ____ | ____ | ____ |
-| 4.7 pF | ____ | 06_cf_4p7.csv | ____ | ____ | ____ |
-
-■ **STOP POINT B**, after run 3 if the sweep is still going (~20 min):
-output OFF, USB. Leave the last C1 fitted and note it: ____
-
-| # | min | Do | Pass | Record | Fail → |
-|---|---|---|---|---|---|
-| 7 | 6 | **Fit the best C1** (no swap if it is already fitted; for none, remove C1). Re-run the step test on **L1** (`h4/07_best_L1.csv`) and on **open** (`h4/07_best_open.csv`) | L1: O ≤ 25%, dev ≤ 1.0 mV, p-p < 5 mV. Open: p-p < 5 mV | C_f = ____ pF; O_L1 = ____ %; O_open = ____ %; best at an end (none or 4.7)? Y/N ____; rows run ____; spread over the best and its neighbours = ____ points; widened (rule 4)? Y/N ____; spread over the five nearest the best = ____ points | No row with p-p < 5 mV → **CONTINGENCY A4**. Otherwise → **CONTINGENCY A3** |
-
-■ **STOP POINT C** (~20 min): output OFF, USB. The loop result is now on
-paper.
+Nothing is fitted to C1 at H4. The sweep this block used to run was a
+remove-and-refit of an 0603 at C1 for every row, by hand, and that is not
+being done (`DECISIONS.md` R2-2). Steps 6 and 7 are retired; the later
+step numbers are unchanged.
 
 ## Block 3: calibration and protection (≈ 13 min). J6 open, Kelvin pair on.
 

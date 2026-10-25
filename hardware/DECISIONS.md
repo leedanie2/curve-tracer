@@ -39,8 +39,8 @@ entry). Read every Sim figure below with that in mind.
 | <a id="u1"></a>U1 (A) | OPA2197IDR | — | Blueprint §3.1, §8 | 36 V, RRIO, 10 MHz GBW. The fab fits it (§14.3) | H4 stability gate on the board |
 | <a id="r1"></a>R1 | R_f | **23.2 kΩ 0.1%** | Blueprint §3.1 | Gain `1 + 23.2/10` = **3.32**. 23.2 kΩ is the E96 neighbour of the never-orderable 23.3 kΩ. Sims 01–11 ran at 23.3 kΩ (see above). 0603, so the pads add as little as possible to the inverting node (§14.5(2)) | Gain ratio at H4. **Not** the 2026-09-18 bench reading: that session used 5% stand-ins measured at 19.34 k / 9.74 k |
 | <a id="r2"></a>R2 | R_g | **10 kΩ 0.1%** | Blueprint §3.1 | As R1 | As R1 |
-| <a id="c1"></a>C1 | C_f | **DNP**, footprint only | Blueprint §3.1, §14.4 | `C_f = C_in · R_g / R_f`. The breadboard estimate (`C_in` = 5–10 pF) gave 2.16–4.31 pF. On the PCB the strays shrink, but the OPA2197's own input capacitance dominates: `C_in` ≈ 5–9 pF, so **`C_f` ≈ 2.2–3.9 pF** (3.3–3.9 if TI's 6.4 pF is per input; blueprint §3.1, design finding Oct 8, 2026). Fitted at H4 from a measurement (`CONTINGENCY.md` §2) | **H4**: measure, fit, then sweep both directions. Overshoot near 25% means re-fit `C_f`, not "marginal loop" (§3.1 diagnostic) |
-| <a id="r3"></a>R3 | R_B | **330 Ω** 1%, 2512 1 W | Blueprint §3.1. Sims 08, 09, 10, 11. Package: Capture C-3 | **Why 330 and not 680:** sim 08 (re-run 2026-09-22) gives 10.3% small-signal overshoot into 100 nF / 200 Ω at 330 Ω (ζ ≈ 0.59, ~59° PM) against 21.4% at 680 Ω (~44°). The un-simulated 2–3 MHz stray input pole costs ~45°, which is recoverable from 59° with `C_f` and not from 44°. **Why not 100 Ω:** sim 10 (2026-09-18) gives a held-short load current of 107 mA at 330 Ω against 143 mA at 100 Ω, and at 330 Ω the op-amp supplies 32 mA, outside its own 65 mA limit. Clamp discharge peaks at 21.9 mA (sim 09). 680 Ω would have bought nothing that still matters (§3.1, PTC reclassified) | H4: overshoot into 100 nF, with `C_f` swept. With the limiter tripped, the drop across R_B gives op-amp current, to confirm it is out of its limit (§3.1) |
+| <a id="c1"></a>C1 | C_f | **DNP**, footprint only | Blueprint §3.1, §14.4 | `C_f = C_in · R_g / R_f`. The breadboard estimate (`C_in` = 5–10 pF) gave 2.16–4.31 pF. On the PCB the strays shrink, but the OPA2197's own input capacitance dominates: `C_in` ≈ 5–9 pF, so **`C_f` ≈ 2.2–3.9 pF** (3.3–3.9 if TI's 6.4 pF is per input; blueprint §3.1, design finding Oct 8, 2026). Was to be fitted by hand at H4 from a measurement; **not fitted at H4** since 2026-10-25, see [R2-2](#r2-2) | **H4**: C1 empty throughout. A loop-band oscillation gives a predicted C_f off-bench (`CONTINGENCY.md` A3, §3); no sweep |
+| <a id="r3"></a>R3 | R_B | **330 Ω** 1%, 2512 1 W | Blueprint §3.1. Sims 08, 09, 10, 11. Package: Capture C-3 | **Why 330 and not 680:** sim 08 (re-run 2026-09-22) gives 10.3% small-signal overshoot into 100 nF / 200 Ω at 330 Ω (ζ ≈ 0.59, ~59° PM) against 21.4% at 680 Ω (~44°). The un-simulated 2–3 MHz stray input pole costs ~45°, which is recoverable from 59° with `C_f` and not from 44°. **Why not 100 Ω:** sim 10 (2026-09-18) gives a held-short load current of 107 mA at 330 Ω against 143 mA at 100 Ω, and at 330 Ω the op-amp supplies 32 mA, outside its own 65 mA limit. Clamp discharge peaks at 21.9 mA (sim 09). 680 Ω would have bought nothing that still matters (§3.1, PTC reclassified) | H4: overshoot into 100 nF, C1 empty (no `C_f` sweep since 2026-10-25, so §3.1's R_B test is not run). With the limiter tripped, the drop across R_B gives op-amp current, to confirm it is out of its limit (§3.1) |
 | <a id="r4"></a>R4 | R_B alt | **DNP**, THT axial parallel to R3 | Blueprint §14.4 | 330 Ω was chosen over 680 Ω on a sim-only overshoot difference that no bench measurement has checked. The footprint takes the 0207/0309 axial parts already on hand (§8: 330 Ω ×5) without SMD rework, but only **in parallel, so only downward**. Any value above the SMD part's needs the SMD part removed first. That applies to R6 and R8 as well | **Parallel only: fitting R4 lowers R_B** (330 ‖ 330 = 165 Ω), the right direction for excess overshoot (sim 08). Re-testing 680 Ω, or any value above 330 Ω, means removing R3 and fitting the axial alone (`CONTINGENCY.md` §4) |
 | <a id="q1"></a>Q1 | BD139 (ST) | — | Blueprint §3.1, §8. Substitution S-2 | Pass transistor, TO-126. Tab = collector = +15 V. Worst-case dissipation **0.89 W** (sim 11, hard short). **Layout-time check (H2):** ST and onsemi number this part's pins in opposite directions — see [L-1](#layout-time-checks) | H4: thermal under a sustained short |
 | <a id="d1"></a>D1 | 1N4148W | — | Blueprint §3.1. Sim 09. Substitution S-3 | B-E clamp, anode at emitter. Unclamped, V_BE reaches −6.3 V (100 pF open) and −9.0 V (100 nF open) against `V_EBO` = 5 V (sim 08). Clamped: −0.58 / −0.74 V (sim 09, 2026-09-18) | H4: falling edge into 100 pF open, against sim 09's 1.7 µs |
@@ -48,7 +48,7 @@ entry). Read every Sim figure below with that in mind.
 | <a id="r5"></a>R5 | R_sense | **10 Ω** 1%, 1206 0.75 W | Blueprint §3.1. Sim 11. Package: Capture C-3 | Threshold `V_BE / R_sense` = **75.2 mA** (sim 11, 2026-09-18), 50% over the 50 mA spec. 15 Ω is rejected because its threshold of 48.8–50.2 mA sits inside the sweep spec. 12 Ω is rejected on thermal margin: −2 mV/°C over a 20 °C rise takes it to ~57.6 mA, 15% clear (analysis, §3.1). Dissipation 57 mW at the threshold | **H4: trip threshold, cold and warm.** §3.1 calls the drift "the figure most likely to disagree with simulation" |
 | <a id="r6"></a>R6 | R_sense alt | **DNP**, THT axial parallel to R5 | Blueprint §14.4 | As R4. §8 has 10 Ω ×5 on hand | **Parallel only: fitting R6 lowers R_sense and raises the trip**, so it corrects a trip that reads *low*. A trip that reads high needs R5 removed and a larger axial fitted alone. Not a stability lever (`CONTINGENCY.md` §4) |
 | <a id="r7"></a>R7 | R_iso | **22 Ω** 1%, 2512 1 W | Blueprint §3.1. Phase 0 sim 03 (§12, item 4). Package: Capture C-3 | With 22 Ω, the loop is clean at the emitter and the output from 100 pF to 100 nF. Bare, it is stable only to ~1 nF and oscillates by 2.2 nF. Drop of 1.10 V at 50 mA is uncorrected and made harmless by Kelvin sensing (§3.4). Dissipation 252 mW in a hard short (107 mA, sim 10) | **H4.** Never confirmed on hardware: stage 8 was never reached |
-| <a id="r8"></a>R8 | R_iso alt | **DNP**, THT axial parallel to R7 | Blueprint §14.4 | As R4. §8 has 22 Ω ×5 on hand | **Parallel only: fitting R8 lowers R_iso**, toward the bare loop that oscillated by 2.2 nF (§12, item 4). That is not a response to ringing. To *raise* R_iso for ringing into 100 nF, remove R7 and fit the axial alone: **47 Ω**, the only raise value stocked (README shopping list). Then update `CT_R_ISO_OHM` (`CONTINGENCY.md` A6, §4) |
+| <a id="r8"></a>R8 | R_iso alt | **DNP**, THT axial parallel to R7 | Blueprint §14.4 | As R4. §8 has 22 Ω ×5 on hand | **Parallel only: fitting R8 lowers R_iso**, toward the bare loop that oscillated by 2.2 nF (§12, item 4). That is not a response to ringing. To *raise* R_iso for ringing into 100 nF, remove R7 and fit the axial alone: **47 Ω**, the only raise value stocked (README shopping list). Then update `CT_R_ISO_OHM` (`CONTINGENCY.md` §4; off-bench rework since 2026-10-25) |
 | <a id="c2"></a>C2 | Decoupling, BD139 collector | **100 nF** X7R 50 V | Blueprint §8, §14.5(3) | Within ~5 mm of the collector, measured along the trace | — |
 | <a id="r23"></a>R23 | Pull-down, DAC_SWEEP | **DNP, value open** | Capture C-6 | — | — |
 
@@ -655,7 +655,7 @@ Changes for a second board, if there is one. None blocks this order.
 
 **R2-1 — No safe scope spring-ground point near TP3** (Daniel, 2026-10-11).
 TP3 (BD139 emitter) is where the oscillation and step measurements are
-taken (H4 Blocks 1 and 2, step 14c; CONTINGENCY A1, A2, A5, A6). The nearest ground is C2's
+taken (H4 Block 1, step 14c; CONTINGENCY A1–A3). The nearest ground is C2's
 GNDPWR pad, 4.8 mm away. It sits 1.6 mm from C2's +15 V pad, so a spring
 ground slipping there shorts the rail. TP27 is 50 mm away. A VHF
 measurement on this node therefore has to use a clip lead, whose inductance
@@ -663,6 +663,35 @@ can make ringing that is not in the circuit (a long ground lead rings near
 100 MHz by itself). **Rev 2: a dedicated ground pad or via within a few mm
 of TP3, on GNDPWR, with nothing at another potential within reach of a
 spring-ground tip.** TP19 (step 15) is better placed: TP27 is 6.5 mm from it.
+
+<a id="r2-2"></a>**R2-2 — Populate C1 at the measured value; do not leave it open**
+(Daniel, 2026-10-25). **C1 as a DNP footprint was a design decision that
+assumed hand-fitting.** C_f could not be known before assembly (§3.1: C_in
+is only estimated, 5–9 pF), so the board shipped with the footprint empty,
+to be fitted by hand at H4 and swept. That assumption did not hold. Daniel
+attempted the P3 practice on board 5, lost the 3.3 pF parts off the bench,
+and could not place an 0603 reliably with the tools on hand. Hand-fitting
+was a real constraint the card did not account for. It also sat badly with
+the 2026-10-11 decision below, zero hand-soldering, which covered every
+part on the order but not the one left to fit by hand.
+
+Consequences, all 2026-10-25:
+- **H4 fits nothing to C1.** The C_f sweep is retired. A bare-run
+  oscillation is recorded, the C_f that would cancel it is predicted
+  off-bench (`CONTINGENCY.md` A3, §3), and the session stops.
+- **The alternates (R4, R8) and the OPA2196 swap are off-bench too.** They
+  are hand rework for the same reason.
+- **Resolving an oscillation is Daniel's call**, off-bench: a rev 2 with C1
+  populated, assembly by someone with fine-pitch experience, or a measured
+  finding with the fix analysed but not implemented.
+- **C0G kit on hand:** 1.5, 2.2, 2.7, 4.7 pF. The 3.3 and 3.9 pF parts are
+  gone.
+
+**Rev 2: populate C1 by JLCPCB at the measured value.** If the bare run
+oscillates, that is CONTINGENCY §3's value, rounded to a stocked 0603 C0G
+±0.1 pF part. If it does not oscillate, C1 stays DNP and the footprint
+records that it was checked empty. Either way it is not left open for
+hand-fitting again.
 
 ## Assembly — JLCPCB assembles everything; nothing is hand-soldered
 

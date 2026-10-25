@@ -7,8 +7,11 @@ the bench.
 
 H4 is the first time the whole composite amplifier meets real parasitics.
 Phase 1, the breadboard stability gate, was dropped on Oct 8, 2026, as an
-accepted risk (blueprint §9). The hedge is on the board: the C_f footprint
-and the parallel alternates.
+accepted risk (blueprint §9). The hedge was meant to be on the board: the
+C_f footprint and the parallel alternates. **Nothing in this document is
+soldered at the bench** (Daniel, 2026-10-25). Using either hedge means hand
+rework, so it is an off-bench resolution, not a bench step (`DECISIONS.md`
+R2-2).
 
 ---
 
@@ -18,48 +21,37 @@ and the parallel alternates.
 
 - Supply output OFF before touching any part.
 - Nothing on TP6.
-- No held short (H4 step 14 on) while any Part A step is open.
+- No soldering. Nothing here fits, removes or swaps a part.
 
-**Entry points:**
-
-- from H4 step 2, 2b or 3 (oscillation, C1 empty) → **A1**;
-- from H4 step 7, no Block 2 row with p-p < 5 mV → **A4**;
-- from H4 step 7, gate failed at the best C_f → **A3**.
+**Entry point:** from H4 step 2, 2b or 3 (oscillation, C1 empty) → **A1**.
 
 | # | min | Condition (from the sheet) | Do | Record | Next |
 |---|---|---|---|---|---|
-| **A1** | 0 | Oscillation frequency f, recorded at H4 2/2b/3 | — | — | f ≥ 20 MHz → **A2**. f < 0.3 MHz → **A1.1**. 0.3 ≤ f < 20 MHz: loop band, **expected with C1 empty** (§2B). Record it as Block 2's "none" row and go to the H4 step after the one that failed. It is data, not a goto into A4 |
+| **A1** | 0 | Oscillation frequency f, recorded at H4 2/2b/3 | — | — | f ≥ 20 MHz → **A2**. f < 0.3 MHz → **A1.1**. 0.3 ≤ f < 20 MHz: loop band → **A3** |
 | A1.1 | 1 | f < 0.3 MHz | Is the supply in CC? | CC Y/N ____ | Y: output OFF → **STOP**. N: record → **STOP** (off-bench: §6) |
 | **A2** | 3 | VHF | Move the probe's ground lead from TP27 to **TP9**, dressed flat along the board. Re-run the H4 step that failed | p-p = ____ mV | < 20 mV: record "probe artefact", go to the H4 step after the failed one. ≥ 20 mV → **A2.1** |
 | A2.1 | 1 | VHF persists | Output OFF | — | **STOP** (off-bench: §5, the base stopper needs a prepared part) |
-| **A4** | 0 | Every Block 2 row oscillates (p-p ≥ 5 mV), so no C_f in the kit stops it. Block 2 has then run every value (its rule 2) | — | — | **A5** |
-| **A3** | 0 | Gate failed at H4 step 7 | ΔO = O_L1 − O_open, both from step 7 | ΔO = ____ points | ΔO ≥ 10 → **A6**. ΔO < 10 → **A5** |
-| **A5** | 15 | Lower R_B | Output OFF. Fit **R4 = 330 Ω axial** (in parallel: R_B becomes 165 Ω). Output ON. Run the H4 step-5 test at the current C1, then at one kit value either side (at the kit's end, the two nearest) (3 runs, files `a5_<cf>.csv`; refit C1 between runs as in Block 2) | rows below | Any run passes the H4 step-7 rule → fit that C_f, record "R4 fitted", go to **H4 step 8**. None passes: A6 not yet done → **A6**; done → **A7** |
-| **A6** | 20 | Raise R_iso | Output OFF. Remove **R7** (2512). Fit **R8 = 47 Ω axial** alone. Output ON. Same 3 runs as A5, files `a6_<cf>.csv` | rows below | Any passes → fit that C_f, record "R_iso = 47 Ω", go to **H4 step 8**. None passes: A5 not yet done → **A5**; done → **A7** |
-| **A7** | 1 | Nothing on the board fixes it | Output OFF | — | **STOP.** Off-bench: U1 to OPA2196 (§4), then the rev 2 criteria (§7) |
+| **A3** | 2 | **Loop-band oscillation, C1 empty** | Scope as the failed step, 1 cycle ≈ 4 div. Measure **f** (scope's frequency readout, mean of 16) and **amplitude**, p-p at TP3. Record in the sheet below, one row per H4 step that oscillated | rows below | Go to the H4 step after the failed one. Block 1 runs to the end; the session stops at **STOP POINT A**. C_f is computed off-bench (§3) |
 
-**Pass rule** (the same as H4 step 7): O ≤ 25%, deviation at +5 µs
-≤ 1.0 mV, and p-p from +20 to +100 µs < 5 mV. If several runs pass, take the
-lowest O; on a tie within 2 points, the smaller C_f.
+**A3 recording sheet** (C1 empty, R_B 330 Ω, R_iso 22 Ω as assembled):
 
-**A5 / A6 recording sheet:**
+| H4 step | Load | f (MHz) | p-p at TP3 (mV) | File |
+|---|---|---|---|---|
+| 2 | L1 | ____ | ____ | 02_osc_L1.csv |
+| 2b | L1, BW off | ____ | ____ | — |
+| 3 | open | ____ | ____ | 03_osc_open.csv |
 
-| Step | R_B | R_iso | C1 | File | O (%) | dev (mV) | p-p (mV) |
-|---|---|---|---|---|---|---|---|
-| A5 | 165 | 22 | ____ | ____ | ____ | ____ | ____ |
-| A5 | 165 | 22 | ____ | ____ | ____ | ____ | ____ |
-| A5 | 165 | 22 | ____ | ____ | ____ | ____ | ____ |
-| A6 | ____ | 47 | ____ | ____ | ____ | ____ | ____ |
-| A6 | ____ | 47 | ____ | ____ | ____ | ____ | ____ |
-| A6 | ____ | 47 | ____ | ____ | ____ | ____ | ____ |
+Predicted C_f, filled in off-bench from §3: C_in = ____ pF ; C_f = ____ pF
 
-**Off-bench after A5 or A6 passes:**
+**Off-bench after A3.** The predicted C_f is the record. Turning it into a
+fix is one of three routes (§7), and the choice is Daniel's:
 
-- **R4 fitted:** H4 step 14 must be re-run, because the held-short current
-  and the op-amp drive both rise (§4).
-- **R_iso = 47 Ω:** set `CT_R_ISO_OHM` to 47 in firmware.
-  `check_topology.py` fails until you do. Worst-case DUT headroom drops to
-  7.81 V (§4).
+1. **A rev 2 board with C1 populated** at the computed value, by JLCPCB
+   (`DECISIONS.md` R2-2).
+2. **Assembly by someone with fine-pitch experience**, fitting C1 at the
+   computed value to a board from this order, then re-running H4.
+3. **Report it as a measured finding**: the bare loop oscillates at f,
+   the C_f that cancels it is analysed, and the fix is not implemented.
 
 ---
 ---
@@ -108,7 +100,7 @@ the same argument for the breadboard: "roughly 45° on its own".
 
 The card used to fit the predicted 3.3 pF before first power-up, so that a
 known ringing would not send it into Part A. It now powers up bare, for
-three reasons:
+two reasons:
 
 - **Nothing is at risk.** These are hand estimates, not simulation. At idle
   the firmware holds both DACs at 0, so the follower is off and the loop has
@@ -120,15 +112,12 @@ three reasons:
   built for, 0.89 W, ~53 °C on the heatsink (`DECISIONS.md` P-8). D3 clamps
   the DUT node, and the ADC inputs are clamped. P4 (heatsink) and S1
   (100 mA limit) stay preconditions.
-- **The bare run is data, not a detour.** It is Block 2's "none" row, taken
-  first. A loop-band oscillation there is the pole confirming itself: A1
-  records it and moves on.
-- **The first solder operation on board 1 comes after the rails** (H4
-  steps 1–4) have shown the board is sound, and the bare result shows which
-  side of 3.3 pF the minimum is likely on.
+- **The bare run is data, not a detour.** A loop-band oscillation there is
+  the pole confirming itself: A3 records it.
 
-On its own, measuring "none" first saves no soldering: the swaps come from
-the sweep, whenever "none" is measured. §3 is where the count came down.
+**Since 2026-10-25 the bare run is the only loop measurement** (Daniel).
+C1 is never fitted at H4, so there is no C_f sweep (§3) and no first solder
+operation on board 1.
 
 ### 2C. Unpowered board-share measurement (optional; needs fast edges and an active probe)
 
@@ -148,51 +137,43 @@ probe (~10–15 pF), the probe dominates and the result is too loose to use.
 
 ### 2D. In-loop
 
-**The measurement that counts is the minimum of the C_f sweep:** C_in
-(effective) = 2.32 × C_f at the minimum. Record it in `DECISIONS.md` (C1)
-and `docs/characterization.md`.
+This used to be the minimum of the C_f sweep, C_in (effective) = 2.32 ×
+C_f at the minimum. With no sweep, the in-loop figure is the one §3 derives
+from A3's oscillation frequency. It is model-fitted, not swept, and is
+recorded as such in `DECISIONS.md` (C1) and `docs/characterization.md`.
 
-## 3. The C_f sweep, and reading it
+## 3. No C_f sweep: from the oscillation to a predicted C_f (Daniel, 2026-10-25)
 
-The values (E12, ~20% steps) bracket C_in from ~3.5 to ~11 pF. H4 starts at
-3.3 pF and moves toward the minimum.
+**The sweep is retired.** Every row was a hand remove-and-refit of an 0603
+on the inverting node. Hand-fitting 0603 parts is not a skill on hand: the
+P3 practice on board 5 lost the 3.3 pF parts and could not place an 0603
+reliably (`DECISIONS.md` R2-2). The C0G kit left is 1.5, 2.2, 2.7 and
+4.7 pF; the 3.3 and 3.9 pF parts are gone.
 
-**The sweep stops once the minimum is bracketed** (Daniel, 2026-10-24). It
-used to run all six values every time. It now stops once the best value has
-a worse one on each side (at an end of the kit, its one neighbour), which is
-three fits when 3.3 pF is best. The reason is the pad. Every row is a
-remove-and-refit of an 0603 on the inverting node, the node §3.1's
-stability rests on, and a lifted pad there is the worst rework on the
-board. Fewer solder operations on that pad are worth more than the extra
-data points. A bracketed minimum still varies C_f both ways, which is what
-§3.1 asks. What is lost is the shape of the curve away from the minimum.
+**No oscillation at the bare run:** C1 stays empty and nothing is computed.
+The bare step result (H4 step 5) is recorded as data.
 
-**Broad-minimum guard** (Daniel, 2026-10-24). Over three adjacent values
-the spread is smaller than over six. A three-point spread under 8 points is
-therefore ambiguous: it can be a broad but genuine minimum, or a loop
-genuinely short of margin. So before anything is concluded, the sweep
-widens by one value in each direction, to the five kit values nearest the
-best (beside none or 4.7, two on the open side). **Only a spread still under
-8 points across those five indicates low margin.** An oscillating row
-(p-p ≥ 5 mV) counts as a spread of 8 or more. H4 Block 2's rule 4 runs it,
-once.
+**Oscillation (A3):** §1's relation, `C_f = 0.431 · C_in`, needs C_in.
+**f does not give C_in in closed form.** A loop oscillates where its total
+phase reaches −180°, which depends on the op-amp, the follower, R_B·C_jc
+and the load as well as the C_in pole. So off-bench:
 
-**The guard runs only when the best overshoot is above ~20%** (20% on the
-card; Daniel, 2026-10-24). If all three values sit near 10–13%, the loop has
-margin: the §3.1 gate is 25%, and the low-margin row of the table below
-needs every value near 25%. A narrow spread there reflects a flat optimum,
-not low margin. Widening would then buy two more fits on the
-inverting-input pad and no information. Fewer fits on that pad is itself
-worth protecting, which is why the sweep is bracketed at all.
+1. Add a capacitor C_in from IN− to ground in sim 08, C1 empty (§3.1:
+   the stray pole is not in sim 08, so this is a new run).
+2. Step C_in until the simulated bare oscillation frequency matches A3's f
+   into L1. Check it against the open-load f.
+3. `C_f = 0.431 · C_in`. Round to a stocked 0603 C0G ±0.1 pF value for
+   R2-2.
+4. Cross-check against §2A's 5–9 pF. If no C_in in ~2–20 pF reproduces f,
+   the oscillation is not the C_in pole and C_f is not the fix: §7.
 
-The step-7 numbers that H4 records, and what they mean (§3.1 diagnostic):
+Until that sim is run, the only C_f figure is §2A's estimate, 2.2–3.9 pF.
 
-| On the sheet | Meaning |
-|---|---|
-| A clear minimum, O falling to **10–15%** at one value | C_f was mis-fitted. Not a marginal loop |
-| max O − min O **< 8 points across five values** (after the broad-minimum guard), all near 25% | The loop itself is short of margin. That is why A3 goes on to R_B or R_iso. Under 8 across only three is not this row: the guard widens it first |
-| Best at **none** | C_in < ~3.5 pF: the over-compensated side |
-| Best at **4.7 pF** | The node holds more than ~11 pF, more than the op-amp plus a clean layout. Clean it; do §2C |
+**What H4 can and cannot claim.** Blueprint §3.1 asks for the loop to be
+measured with C_f fitted and swept, and for no stability result to come
+from one C_f. With C1 empty throughout, H4 meets neither condition. Its loop
+result is the bare loop, oscillating or not, and §3.1's R_B conclusion is
+not tested.
 
 **The error is two-sided, and the two sides are different failures.**
 
@@ -206,16 +187,19 @@ The step-7 numbers that H4 records, and what they mean (§3.1 diagnostic):
   little. §3.1 puts 2.66 pF too much at ~19° lost and **25.4% overshoot**,
   and the 25% gate is sized on that case. Sim 02 shows the mechanism, not
   the size on this board: it had no stray C_in and no R_iso.
-- **Tie-break.** On a tie the card takes the smaller C_f, because the
-  over-compensated side is the Phase 0 failure.
+- **Rounding.** §3's computed C_f rounds to the smaller stocked value
+  when it falls between two, because the over-compensated side is the Phase
+  0 failure.
 
 ## 4. The alternates
 
 **R4, R6 and R8 are wired in *parallel* with R3, R5 and R7**
 (`tools/check_topology.py` asserts it). Fitting an alternate **lowers** the
 value. To **raise** one, remove the SMD part and fit the axial alone.
+**Every alternate is hand rework, so none is a bench step** (2026-10-25).
+They stay as analysis for an off-bench resolution or a rev 2.
 
-### R_B — R3 (330 Ω 2512), alternate R4. The first lever after C_f (A5).
+### R_B — R3 (330 Ω 2512), alternate R4. The first lever after C_f.
 
 **Lower it: it helps.** R_B·C_jc is a pole inside the loop.
 
@@ -234,10 +218,10 @@ Costs, from sim 10 at 100 Ω and 330 Ω (165 Ω sits between, unsimulated):
   estimate);
 - BD139 dissipation does not change: R_sense sets it (sim 11).
 
-That is why H4 step 14 is re-run after A5. **Raise it: never, for
+That is why H4 step 14 is re-run after fitting R4. **Raise it: never, for
 oscillation.** 680 Ω gives 21.4% and ~44° (sim 08).
 
-### R_iso — R7 (22 Ω 2512), alternate R8. Only for a load-dependent problem (A6).
+### R_iso — R7 (22 Ω 2512), alternate R8. Only for a load-dependent problem.
 
 **Lower it (R8 in parallel): wrong direction.** It moves toward the bare
 loop, stable to ~1 nF and oscillating by 2.2 nF (§12, item 4; sim 03).
@@ -262,10 +246,10 @@ Costs:
 **Firmware:** set `CT_R_ISO_OHM` to 47. `check_topology.py` fails until you
 do, and the host's V_DS check uses it.
 
-**The A3 load test.** R_iso does nothing for the stray *input* pole: it
-isolates outputs, and C_f handles the input (§3.7, scope note). That is why
-A3 sends a problem that does not depend on the load (ΔO < 10 points) to R_B
-first.
+**The load test.** R_iso does nothing for the stray *input* pole: it
+isolates outputs, and C_f handles the input (§3.7, scope note). A problem
+that does not depend on the load (A3's f and p-p alike into L1 and open)
+points to R_B first.
 
 ### R_sense — R5 (10 Ω 1206), alternate R6. Not a stability lever; not in Part A.
 
@@ -280,7 +264,7 @@ sets the limiter threshold, V_BE / R_sense (sim 11).
 
 Fit R6 only to correct a trip that reads *low* (H4 step 14a, off-bench).
 
-### U1 to OPA2196 — the last component lever (A7, off-bench)
+### U1 to OPA2196 — the last component lever (off-bench)
 
 The OPA2196 has a **2.5 MHz** GBW against the OPA2197's 10 MHz (TI), in the
 same SOIC-8 dual pinout, rated 4.5–36 V.
@@ -333,16 +317,17 @@ without also moving the threshold out of sim 11's window. Treat it as §7.
 
 **Any one of these:**
 
-1. **Loop-band oscillation, or ≥ 25% overshoot, survives every component
-   lever:**
-   - the full C_f sweep;
-   - R_B at 165 Ω;
-   - R_iso at 47 Ω;
-   - U1 to OPA2196, if the rework is possible.
+1. **Loop-band oscillation at the bare run (A3).** Since 2026-10-25 no
+   component lever is tried at the bench, so this is a decision point, not
+   a verdict. The three routes are in Part A, *Off-bench after A3*: a rev 2
+   with C1 populated at §3's computed value (R2-2), assembly by someone with
+   fine-pitch experience, or a measured finding with the fix analysed but
+   not implemented. Daniel chooses, off-bench. R_B at 165 Ω, R_iso at 47 Ω
+   and U1 to OPA2196 are analysed in §4 for whichever route is taken.
 2. **The fix that works breaks another constraint.**
    - R_iso at 47 Ω takes worst-case headroom to 7.81 V against the stated
      9.06–9.73 V. Either the spec is restated (blueprint §1, §3.1) or it is
-     a rev 2. That is Daniel's call, off-bench; at the bench A6 continues.
+     a rev 2. That is Daniel's call, off-bench.
    - R_B low enough to stop it puts the op-amp in its own limit in a held
      short (sim 10's 100 Ω case).
    - R_sense moved out of sim 11's window.
