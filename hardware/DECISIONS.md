@@ -113,7 +113,7 @@ entry). Read every Sim figure below with that in mind.
 | <a id="r25"></a>R25 | Q3 gate pull-down | **10 kΩ** 1% 0603 (C25804, Basic) | P-11 | Gate to GNDPWR. D6 current (15 − 12) V / 10 kΩ = 0.3 mA | — |
 | <a id="c6"></a>C6, <a id="c7"></a>C7, <a id="c8"></a>C8 | Op-amp decoupling | **100 nF** X7R 50 V | Blueprint §8, §14.5(3) | One per OPA2197 V+, within ~5 mm | — |
 | <a id="nt2"></a>NT2 | Star point | — | **Capture C-2** | §14.5(4) | — |
-| <a id="j7"></a>J7, <a id="j8"></a>J8 | Nucleo CN7 / CN10 | 2×19 sockets | Blueprint §14.4. `firmware/README.md` pin table | PA0 = CN7-28 (ADC1_IN1), PA4 = CN7-32 (DAC1_OUT1), PC0 = CN7-38 (ADC2_IN6, default solder bridges), PA6 = CN10-13 carries DAC_SWEEP. Connector positions verified against **UM1724 Rev 14 Table 26**; that table gave the pin's position, not its function, and **the F303RE has no DAC2** (found 2026-10-23, first build against ST's headers; blueprint §11). **Option A** (Daniel, 2026-10-24): the sweep DAC is `DAC1_OUT2` on PA5 (CN10-11), carried to CN10-13 by a shunt on the Nucleo, with PA6 held analog by the firmware and SB21 removed so LD2 does not load PA5 (H4 P1a, P1b). CN10-11 stays unconnected on the board, or the board would drive against the shunt. Reasons over a Nucleo-F334R8: the F303RE is in hand (the F334R8 is ~$11 and ~3 days); the F334's unbuffered DAC2 (up to 15 kΩ) would drive IN+, which takes IN+ off AC ground near crossover, so the 1.6 pF differential input capacitance CONTINGENCY §2A counts at IN− becomes an unmodelled, frequency-dependent part of C_in; and both sources on DAC1 restore the synchronised dual-channel update (§3.5). Nucleo is USB-powered: +15 V exceeds VIN max | **H4 P1b:** LD2 dark, PA5 at the top of the buffered DAC range at CN10-13 |
+| <a id="j7"></a>J7, <a id="j8"></a>J8 | Nucleo CN7 / CN10 | 2×19 sockets | Blueprint §14.4. `firmware/README.md` pin table | PA0 = CN7-28 (ADC1_IN1), PA4 = CN7-32 (DAC1_OUT1), PC0 = CN7-38 (ADC2_IN6, default solder bridges), PA6 = CN10-13 carries DAC_SWEEP. Connector positions verified against **UM1724 Rev 14 Table 26**; that table gave the pin's position, not its function, and **the F303RE has no DAC2** (found 2026-10-23, first build against ST's headers; blueprint §11). **Option A** (Daniel, 2026-10-24): the sweep DAC is `DAC1_OUT2` on PA5 (CN10-11), carried to CN10-13 by a shunt on the Nucleo, with PA6 held analog by the firmware. SB21 was to be removed so LD2 would not load PA5; **since 2026-10-25 it stays fitted, measure first** ([R2-3](#r2-3); H4 P1a, P1b). CN10-11 stays unconnected on the board, or the board would drive against the shunt. Reasons over a Nucleo-F334R8: the F303RE is in hand (the F334R8 is ~$11 and ~3 days); the F334's unbuffered DAC2 (up to 15 kΩ) would drive IN+, which takes IN+ off AC ground near crossover, so the 1.6 pF differential input capacitance CONTINGENCY §2A counts at IN− becomes an unmodelled, frequency-dependent part of C_in; and both sources on DAC1 restore the synchronised dual-channel update (§3.5). Nucleo is USB-powered: +15 V exceeds VIN max | **H4 P1b:** PA5 at six held levels against the ideal DAC output, mapping where LD2's load starts to bite; PA6 tracks PA5 |
 | <a id="tp"></a>TP1–TP28 | Test points | **RH-5001 loops (ronghe, C5199801), assembled by JLCPCB** on TP1–TP27 except TP6, in the Keystone 5001 footprint (1.0 mm hole). TP6 and TP28 bare SMD pads. Dropped and restored the same day (Daniel, 2026-10-11; Assembly) | Blueprint §14.4. TP6: Capture C-4. TP28 (VIN): a 1 mm pad because a loop does not fit by J1 (P-11) | Every node §14.4 lists, plus every other named net except Q3's gate (RP_GATE), the op-amp input nodes DA_P, DA_N, GATE_IN- and the per-shunt pads SH1–3_TOP, which SHUNT_HI reaches when selected | — |
 
 `BD139_C` from the README routing table is not a separate net: the collector
@@ -692,6 +692,44 @@ oscillates, that is CONTINGENCY §3's value, rounded to a stocked 0603 C0G
 ±0.1 pF part. If it does not oscillate, C1 stays DNP and the footprint
 records that it was checked empty. Either way it is not left open for
 hand-fitting again.
+
+<a id="r2-3"></a>**R2-3 — The sweep DAC carries an LED load; a rev 2 must not**
+(Daniel, 2026-10-25). The F303RE has no DAC2 (found 2026-10-23; J7/J8). The
+workaround, option A, puts the sweep DAC on DAC1_OUT2, PA5, and on a
+Nucleo-64 PA5 also drives LD2 through SB21 and R31, 510 Ω (MB1136 C-03
+schematic; UM1724 Table 10). SB21 was to be removed at H4 P1a. **It stays
+fitted.** Reasoning:
+
+- **H4 does not need the loaded range.** The buffered DAC is rated for
+  5 kΩ or more. LD2 draws more than that from PA5 ≈ 2.0–2.3 V, 6.6–7.8 V
+  at the feedback node (estimate: the LED's part and forward voltage are
+  not on the schematic). Block 1 sweeps to 6 V and steps 11–12 hold at
+  6 V, so PA5 stays at 1.81 V, at or below the LED's turn-on. Steps 14 and
+  15 go higher. Step 14's figures are set by the limiter, which engages for
+  any command above ~4 V. Step 15 records the level it actually reached,
+  from P1b.
+- **Removing SB21 is a solder operation against a problem the session does
+  not meet.** UM1724 does not say whether SB21 is a solder blob or a 0 Ω
+  part. Look before deciding.
+- **It stays the fallback for full-range sweeps.** Removal is a far more
+  forgiving operation than placement (R2-2): SB21 never goes back, so its
+  pads need not survive.
+
+What it costs until then:
+- above ~6.6 V at the node `vds_set_v` is not what the DAC produced, so the
+  host's series-drop diagnostic fits only `vds_set_v` ≤ 6.6 V by default
+  (`host/ct_host/dataset.py`, `VDS_SET_MAX_V`);
+- full-range sweeps to 10 V may fall short.
+
+**H4 P1b decides whether SB21 ever comes off.** It holds PA5 at ~2.0, 2.5,
+3.0, 3.1 and 3.3 V and records each against the ideal DAC output.
+
+The gate DAC is DAC1_OUT1 on PA4, which carries no LED. Nothing here
+applies to it. It has only the buffered-range ceiling both channels share
+(blueprint §3.5).
+
+**Rev 2: either use an MCU or board with a free buffered DAC output for the
+sweep, or do not route the sweep through a pin with an LED on it.**
 
 ## Assembly — JLCPCB assembles everything; nothing is hand-soldered
 

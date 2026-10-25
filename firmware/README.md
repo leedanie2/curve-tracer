@@ -399,7 +399,7 @@ flashing.**
 | Signal | Pin | Peripheral | Arduino / connector | Why this pin |
 |---|---|---|---|---|
 | Gate / step source | **PA4** | `DAC1_OUT1` | A2 (CN8-3) | DAC1 channel 1 |
-| Sweep source | **PA5** | `DAC1_OUT2` | D13 (CN10-11), **jumpered to CN10-13** | the F303RE's only other DAC output; the board takes it at PA6. **SB21 removed** — see below |
+| Sweep source | **PA5** | `DAC1_OUT2` | D13 (CN10-11), **jumpered to CN10-13** | the F303RE's only other DAC output; the board takes it at PA6. **SB21 fitted, LD2 loads it** — see below |
 | (sweep, board side) | **PA6** | analog, high-Z | D12 (CN10-13) | where the board's DAC_SWEEP lands; held analog so it never drives against PA5 |
 | Current sense | **PA0** | `ADC1_IN1` | A0 (CN8-1) | §4 assigns current to ADC1 |
 | Voltage sense | **PC0** | `ADC2_IN6` | A5 (CN8-6) | §4 assigns voltage to ADC2; PA4–PA7 are taken |
@@ -425,11 +425,14 @@ on PA5, carried to the board on the Nucleo itself.
 - PA6 is set **analog** in `MX_GPIO_Init`, before any DAC starts, so it has
   no output driver and cannot fight PA5. From reset until then it is a
   floating digital input, also high-impedance.
-- **SB21 is removed** from the Nucleo's underside. With it fitted, LD2, the
-  green user LED, and its series resistor hang on PA5 and load the DAC
-  output.
-- H4 prep P1a and P1b do the mod and check it: LD2 stays dark, and PA5
-  reaches the top of the DAC's range at CN10-13.
+- **SB21 stays fitted for now** (Daniel, 2026-10-25; `hardware/DECISIONS.md`
+  R2-3). LD2, the green user LED, and its 510 Ω resistor hang on PA5. They
+  load the DAC beyond its 5 kΩ rating from PA5 ≈ 2.0–2.3 V, 6.6–7.8 V at the
+  feedback node. H4 never needs that range. Above it `vds_set_v` is not
+  what the DAC produced, and full-range sweeps may fall short. Removing
+  SB21 is the fallback.
+- H4 prep P1a fits the shunt. P1b holds PA5 at six levels and records each
+  against the ideal output, mapping where the LED load starts to bite.
 
 **Why not a Nucleo-F334R8** (which has DAC2 on PA6, so the board would work
 unchanged):

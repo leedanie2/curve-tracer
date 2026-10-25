@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 from .csvio import Sweep, parse, save
-from .dataset import vds_delta_report
+from .dataset import VDS_SET_MAX_V, vds_delta_report
 from .extract import FitError, extract_diode, extract_mosfet
 from .protocol import SweepRequest, run_hold, run_sweep
 from .recompute import CalibrationMismatch, recompute
@@ -181,7 +181,8 @@ def cmd_extract(args: argparse.Namespace) -> int:
     print(params.describe())
     if args.diagnostics:
         print()
-        print(vds_delta_report(sweep, r_ptc_ohm=args.r_ptc).describe())
+        print(vds_delta_report(sweep, r_ptc_ohm=args.r_ptc,
+                               vds_set_max_v=args.vds_set_max).describe())
     if kind == "mosfet" and args.sensitivity and params.sensitivity is not None:
         print()
         print("V_th across fit-range choices")
@@ -221,7 +222,8 @@ def cmd_plot(args: argparse.Namespace) -> int:
 
     sweep = _checked(_load(args.csv), strict=False)
     if args.diagnostic:
-        plot_vds_delta(sweep, r_ptc_ohm=args.r_ptc)
+        plot_vds_delta(sweep, r_ptc_ohm=args.r_ptc,
+                       vds_set_max_v=args.vds_set_max)
     else:
         plot_family(sweep)
 
@@ -241,6 +243,11 @@ def cmd_ports(_: argparse.Namespace) -> int:
     for device, description in ports:
         print(f"{device}\t{description}")
     return 0
+
+
+def _vds_set_max(text: str) -> float | None:
+    """``--vds-set-max``: a voltage, or ``none`` to fit every row."""
+    return None if text.lower() == "none" else float(text)
 
 
 def _guess_kind(sweep: Sweep) -> str:
@@ -296,6 +303,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--r-ptc", type=float, default=None, metavar="OHM",
                    help="measured PTC resistance for the delta diagnostic; "
                         "overrides cal_r_ptc_ohm (re-measure after a trip)")
+    p.add_argument("--vds-set-max", type=_vds_set_max, default=VDS_SET_MAX_V,
+                   metavar="V",
+                   help="highest vds_set_v the delta diagnostic fits "
+                        f"(default {VDS_SET_MAX_V:g} V: above it the sweep DAC "
+                        "is outside its rated load while SB21 is fitted); "
+                        "'none' fits every row")
     p.add_argument("--allow-mismatch", action="store_true",
                    help="warn instead of failing on calibration disagreement")
     p.set_defaults(func=cmd_extract)
@@ -317,6 +330,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--r-ptc", type=float, default=None, metavar="OHM",
                    help="measured PTC resistance for --diagnostic; "
                         "overrides cal_r_ptc_ohm (re-measure after a trip)")
+    p.add_argument("--vds-set-max", type=_vds_set_max, default=VDS_SET_MAX_V,
+                   metavar="V",
+                   help="highest vds_set_v the delta diagnostic fits "
+                        f"(default {VDS_SET_MAX_V:g} V: above it the sweep DAC "
+                        "is outside its rated load while SB21 is fitted); "
+                        "'none' fits every row")
     p.set_defaults(func=cmd_plot)
 
     p = sub.add_parser("ports", help="list serial ports")

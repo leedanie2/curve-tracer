@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from ct_host.dataset import family_of, vds_delta_report
+from ct_host.dataset import VDS_SET_MAX_V, family_of, vds_delta_report
 
 
 def test_family_groups_by_gate_step(mosfet):
@@ -117,6 +117,25 @@ def test_vds_delta_describes_itself(mosfet):
     text = vds_delta_report(mosfet, r_ptc_ohm=0.0).describe()
     assert "implied series R" in text
     assert "23.00 ohm" in text
+
+
+def test_vds_delta_leaves_out_rows_the_dac_cannot_be_trusted_at(mosfet):
+    """With SB21 fitted, LD2 loads the sweep DAC above ~6.6 V at the node.
+
+    Those rows would fold the DAC's own shortfall into the delta and read as
+    extra series resistance, so the default fit leaves them out and says so.
+    """
+    above = [r for r in mosfet.valid_rows
+             if r.i_ma > 1.0 and r.vds_set_v > VDS_SET_MAX_V]
+    assert above, "the fixture should reach above the limit"
+
+    report = vds_delta_report(mosfet, r_ptc_ohm=0.0)
+    assert report.n_above_max == len(above)
+    assert f"vds_set_v > {VDS_SET_MAX_V:g} V" in report.describe()
+
+    everything = vds_delta_report(mosfet, r_ptc_ohm=0.0, vds_set_max_v=None)
+    assert everything.n_above_max == 0
+    assert everything.n == report.n + len(above)
 
 
 def test_shorted_kelvin_leads_would_be_caught(mosfet):

@@ -161,6 +161,14 @@ def family_of(sweep: Sweep) -> Family:
 # The vds delta diagnostic
 # --------------------------------------------------------------------------
 
+#: Highest commanded voltage the diagnostic trusts. With SB21 fitted, LD2 and
+#: its 510 ohm resistor load the sweep DAC on PA5. Above ~2.0-2.3 V there
+#: (6.6-7.8 V at the feedback node, set by the LED's forward voltage) the load
+#: exceeds the buffered DAC's 5 kohm rating, so vds_set_v stops being what the
+#: DAC produced. 6.6 V is the low end. H4 P1b measures where it really bites
+#: (blueprint §3.5; hardware/DECISIONS.md J7/J8).
+VDS_SET_MAX_V = 6.6
+
 @dataclass(frozen=True)
 class DeltaReport:
     """``vds_set_v - vds_meas_v`` against the expected I x (R_iso + shunt + R_PTC).
@@ -181,6 +189,9 @@ class DeltaReport:
     #: ``None`` when the board's PTC has not been measured. ``expected_r_ohm``
     #: is then R_iso + shunt only, a lower bound rather than a prediction.
     r_ptc_ohm: float | None = None
+    #: Rows left out because ``vds_set_v`` was above ``vds_set_max_v``.
+    n_above_max: int = 0
+    vds_set_max_v: float | None = None
 
     #: nSMD010 datasheet: 1.6 ohm minimum, 15 ohm maximum one hour after
     #: reflow or a trip (hardware/DECISIONS.md, S-1).
@@ -239,13 +250,17 @@ class DeltaReport:
             f"{'' if self.r_ptc_ohm is None else f' + R_PTC {self.r_ptc_ohm:.2f}'}"
             f"{'; R_PTC unset' if self.r_ptc_ohm is None else ''})\n"
             f"  max residual      : {self.max_residual_v:.4f} V\n"
-            f"  verdict           : {self.verdict}"
+            + (f"  excluded          : {self.n_above_max} rows with vds_set_v > "
+               f"{self.vds_set_max_v:g} V (DAC outside its rated load)\n"
+               if self.n_above_max else "")
+            + f"  verdict           : {self.verdict}"
         )
 
 
 def vds_delta_report(sweep: Sweep, *, r_iso_ohm: float | None = None,
                      r_ptc_ohm: float | None = None,
-                     i_floor_ma: float = 1.0) -> DeltaReport:
+                     i_floor_ma: float = 1.0,
+                     vds_set_max_v: float | None = VDS_SET_MAX_V) -> DeltaReport:
     """Check the commanded-minus-measured delta against I x (R_iso + shunt + R_PTC).
 
     The expected resistance comes from the sweep's ``cal_*`` header, not a
@@ -256,7 +271,10 @@ def vds_delta_report(sweep: Sweep, *, r_iso_ohm: float | None = None,
     says to measure it, and reports what the fit implies.
 
     Rows below ``i_floor_ma`` are excluded: at low current the delta is a
-    fraction of an ADC count and the ratio is meaningless.
+    fraction of an ADC count and the ratio is meaningless. So are rows
+    commanded above ``vds_set_max_v`` (see ``VDS_SET_MAX_V``): there the DAC
+    is outside its rated load and the delta would include the DAC's own
+    shortfall. Pass ``None`` once SB21 is off or P1b shows no shortfall.
     """
     from .recompute import Calibration
 
@@ -269,8 +287,13 @@ def vds_delta_report(sweep: Sweep, *, r_iso_ohm: float | None = None,
     expected_r = r_iso_ohm + shunt + (r_ptc_ohm or 0.0)
 
     rows = [r for r in sweep.valid_rows if r.i_ma > i_floor_ma]
+    n_all = len(rows)
+    if vds_set_max_v is not None:
+        rows = [r for r in rows if r.vds_set_v <= vds_set_max_v]
+    n_above = n_all - len(rows)
     if not rows:
-        return DeltaReport(0, 0.0, 0.0, None, expected_r, 0.0, True, r_ptc_ohm)
+        return DeltaReport(0, 0.0, 0.0, None, expected_r, 0.0, True, r_ptc_ohm,
+                           n_above, vds_set_max_v)
 
     i_a = np.array([r.i_ma for r in rows]) / 1000.0
     delta = np.array([r.vds_set_v - r.v_dut for r in rows])
@@ -295,4 +318,6 @@ def vds_delta_report(sweep: Sweep, *, r_iso_ohm: float | None = None,
         max_residual_v=residual,
         monotonic=monotonic,
         r_ptc_ohm=r_ptc_ohm,
+        n_above_max=n_above,
+        vds_set_max_v=vds_set_max_v,
     )

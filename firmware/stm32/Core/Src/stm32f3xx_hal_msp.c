@@ -49,8 +49,9 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef *hdac)
         /* PA4 — DAC1_OUT1, gate / step source (Arduino A2).
          * PA5 — DAC1_OUT2, sweep source (Arduino D13, CN10-11). The board
          * takes it at PA6 (CN10-13) through a jumper on the Nucleo; PA6 is
-         * set analog in MX_GPIO_Init. SB21 must be removed: with it fitted,
-         * LD2 and its resistor load this output. See blueprint §3.5. */
+         * set analog in MX_GPIO_Init. SB21 stays fitted for now, so LD2 and
+         * its 510 ohm resistor load this output above ~2 V. See blueprint
+         * §3.5 and hardware/DECISIONS.md R2-3. */
         gpio.Pin  = GPIO_PIN_4 | GPIO_PIN_5;
         gpio.Mode = GPIO_MODE_ANALOG;
         gpio.Pull = GPIO_NOPULL;

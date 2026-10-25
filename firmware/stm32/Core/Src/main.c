@@ -8,8 +8,9 @@
  * firmware/README.md. Two are not obvious:
  *   - the sweep DAC is DAC1_OUT2 on PA5. The board takes it at PA6
  *     (CN10-13) through a jumper on the Nucleo from CN10-11, so PA6 is held
- *     analog and never drives against PA5, and SB21 is removed so LD2 does
- *     not load it. The F303RE has no DAC2.
+ *     analog and never drives against PA5. SB21 stays fitted for now, so
+ *     LD2 loads PA5 above ~2 V (hardware/DECISIONS.md R2-3). The F303RE
+ *     has no DAC2.
  *   - "USB CDC" is USART2 through the ST-LINK VCP; there is no USB stack
  */
 

@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from .csvio import Row, Sweep
-from .dataset import family_of, vds_delta_report
+from .dataset import VDS_SET_MAX_V, family_of, vds_delta_report
 
 __all__ = ["LivePlot", "plot_family", "plot_vds_delta"]
 
@@ -209,13 +209,15 @@ def plot_family(sweep: Sweep, *, ax: Any = None, show_flagged: bool = True,
 
 def plot_vds_delta(sweep: Sweep, *, ax: Any = None,
                    r_iso_ohm: float | None = None,
-                   r_ptc_ohm: float | None = None) -> Any:
+                   r_ptc_ohm: float | None = None,
+                   vds_set_max_v: float | None = VDS_SET_MAX_V) -> Any:
     """The commanded-minus-measured diagnostic against the expected line.
 
     This is the one plot where ``vds_set_v`` appears, and only as part of the
     difference. A healthy instrument puts every point on the
     I x (R_iso + shunt + R_PTC) line; with R_PTC unmeasured the line drawn is
-    R_iso + shunt only, a lower bound. See ``vds_delta_report``.
+    R_iso + shunt only, a lower bound. Rows above ``vds_set_max_v`` are drawn
+    grey and left out of the fit. See ``vds_delta_report``.
     """
     import matplotlib.pyplot as plt
     import numpy as np
@@ -226,10 +228,17 @@ def plot_vds_delta(sweep: Sweep, *, ax: Any = None,
     rows = [r for r in sweep.valid_rows if r.i_ma > 0.5]
     i_ma = np.array([r.i_ma for r in rows])
     delta = np.array([r.vds_set_v - r.v_dut for r in rows])
+    above = np.array([vds_set_max_v is not None and r.vds_set_v > vds_set_max_v
+                      for r in rows], dtype=bool)
 
-    report = vds_delta_report(sweep, r_iso_ohm=r_iso_ohm, r_ptc_ohm=r_ptc_ohm)
-    ax.plot(i_ma, delta, linestyle="none", marker=".", markersize=4,
-            label="measured delta")
+    report = vds_delta_report(sweep, r_iso_ohm=r_iso_ohm, r_ptc_ohm=r_ptc_ohm,
+                              vds_set_max_v=vds_set_max_v)
+    ax.plot(i_ma[~above], delta[~above], linestyle="none", marker=".",
+            markersize=4, label="measured delta")
+    if above.any():
+        ax.plot(i_ma[above], delta[above], linestyle="none", marker=".",
+                markersize=4, color="0.7",
+                label=f"vds_set_v > {vds_set_max_v:g} V, not fitted")
     if i_ma.size:
         grid = np.linspace(0.0, float(i_ma.max()), 50)
         ax.plot(grid, grid / 1000.0 * report.expected_r_ohm, linewidth=1.2,

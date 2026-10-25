@@ -284,7 +284,7 @@ So extracting anything at a fixed `V_DS` — `V_th` and `β` from a `√I_D` fit
 
 - a 2.54 mm shunt joins CN10-11 (PA5) to CN10-13 (PA6), on the Nucleo's top-side morpho pins;
 - the firmware holds PA6 analog, so it has no output driver and cannot fight PA5;
-- SB21 is removed, so LD2 and its resistor no longer load PA5.
+- SB21 was to be removed, so LD2 and its resistor would not load PA5. **Since 2026-10-25 it stays fitted, measure first** (`hardware/DECISIONS.md` R2-3). LD2 loads PA5 beyond the DAC's 5 kΩ rating above ~6.6–7.8 V at the node, a range H4 does not use.
 
 H4 prep P1a and P1b fit and check it. The alternative, a Nucleo-F334R8 with a real DAC2 on PA6, was rejected; the reasons are in `firmware/README.md` (*The sweep DAC*) and `hardware/DECISIONS.md` (J7/J8). §11 records how the mistake survived until the board was built.
 

@@ -5,7 +5,8 @@
  *
  *   PA4   DAC1_OUT1   gate / step source
  *   PA5   DAC1_OUT2   sweep source        (jumpered on the Nucleo, CN10-11
- *                                         to CN10-13; SB21 removed, LD2 off)
+ *                                         to CN10-13; SB21 fitted, so LD2
+ *                                         loads it above ~2 V)
  *   PA6   analog      high-Z: where the board takes the sweep DAC
  *   PA0   ADC1_IN1    current sense
  *   PC0   ADC2_IN6    voltage sense
