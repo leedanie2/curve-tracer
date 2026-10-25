@@ -44,7 +44,7 @@ printout is the step's clock**. No stopwatch. `--vgs` defaults to 0.
 |---|---|---|
 | P1 | Flash the firmware: in `firmware/stm32/`, `make drivers` (once), `make`, then `make flash` with the Nucleo on USB (it copies the .bin to the NODE_F303RE drive). `python -m ct_host ports` lists the Nucleo; write the port in the header | fw version ____ |
 | P1a | **Nucleo mod: PA5–PA6 shunt on. SB21 stays fitted.** USB unplugged, Nucleo not seated. On the top-side morpho pins, fit a 2.54 mm shunt across **CN10-11 (PA5)** and **CN10-13 (PA6)**. *The F303RE has no DAC2: the sweep DAC is DAC1_OUT2 on PA5, and the board takes it at PA6. With SB21 fitted, LD2 and its 510 Ω resistor load PA5. Nothing in this session needs the levels where that matters, so SB21 is not removed: measure first (P1b; `DECISIONS.md` R2-3)* | shunt ☐ |
-| P1b | **Nucleo check, off the board: map the LED load.** USB in, Nucleo **not seated**: on the board, an unpowered op-amp's inputs would load the DAC. Run one HOLD per row of the **P1b sheet** below, in order: `HOLD --vds <V> --seconds 20 --i-limit 165 -o h4/p1b_<V>.csv`. At **t = 10 s** of each, DMM black on **CN10-9 (GND)**, red on **CN10-11 (PA5)**, then **CN10-13 (PA6)**; note LD2. In the first hold (0 V) also read **CN7-16 (+3V3)** and **CN7-32 (PA4, the gate DAC)**. Read every value to the mV (0.1 mV if the DMM has it). *`--i-limit 165`: PA0 floats off the board, and 165 mA is the ADC ceiling, so no floating reading can end the hold* | sheet below |
+| P1b | **Nucleo check, off the board: map the LED load.** USB in, Nucleo **not seated**: on the board, an unpowered op-amp's inputs would load the DAC. Run one HOLD per row of the **P1b sheet** below, in order: `HOLD --vds <V> --seconds 20 --i-limit 165 -o h4/p1b_<V>.csv`. At **t = 10 s** of each, DMM black on **CN10-9 (GND)**, red on **CN10-11 (PA5)**, then **CN10-13 (PA6)**; note LD2. In the first hold (0 V) also read **CN7-16 (+3V3)** and **CN7-32 (PA4, the gate DAC)**. Last, the **gate row**: `HOLD --vgs 10.95 --vds 0 --seconds 20 --i-limit 165 -o h4/p1b_gate.csv`, step 10's gate level; at t = 10 s read **CN7-32 (PA4)**. Read every value to the mV (0.1 mV if the DMM has it). *`--i-limit 165`: PA0 floats off the board, and 165 mA is the ADC ceiling, so no floating reading can end the hold* | sheet below |
 | P1b pass | **PA6 within 5 mV of PA5** at every level, and **PA5 at 0 V ≤ 0.20 V** (the floor of the buffered DAC's guaranteed range). PA6 ≠ PA5 → shunt not seated, redo P1a. **LD2 lighting from the 6.64 V row up is expected, not a fail.** No pass mark on the upper rows: **the shortfall column is the result.** It maps where the LED load starts to bite, and it is the measurement that decides whether SB21 ever comes off (`DECISIONS.md` R2-3). The floor matters more than the ceiling (blueprint §3.5, *Range*): write the floor × 3.32 too | pass ☐ ; floor × 3.32 = ____ V |
 | P2 | Seat the Nucleo on J7/J8; check against README *Footprint orientation*. The CN10-11/13 shunt stays on. J3 and J4 jumpers on **RNG1** | done ☐ |
 | P3 | **Board 1's C1 is empty.** Loupe: both C1 pads bare and flat. Nothing is fitted to C1 at H4 (Block 2) | C1 empty ☐ |
@@ -68,7 +68,27 @@ firmware sends for each `--vds`. Shortfall = ideal − measured.
 | 10.29 | 3846 | 3.099 | ____ | ____ | ____ | ____ | ____ |
 | 10.96 | 4095 | 3.300 | ____ | ____ | ____ | ____ | ____ |
 
+**Gate row** (PA4, DAC1_OUT1; no LED on it):
+
+| `--vgs` (V) | Code | PA4 at 3.300 V (ref.) | Ideal PA4 at your V_3V3 (V) | PA4 measured (V) | Shortfall (mV) | × 3.32 at the gate (mV) |
+|---|---|---|---|---|---|---|
+| 10.95 | 4093 | 3.298 | ____ | ____ | ____ | ____ |
+
 V_3V3 = ____ V ; PA4 at 0 V = ____ mV
+
+**What the gate row means.** This is the only measurement the gate channel
+gets. 10.95 V puts PA4 above the buffered DAC's guaranteed VDDA − 0.2 V
+(blueprint §3.5, *Range*). **The gate is not measured**: the CSV carries
+`vgs_set_v` only. So a PA4 shortfall makes the real gate lower than
+`vgs_set_v` by shortfall × 3.32, and that goes straight into V_th
+uncorrected: **V_th reads high by up to shortfall × 3.32 for gate steps at
+this level.** It is a bound for steps near full scale only. VDDA − 0.2 V is
+a ceiling, not a gain error, so a full-scale shortfall says nothing about
+steps inside the guaranteed range (PA4 ≤ 3.1 V, ≤ 10.29 V at the gate). A
+2N7000's steps, 2.6–3.6 V, sit at PA4 = 0.78–1.08 V. A family that mixes
+steps inside and above the range does not get a pure offset: only its top
+steps move, which tilts the fit. Step 10 is affected the same way: its Zener
+check runs at the real gate, P1b's PA4 × 3.32, not 10.95 V.
 
 **What the sheet decides.** The buffered DAC is rated for 5 kΩ or more. LD2
 and its 510 Ω resistor draw more than that from PA5 ≈ 2.0–2.3 V, which is
