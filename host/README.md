@@ -296,8 +296,20 @@ included.
   the generated card. Fitting the full triode equation would remove the bias
   and is the right fix if it ever becomes load-bearing; doing it now would add
   a nonlinear solve to serve a number nothing downstream consumes.
-- **`I_S` carries a ~9% bias** from quantisation at the low-current
-  end of the fit, where the lowest points sit near the ADC LSB.
+- **`I_S` is off by 4–10% on the noiseless simulator** (9% on the fixture),
+  from quantisation at the low-current end of the fit, where the lowest
+  points sit a few LSB above the floor. With no noise every sample rounds
+  the same way, and `I_S = exp(-b/a)` extrapolates that rounding error
+  across six decades. The size is set by where the rounding happens to
+  fall, not by any current the instrument adds. The Kelvin divider
+  correction is not the cause: with the divider's current (0.04 LSB at
+  0.7 V) modelled and the subtraction turned off, the error is 10.6%; with
+  the subtraction on, 9.3%; with no divider at all, 5.2%, the pre-F-1
+  figure. Shifting that current by 0.005 LSB moves the error by 5 points,
+  in either direction. With ±0.5 to ±4 counts of dither (`--noise`), the
+  error is under 2% with or without the divider. A real ADC's noise
+  should supply that dither. Until it is measured, read a simulator
+  `I_S` to about ±10%.
 - **Overlay comparison against LTspice** (blueprint §5 item 5) is not
   implemented.
 - **Nothing here has been run against hardware.** Every figure in this file

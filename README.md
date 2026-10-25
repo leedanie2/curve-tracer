@@ -1,7 +1,8 @@
 # Curve Tracer
 
-Curve tracer for MOSFETs and diodes, designed to be accessible in cost and usability. Sweeps drain voltage up to 10 V and
-50 mA with four-wire sensing and a KiCad PCB. STM32 firmware receives the data, sending it over serial to a desktop Python script that extracts
+Curve tracer for MOSFETs and diodes, designed to be accessible in cost and usability. Sweeps drain current up to 50 mA and
+drain voltage up to 10 V, with four-wire sensing and a KiCad PCB. The full 10 V is available at low current only: at 50 mA the
+ceiling is 9.06–9.73 V, set by the PTC's resistance. STM32 firmware receives the data, sending it over serial to a desktop Python script that extracts
 device-specific parameters, such as threshold voltage, into a SPICE .model card for accurate simulation. Using simulated data, this design has calculated the threshold voltage to within 0.1% error of known values.
 
 Status: in progress.
