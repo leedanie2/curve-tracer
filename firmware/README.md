@@ -340,7 +340,7 @@ The sweep engine cannot tell them apart, so every test below runs the
 
 ```sh
 make            # build the simulator and the test binaries
-make test       # run all three C suites
+make test       # run all four C suites
 make demo       # a short MOSFET sweep to stdout
 pytest tests/test_csv_contract.py
 ```

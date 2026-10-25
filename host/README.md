@@ -19,7 +19,7 @@ ct_host/
   spice.py       .model cards
   plot.py        live family plot, static plots, series-drop diagnostic
   cli.py         python -m ct_host capture | plot | extract | model | ports
-tests/           119 tests, every one against the simulator
+tests/           135 tests, every one against the simulator
 ```
 
 `parse_cmrr_log.py`, `parse_current_limit.py` and `parse_tran_overshoot.py`
@@ -67,12 +67,12 @@ sweep, extract, and require the values back:
 
 | Fed in | Recovered | Error |
 |---|---|---|
-| `V_th` = 2.15 V | 2.1498 V | 0.2 mV |
-| `k` = 0.055 A/V² | `kp_wl` = 0.05493 | 0.1% |
-| `λ` = 0.012 /V | 0.01207 | 0.5% |
-| diode `n` = 1.75 | 1.7559 | 0.3% |
-| diode `I_S` = 2.5 nA | 2.63 nA | 5% |
-| diode `R_s` = 0.6 Ω | 0.5948 Ω | 0.9% |
+| `V_th` = 2.15 V | 2.1502 V | 0.2 mV |
+| `k` = 0.055 A/V² | `kp_wl` = 0.05506 | 0.1% |
+| `λ` = 0.012 /V | 0.01192 | 0.7% |
+| diode `n` = 1.75 | 1.7605 | 0.6% |
+| diode `I_S` = 2.5 nA | 2.73 nA | 9% |
+| diode `R_s` = 0.6 Ω | 0.5914 Ω | 1.4% |
 
 That closes `physics → measurement → model` in software before it closes on
 the bench, which matters because the bench has been blocked since the trainer
@@ -107,8 +107,8 @@ with current, so at one commanded `vds_set_v` every curve reaches a different
 measured `vds_meas_v`:
 
 ```
-commanded 2.052 V  ->  1.921 V at V_GS = 2.6 V    (5.7 mA)
-                   ->  0.899 V at V_GS = 3.6 V   (50.1 mA)
+commanded 2.033 V  ->  1.902 V at V_GS = 2.6 V    (5.7 mA)
+                   ->  0.890 V at V_GS = 3.6 V   (49.8 mA)
 ```
 
 Grouping rows by `vds_set_v` — the obvious implementation — compares a
@@ -173,13 +173,13 @@ extraction also recomputes `V_th` across a grid of plausible fit ranges — slic
 voltages and gate-point subsets — and `describe()` prints both:
 
 ```
-  V_th   = 2.1498 ± 0.00032106 V
-           fit standard error   ± 0.00032106 V
-           fit-range spread     ± 0.00088074 V (full spread 0.0017615 V over 30 choices)
-           fit-range choice dominates: the spread is 5x the fit error, so quote the spread
+  V_th   = 2.1502 ± 0.0007059 V
+           fit standard error   ± 0.0007059 V
+           fit-range spread     ± 0.0015714 V (full spread 0.0031428 V over 30 choices)
+           fit-range choice dominates: the spread is 4x the fit error, so quote the spread
 ```
 
-On noiseless simulator data the spread is already ~5× the fit error. On bench
+On noiseless simulator data the spread is already ~4× the fit error. On bench
 data it should dominate outright. Both numbers appear in the printed report
 and in the generated `.model` card, so a reader who does not know to ask still
 sees them. `vth_sensitivity()` returns the full table; `extract --sensitivity`
@@ -195,7 +195,7 @@ many available, and one line per dropped point saying why:
 range   : 6 of 6 points over 2.601 .. 3.601 V (V_GS)  [default]
 rule    : highest measured V_DS reached by every curve (common span
           0.000..8.532 V); two-pass: fit all steps with I_D >= 5 current LSB
-          to get a provisional V_th = 2.1498 V, then keep steps satisfying
+          to get a provisional V_th = 2.1502 V, then keep steps satisfying
           V_DS >= V_GS - V_th + 0.50 V and refit
 ```
 
@@ -284,9 +284,9 @@ included.
   what produced it:
 
   ```
-  R_DS(on) = 14.366 ± 0.31241 ohm
+  R_DS(on) = 14.366 ± 0.31244 ohm
              range   : 5 of 60 points over 0.06125 .. 0.3223 V (V_DS)  [default]
-             rule    : highest gate step (V_GS = 3.601 V), 0 < V_DS <= 0.25*V_ov
+             rule    : highest gate step (V_GS = 3.601 V), 0 < V_DS <= 0.25*V_ov = 0.363 V
   ```
 
   It is left uncorrected because **`R_DS(on)` is not on the closed-loop path.**
@@ -296,7 +296,7 @@ included.
   the generated card. Fitting the full triode equation would remove the bias
   and is the right fix if it ever becomes load-bearing; doing it now would add
   a nonlinear solve to serve a number nothing downstream consumes.
-- **`I_S` carries a few percent bias** from quantisation at the low-current
+- **`I_S` carries a ~9% bias** from quantisation at the low-current
   end of the fit, where the lowest points sit near the ADC LSB.
 - **Overlay comparison against LTspice** (blueprint §5 item 5) is not
   implemented.
