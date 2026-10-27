@@ -7,7 +7,7 @@ not settled by this file; they are listed under *Verify yourself* at the end.
 | Vendor | What | Subtotal | Shipping | Total |
 |---|---|---|---|---|
 | JLCPCB | 5 boards, all 5 assembled, every part fitted by JLCPCB, test loops included. **Shipped, DHL 3074485864; delivery estimated Wed Oct 21** | $137.98 | $31.59 DHL Express (DDP), plus $55.82 duties and $9.66 sales tax | **$235.05 paid** |
-| LCSC | H4 parts, contingency parts, jumper shunts, plus 10 kΩ and 10 Ω axial. **Ordered 2026-10-11, WM2610120117**; in transit 2026-10-15 | $15.12 | Global Direct Standard Line ($10.85 quoted) ⚠ arrives Oct 22 – Nov 4, after the boards: spares | ~$25.97 |
+| LCSC | H4 parts, contingency parts, jumper shunts, plus 10 kΩ and 10 Ω axial. **Ordered 2026-10-11, WM2610120117**; **first parcel received 2026-10-26, 8 of 15 lines**; the other 7 awaiting a second parcel | $15.12 | Global Direct Standard Line ($10.85 quoted) | ~$25.97 |
 | DigiKey | TO-126 heatsink and insulator. Submitted 2026-10-11, **received 2026-10-15** | $5.37 | $4.99 USPS Ground Advantage, plus $0.70 tariff and $0.42 sales tax (estimates) | **$11.48** |
 | DigiKey (2nd) | C_f set, 0603 C0G 1.5–4.7 pF, so H4 does not wait for LCSC. Submitted 2026-10-11, **received 2026-10-15** | $4.84 | $4.99 USPS Ground Advantage, plus $0.40 tariff and $0.37 sales tax (estimates) | **~$10.60** |
 
@@ -34,11 +34,12 @@ reports it on its way with an estimated delivery of **Wed 21 Oct, end of
 day**, one day after the quoted window. Track it in JLCPCB's order history
 or on DHL's site.
 
-## Blocking items for H4: status 2026-10-15
+## Blocking items for H4: status 2026-10-26
 
 Both DigiKey packages arrived on **2026-10-15** (Daniel). Check each against
 its packing slip when you unpack: 2 heatsinks and 5 Sil-Pads; six bags of
-10 capacitors each.
+10 capacitors each. The first LCSC parcel arrived on **2026-10-26** with the
+shunts and the 200 Ω 1 W (*LCSC delivery* below).
 
 | Item | Blocks | Status |
 |---|---|---|
@@ -48,17 +49,17 @@ its packing slip when you unpack: 2 heatsinks and 5 Sil-Pads; six bags of
 | Sil-Pad K-10 insulator | P4; H4 Block 4 | **In hand** (DigiKey) |
 | The boards | Everything | **Outstanding:** shipped, DHL 3074485864, delivery estimated Wed Oct 21 |
 | Nucleo-F303RE and USB Mini-B cable | P1 onward | **Outstanding:** cabinet, not yet checked |
-| Jumper shunts, 2.54 mm: three, for J3, J4 and the Nucleo's CN10-11/13 (added 2026-10-24, `firmware/README.md`) | P1a, P2 | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
-| L1 resistor: 200 Ω, genuinely 1 W | H4 Blocks 1–2 | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
-| L1 capacitor: 100 nF X7R or C0G, leaded | H4 Blocks 1–2 | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
-| 10 kΩ resistor, ≥ 1/8 W | Step 13a | **Outstanding:** cabinet, not yet checked. LCSC's arrive too late |
+| Jumper shunts, 2.54 mm: three, for J3, J4 and the Nucleo's CN10-11/13 (added 2026-10-24, `firmware/README.md`) | P1a, P2 | **In hand** (LCSC C100114, 50, received 2026-10-26) |
+| L1 resistor: 200 Ω, genuinely 1 W | H4 Blocks 1–2 | **In hand** (LCSC C172930, YAGEO MFR1WSFTE52-200R, received 2026-10-26) |
+| L1 capacitor: 100 nF X7R or C0G, leaded | H4 Blocks 1–2 | **Cabinet** (Daniel, 2026-10-26): measure it before use. LCSC's KEMET X7R is awaiting the second parcel |
+| 10 kΩ resistor, ≥ 1/8 W | Step 13a | **Cabinet** (Daniel, 2026-10-26). LCSC's is awaiting the second parcel |
 
-**Before H4 can start:** the boards arrive, and the cabinet check
-(*Lab cabinet checklist* below) turns up the Nucleo, the shunts, a true 1 W
-200 Ω and a 100 nF X7R/C0G. Anything the cabinet lacks comes from DigiKey:
-the part numbers are in the checklist and under *Not ordered*. The 10 kΩ is needed only by step 13a, in
-Block 3. The LCSC order is still in transit and arrives Oct 22 – Nov 4; its
-blocking lines become spares.
+**Before H4 can start:** the boards arrive, the Nucleo turns up in the
+cabinet, and the cabinet's 100 nF is measured (*Lab cabinet checklist*
+below). The shunts and the 200 Ω 1 W are in hand from LCSC. Anything the
+cabinet lacks comes from DigiKey: the part numbers are in the checklist and
+under *Not ordered*. The 10 kΩ is needed only by step 13a, in Block 3. None
+of the seven LCSC lines still awaiting the second parcel blocks H4.
 
 ---
 
@@ -213,6 +214,34 @@ including the 3.3 pF for C1 is on a second DigiKey order (section below).
 The shunts, the 200 Ω 1 W and the 100 nF X7R come from the cabinet; if the
 cabinet is short, the DigiKey part numbers are in that section.
 
+**LCSC delivery: first parcel received 2026-10-26** (Daniel). Shipped
+2026-10-14, inside the Oct 22 – Nov 4 window. The packing list lists **8 of
+the 15 lines, each in its full ordered quantity**:
+
+| LCSC | Part | Qty |
+|---|---|---|
+| C100114 | Jumper shunts, 2.54 mm | 50 |
+| C113957 | SMAJ12A (D3 spares) | 20 |
+| C162229 | C_f 3.9 pF | 10 |
+| C172930 | 200 Ω 1 W (L1) | 20 |
+| C172941 | 330 Ω 1 W (R4) | 20 |
+| C313085 | C_f 2.2 pF | 50 |
+| C313086 | C_f 4.7 pF | 100 |
+| C385394 | 47 Ω 1 W (R8) | 20 |
+
+**Awaiting second parcel** (not on this packing list; presumably a split
+shipment, not yet confirmed by LCSC):
+
+| LCSC | Part | Qty | Why it does not block H4 |
+|---|---|---|---|
+| C1882781 | 100 nF X7R leaded (L1) | 5 | The cabinet covers it, once measured |
+| C410695 | 10 kΩ ¼ W axial (step 13a) | 50 | The cabinet covers it |
+| C410692 | 10 Ω ¼ W axial (R6) | 50 | Contingency only |
+| C507055 | C_f 1.5 pF | 100 | Spares; DigiKey's are in hand |
+| C2836769 | C_f 2.7 pF | 50 | Spares; DigiKey's are in hand |
+| C2836771 | C_f 3.3 pF | 50 | Spares; DigiKey's are in hand |
+| C2057972 | OPA2196IDR | 2 | Contingency only (A7, off-bench) |
+
 The table below is the plan written before ordering; stock and prices were
 checked 2026-10-11, LCSC's own stock. Order now: the boards ship Oct 14 and arrive
 Oct 16–20, and the blocking rows are needed on arrival day. **Blocking**
@@ -333,7 +362,7 @@ it if it meets the spec exactly.
     the host link.
   - **Cabinet:** it is the board the firmware was written for. If it is not
     there: DigiKey **497-15105-ND**, $20.13, 1,111 in stock (2026-10-11).
-- [ ] **L1 resistor: 200 Ω, genuinely rated 1 W**, 1%, metal film, axial
+- [x] **L1 resistor: 200 Ω, genuinely rated 1 W**, 1%, metal film, axial
   (D3.3 × L9 mm class).
   - **Why 1 W:** it dissipates 0.18 W at the card's 6 V and **0.60 W at the
     10.96 V full scale**, so a quarter-watt part is overloaded. An
@@ -341,7 +370,7 @@ it if it meets the spec exactly.
     Check the marking or datasheet, not the body size alone.
   - **Without it:** no resistive load for H4 Blocks 1–2 (oscillation and
     step tests), and no full-scale ADC check against `11_q3.csv`.
-  - **Order:** YAGEO MFR1WSFTE52-200R, LCSC **C172930**.
+  - **Received** 2026-10-26: YAGEO MFR1WSFTE52-200R, LCSC **C172930**, 20.
 - [ ] **L1 capacitor: 100 nF, X7R or C0G, ≥ 25 V, leaded ceramic.**
   - **Not Y5V or Z5U.** Those are rated −20%/+80% and lose much of their
     capacitance under bias, so the "100 nF" stability load would not be
@@ -351,6 +380,8 @@ it if it meets the spec exactly.
     stability.
   - **Order:** KEMET C317C104K5R5TA7301, LCSC **C1882781**. Cabinet only if
     you can confirm the dielectric.
+  - **Cabinet** (Daniel, 2026-10-26): measure it before use. LCSC's is
+    awaiting the second parcel.
 - [ ] **Q1 heatsink insulator: TO-126 insulating pad**, polyimide-backed
   silicone, about 0.15–0.25 mm.
   - **Why:** the TO-126 tab is Q1's collector, tied to **+15 V**. Without
@@ -367,20 +398,21 @@ it if it meets the spec exactly.
     place.** H4 step P4 now checks both: heatsink to **TP7 (+15 V)** must
     read **OL** (the pad insulates), as well as heatsink to TP27 (ground),
     which a live heatsink also passes when nothing grounded touches it.
-- [ ] **10 kΩ resistor**, any tolerance, ≥ 1/8 W.
+- [x] **10 kΩ resistor**, any tolerance, ≥ 1/8 W.
   - Dissipates at most ~20 mW (+15 V across it with D3 reversed).
   - **Without it:** H4 step 13a cannot run, so D3's presence and
     orientation go unverified before the overshoot test.
-  - **Ordered** from LCSC anyway (C410695, 10 kΩ 1% ¼ W axial, WM2610120117), so the cabinet is a backup.
-- [ ] **330 Ω axial, 1 W**, for R4 (CONTINGENCY A5 only).
+  - **Cabinet** (Daniel, 2026-10-26). LCSC's (C410695, 10 kΩ 1% ¼ W axial)
+    is awaiting the second parcel.
+- [x] **330 Ω axial, 1 W**, for R4 (CONTINGENCY A5 only).
   - **Why 1 W:** it sits in parallel with R_B, itself a 1 W part. At the R_B
     voltage limit the card allows (14.85 V, step 14b) a 330 Ω carries
     **0.67 W**, so a quarter-watt part is overloaded.
-  - **Order:** YAGEO MFR1WSFTE52-330R, LCSC **C172941**. Cabinet only if
-    yours is genuinely 1 W; §8's on-hand 330 Ω does not state a rating.
+  - **Received** 2026-10-26: YAGEO MFR1WSFTE52-330R, LCSC **C172941**, 20.
 - [ ] **10 Ω axial**, ≥ 1/4 W, for R6 (contingency only).
   - In parallel with R_sense it carries at most ~0.03 W.
-  - **Ordered** from LCSC anyway (C410692, 10 Ω 1% ¼ W axial, WM2610120117), so the cabinet is a backup.
+  - **Ordered** from LCSC anyway (C410692, 10 Ω 1% ¼ W axial, WM2610120117),
+    awaiting the second parcel, so the cabinet is a backup.
 - [ ] **Bench and assembly items** for the card (`H4_CARD.md` S1–S3, P5–P8):
   - bench supply, 15.00 V with a settable current limit;
   - scope with a 10× probe; DMM; thermometer for step 14d;
@@ -409,5 +441,5 @@ Still open:
 3. **Heatsink fit.** Which way the 19.81 mm runs came from DigiKey's
    dimension names, not a drawing. Two heatsinks are now in hand (2026-10-15):
    measure one against the 17.5 × 14.5 mm keep-out before P4.
-4. **LCSC ships by the standard line and arrives after the boards** (Oct 22 – Nov 4, in transit 2026-10-15). The C_f set is in hand from the second DigiKey order; shunts, 200 Ω 1 W, 100 nF X7R and 10 kΩ must come from the cabinet, or add them from that section's list. See *Blocking items for H4* at the top.
+4. **LCSC's second parcel.** The first arrived 2026-10-26 with 8 of 15 lines. The other 7 are presumed a split shipment; LCSC has not confirmed it. None blocks H4. See *LCSC delivery*.
 5. **The on-hand items** above.
