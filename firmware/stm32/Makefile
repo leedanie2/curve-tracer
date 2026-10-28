@@ -62,7 +62,7 @@ ASM_OBJ  = $(BUILD)/startup.o
 
 vpath %.c Core/Src ../core $(HAL)/Src $(CMSIS_DEV)/Source/Templates
 
-NUCLEO_VOL ?= /Volumes/NODE_F303RE
+NUCLEO_VOL ?= /Volumes/NOD_F303RE
 
 .PHONY: all drivers flash clean
 

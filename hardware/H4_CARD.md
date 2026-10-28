@@ -42,7 +42,8 @@ printout is the step's clock**. No stopwatch. `--vgs` defaults to 0.
 
 | # | Do | Record |
 |---|---|---|
-| P1 | Flash the firmware: in `firmware/stm32/`, `make drivers` (once), `make`, then `make flash` with the Nucleo on USB (it copies the .bin to the NODE_F303RE drive). `python -m ct_host ports` lists the Nucleo; write the port in the header | fw version ____ |
+| P1 | Flash the firmware: in `firmware/stm32/`, `make drivers` (once), `make`, then `make flash` with the Nucleo on USB (it copies the .bin to the NOD_F303RE drive). `python -m ct_host ports` lists the Nucleo; write the port in the header | fw version ____ |
+| P9 | Laptop: terminal in `host/`, then `mkdir h4` there (P1b writes into `h4/`; the host does not create it), `P=<port>` | done ☐ |
 | P1a | **Nucleo mod: PA5–PA6 shunt on. SB21 stays fitted.** USB unplugged, Nucleo not seated. On the top-side morpho pins, fit a 2.54 mm shunt across **CN10-11 (PA5)** and **CN10-13 (PA6)**. *The F303RE has no DAC2: the sweep DAC is DAC1_OUT2 on PA5, and the board takes it at PA6. With SB21 fitted, LD2 and its 510 Ω resistor load PA5. Nothing in this session needs the levels where that matters, so SB21 is not removed: measure first (P1b; `DECISIONS.md` R2-3)* | shunt ☐ |
 | P1b | **Nucleo check, off the board: map the LED load.** USB in, Nucleo **not seated**: on the board, an unpowered op-amp's inputs would load the DAC. Run one HOLD per row of the **P1b sheet** below, in order: `HOLD --vds <V> --seconds 20 --i-limit 165 -o h4/p1b_<V>.csv`. At **t = 10 s** of each, DMM black on **CN10-9 (GND)**, red on **CN10-11 (PA5)**, then **CN10-13 (PA6)**; note LD2. In the first hold (0 V) also read **CN7-16 (+3V3)** and **CN7-32 (PA4, the gate DAC)**. Last, the two **gate rows**: `HOLD --vgs 3.0 --vds 0 --seconds 20 --i-limit 165 -o h4/p1b_gate_3p0.csv`, a typical gate step, then `HOLD --vgs 10.95 --vds 0 --seconds 20 --i-limit 165 -o h4/p1b_gate.csv`, step 10's level; at t = 10 s of each read **CN7-32 (PA4)**. Read every value to the mV (0.1 mV if the DMM has it). *`--i-limit 165`: PA0 floats off the board, and 165 mA is the ADC ceiling, so no floating reading can end the hold* | sheet below |
 | P1b pass | **PA6 within 5 mV of PA5** at every level, and **PA5 at 0 V ≤ 0.20 V** (the floor of the buffered DAC's guaranteed range). PA6 ≠ PA5 → shunt not seated, redo P1a. **LD2 lighting from the 6.64 V row up is expected, not a fail.** No pass mark on the upper rows: **the shortfall column is the result.** It maps where the LED load starts to bite, and it is the measurement that decides whether SB21 ever comes off (`DECISIONS.md` R2-3). The floor matters more than the ceiling (blueprint §3.5, *Range*): write the floor × 3.32 too | pass ☐ ; floor × 3.32 = ____ V |
@@ -53,7 +54,6 @@ printout is the step's clock**. No stopwatch. `--vgs` defaults to 0.
 | P6 | Build the **Kelvin pair**: J5 pin 1 → J6 D, J5 pin 2 → J6 S | done ☐ |
 | P7 | Build a **reversed barrel lead**: plug centre to supply −, sleeve to supply + | done ☐ |
 | P8 | Kit: thermometer for step 14. For step 13a: a **10 kΩ** resistor (§8 assortment) with a mini-grabber on each lead. No soldering iron: nothing is soldered at H4. *The C0G kit on hand is 1.5 / 2.2 / 2.7 / 4.7 pF; the 3.3 and 3.9 pF parts are gone (2026-10-25). None of it is used at the bench* | done ☐ |
-| P9 | Laptop: `mkdir h4`, terminal in `host/`, `P=<port>` | done ☐ |
 
 **P1b sheet.** Ideal PA5 = code / 4095 × V_3V3, with V_3V3 as read in the
 first hold (the DAC's reference is the Nucleo's 3V3). The codes are what the
