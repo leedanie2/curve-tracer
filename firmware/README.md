@@ -431,8 +431,8 @@ on PA5, carried to the board on the Nucleo itself.
   feedback node. H4 never needs that range. Above it `vds_set_v` is not
   what the DAC produced, and full-range sweeps may fall short. Removing
   SB21 is the fallback.
-- H4 prep P1a fits the shunt. P1b holds PA5 at six levels and records each
-  against the ideal output, mapping where the LED load starts to bite.
+- H4 prep P1a fits the shunt. P1b, which was to map where the LED load
+  starts to bite, is skipped (Daniel, 2026-10-30): not measured.
 
 **Why not a Nucleo-F334R8** (which has DAC2 on PA6, so the board would work
 unchanged):
@@ -454,8 +454,8 @@ low-impedance reason. Buffered, the F3's DAC output is guaranteed only from
 **0.2 V to VDDA − 0.2 V**, 0.66 V to 10.29 V after the ×3.32 gain, not
 0–10.96 V. Better parts get closer to the rails. The floor matters more
 than the ceiling: sweeps start at V_DS = 0, and the diode fit lives at the
-low end. H4 prep P1b records this part's actual minimum and maximum, and
-those decide it (blueprint §3.5, *Range*).
+low end. H4 prep P1b was to record this part's actual minimum and maximum; it is
+skipped (Daniel, 2026-10-30), so this stays open (blueprint §3.5, *Range*).
 
 ### "USB CDC" is the ST-LINK VCP
 

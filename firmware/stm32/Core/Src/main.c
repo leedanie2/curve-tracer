@@ -165,8 +165,8 @@ static void MX_DAC1_Init(void)
      * which CONTINGENCY.md §2A relies on when it counts the OPA2197's
      * differential input capacitance as landing on AC ground. The cost is
      * range: buffered, the output is guaranteed only from 0.2 V to
-     * VDDA - 0.2 V, 0.66 to 10.29 V after the x3.32 gain. H4 prep P1b
-     * measures where this part actually reaches. */
+     * VDDA - 0.2 V, 0.66 to 10.29 V after the x3.32 gain. Where this part
+     * actually reaches is not measured (H4 P1b skipped, 2026-10-30). */
     cfg.DAC_Trigger      = DAC_TRIGGER_NONE;
     cfg.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
     if (HAL_DAC_ConfigChannel(&hdac1, &cfg, DAC_CHANNEL_1) != HAL_OK) {

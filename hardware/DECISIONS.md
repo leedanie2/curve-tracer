@@ -113,7 +113,7 @@ entry). Read every Sim figure below with that in mind.
 | <a id="r25"></a>R25 | Q3 gate pull-down | **10 kΩ** 1% 0603 (C25804, Basic) | P-11 | Gate to GNDPWR. D6 current (15 − 12) V / 10 kΩ = 0.3 mA | — |
 | <a id="c6"></a>C6, <a id="c7"></a>C7, <a id="c8"></a>C8 | Op-amp decoupling | **100 nF** X7R 50 V | Blueprint §8, §14.5(3) | One per OPA2197 V+, within ~5 mm | — |
 | <a id="nt2"></a>NT2 | Star point | — | **Capture C-2** | §14.5(4) | — |
-| <a id="j7"></a>J7, <a id="j8"></a>J8 | Nucleo CN7 / CN10 | 2×19 sockets | Blueprint §14.4. `firmware/README.md` pin table | PA0 = CN7-28 (ADC1_IN1), PA4 = CN7-32 (DAC1_OUT1), PC0 = CN7-38 (ADC2_IN6, default solder bridges), PA6 = CN10-13 carries DAC_SWEEP. Connector positions verified against **UM1724 Rev 14 Table 26**; that table gave the pin's position, not its function, and **the F303RE has no DAC2** (found 2026-10-23, first build against ST's headers; blueprint §11). **Option A** (Daniel, 2026-10-24): the sweep DAC is `DAC1_OUT2` on PA5 (CN10-11), carried to CN10-13 by a shunt on the Nucleo, with PA6 held analog by the firmware. SB21 was to be removed so LD2 would not load PA5; **since 2026-10-25 it stays fitted, measure first** ([R2-3](#r2-3); H4 P1a, P1b). CN10-11 stays unconnected on the board, or the board would drive against the shunt. Reasons over a Nucleo-F334R8: the F303RE is in hand (the F334R8 is ~$11 and ~3 days); the F334's unbuffered DAC2 (up to 15 kΩ) would drive IN+, which takes IN+ off AC ground near crossover, so the 1.6 pF differential input capacitance CONTINGENCY §2A counts at IN− becomes an unmodelled, frequency-dependent part of C_in; and both sources on DAC1 restore the synchronised dual-channel update (§3.5). Nucleo is USB-powered: +15 V exceeds VIN max | **H4 P1b:** PA5 at six held levels against the ideal DAC output, mapping where LD2's load starts to bite; PA6 tracks PA5 |
+| <a id="j7"></a>J7, <a id="j8"></a>J8 | Nucleo CN7 / CN10 | 2×19 sockets | Blueprint §14.4. `firmware/README.md` pin table | PA0 = CN7-28 (ADC1_IN1), PA4 = CN7-32 (DAC1_OUT1), PC0 = CN7-38 (ADC2_IN6, default solder bridges), PA6 = CN10-13 carries DAC_SWEEP. Connector positions verified against **UM1724 Rev 14 Table 26**; that table gave the pin's position, not its function, and **the F303RE has no DAC2** (found 2026-10-23, first build against ST's headers; blueprint §11). **Option A** (Daniel, 2026-10-24): the sweep DAC is `DAC1_OUT2` on PA5 (CN10-11), carried to CN10-13 by a shunt on the Nucleo, with PA6 held analog by the firmware. SB21 was to be removed so LD2 would not load PA5; **since 2026-10-25 it stays fitted** ([R2-3](#r2-3); H4 P1a). H4 P1b, which was to measure it, is skipped (Daniel, 2026-10-30). CN10-11 stays unconnected on the board, or the board would drive against the shunt. Reasons over a Nucleo-F334R8: the F303RE is in hand (the F334R8 is ~$11 and ~3 days); the F334's unbuffered DAC2 (up to 15 kΩ) would drive IN+, which takes IN+ off AC ground near crossover, so the 1.6 pF differential input capacitance CONTINGENCY §2A counts at IN− becomes an unmodelled, frequency-dependent part of C_in; and both sources on DAC1 restore the synchronised dual-channel update (§3.5). Nucleo is USB-powered: +15 V exceeds VIN max | **H4 P1b skipped** (Daniel, 2026-10-30): not measured |
 | <a id="tp"></a>TP1–TP28 | Test points | **RH-5001 loops (ronghe, C5199801), assembled by JLCPCB** on TP1–TP27 except TP6, in the Keystone 5001 footprint (1.0 mm hole). TP6 and TP28 bare SMD pads. Dropped and restored the same day (Daniel, 2026-10-11; Assembly) | Blueprint §14.4. TP6: Capture C-4. TP28 (VIN): a 1 mm pad because a loop does not fit by J1 (P-11) | Every node §14.4 lists, plus every other named net except Q3's gate (RP_GATE), the op-amp input nodes DA_P, DA_N, GATE_IN- and the per-shunt pads SH1–3_TOP, which SHUNT_HI reaches when selected | — |
 
 `BD139_C` from the README routing table is not a separate net: the collector
@@ -187,7 +187,7 @@ footprints cost nothing. **The value is open**, and they ship unstuffed.
 | ~~O-1~~ | D2 | Gate Zener voltage | **Closed 2026-10-06: 12 V**, see [D2](#d2) |
 | ~~O-2~~ | R19, R22 | ADC isolation resistance | **Closed 2026-10-06: 51 Ω**, then raised to **1 kΩ** the same day (F-2), see [R19](#r19) |
 | ~~O-3~~ | D3 | Output clamp type and voltage | **Closed 2026-10-09: SMAJ12A TVS**, see [D3](#d3). Fitted by default since 2026-10-11 |
-| O-4 | R23, R24 | Pull-down value | Ships unstuffed (C-6). A possible second use, not designed: pulling the buffered DAC's floor toward ground (blueprint §3.5, *Range*). Measure first (H4 P1b) |
+| O-4 | R23, R24 | Pull-down value | Ships unstuffed (C-6). A possible second use, not designed: pulling the buffered DAC's floor toward ground (blueprint §3.5, *Range*). Not measured: H4 P1b skipped (Daniel, 2026-10-30) |
 
 ## Substitutions — what the blueprint names vs what JLCPCB can fit
 
@@ -707,7 +707,7 @@ fitted.** Reasoning:
   6 V, so PA5 stays at 1.81 V, at or below the LED's turn-on. Steps 14 and
   15 go higher. Step 14's figures are set by the limiter, which engages for
   any command above ~4 V. Step 15 records the level it actually reached,
-  from P1b.
+  from its own CSV.
 - **Removing SB21 is a solder operation against a problem the session does
   not meet.** UM1724 does not say whether SB21 is a solder blob or a 0 Ω
   part. Look before deciding.
@@ -721,8 +721,10 @@ What it costs until then:
   (`host/ct_host/dataset.py`, `VDS_SET_MAX_V`);
 - full-range sweeps to 10 V may fall short.
 
-**H4 P1b decides whether SB21 ever comes off.** It holds PA5 at ~2.0, 2.5,
-3.0, 3.1 and 3.3 V and records each against the ideal DAC output.
+**Whether SB21 ever comes off is open.** H4 P1b was to decide it, holding
+PA5 at ~2.0 to 3.3 V against the ideal DAC output. P1b is skipped
+(Daniel, 2026-10-30): least bench time. Until something measures it, the costs
+above stand.
 
 The gate DAC is DAC1_OUT1 on PA4, which carries no LED. Nothing here
 applies to it. It has only the buffered-range ceiling both channels share

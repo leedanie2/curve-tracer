@@ -165,8 +165,8 @@ def family_of(sweep: Sweep) -> Family:
 #: its 510 ohm resistor load the sweep DAC on PA5. Above ~2.0-2.3 V there
 #: (6.6-7.8 V at the feedback node, set by the LED's forward voltage) the load
 #: exceeds the buffered DAC's 5 kohm rating, so vds_set_v stops being what the
-#: DAC produced. 6.6 V is the low end. H4 P1b measures where it really bites
-#: (blueprint §3.5; hardware/DECISIONS.md J7/J8).
+#: DAC produced. 6.6 V is the low end. Where it really bites is not measured
+#: (H4 P1b skipped; blueprint §3.5; hardware/DECISIONS.md J7/J8).
 VDS_SET_MAX_V = 6.6
 
 @dataclass(frozen=True)
@@ -274,7 +274,7 @@ def vds_delta_report(sweep: Sweep, *, r_iso_ohm: float | None = None,
     fraction of an ADC count and the ratio is meaningless. So are rows
     commanded above ``vds_set_max_v`` (see ``VDS_SET_MAX_V``): there the DAC
     is outside its rated load and the delta would include the DAC's own
-    shortfall. Pass ``None`` once SB21 is off or P1b shows no shortfall.
+    shortfall. Pass ``None`` once SB21 is off or a measurement shows no shortfall.
     """
     from .recompute import Calibration
 

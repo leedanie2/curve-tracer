@@ -43,10 +43,9 @@ printout is the step's clock**. No stopwatch. `--vgs` defaults to 0.
 | # | Do | Record |
 |---|---|---|
 | P1 | Flash the firmware: in `firmware/stm32/`, `make drivers` (once), `make`, then `make flash` with the Nucleo on USB (it copies the .bin to the NOD_F303RE drive). `python -m ct_host ports` lists the Nucleo; write the port in the header | fw version ____ |
-| P9 | Laptop: terminal in `host/`, then `mkdir h4` there (P1b writes into `h4/`; the host does not create it), `P=<port>` | done ☐ |
-| P1a | **Nucleo mod: PA5–PA6 shunt on. SB21 stays fitted.** USB unplugged, Nucleo not seated. On the top-side morpho pins, fit a 2.54 mm shunt across **CN10-11 (PA5)** and **CN10-13 (PA6)**. *The F303RE has no DAC2: the sweep DAC is DAC1_OUT2 on PA5, and the board takes it at PA6. With SB21 fitted, LD2 and its 510 Ω resistor load PA5. Nothing in this session needs the levels where that matters, so SB21 is not removed: measure first (P1b; `DECISIONS.md` R2-3)* | shunt ☐ |
-| P1b | **Nucleo check, off the board: map the LED load.** USB in, Nucleo **not seated**: on the board, an unpowered op-amp's inputs would load the DAC. Run one HOLD per row of the **P1b sheet** below, in order: `HOLD --vds <V> --seconds 20 --i-limit 165 -o h4/p1b_<V>.csv`. At **t = 10 s** of each, DMM black on **CN10-9 (GND)**, red on **CN10-11 (PA5)**, then **CN10-13 (PA6)**; note LD2. In the first hold (0 V) also read **CN7-16 (+3V3)** and **CN7-32 (PA4, the gate DAC)**. Last, the two **gate rows**: `HOLD --vgs 3.0 --vds 0 --seconds 20 --i-limit 165 -o h4/p1b_gate_3p0.csv`, a typical gate step, then `HOLD --vgs 10.95 --vds 0 --seconds 20 --i-limit 165 -o h4/p1b_gate.csv`, step 10's level; at t = 10 s of each read **CN7-32 (PA4)**. Read every value to the mV (0.1 mV if the DMM has it). *`--i-limit 165`: PA0 floats off the board, and 165 mA is the ADC ceiling, so no floating reading can end the hold* | sheet below |
-| P1b pass | **PA6 within 5 mV of PA5** at every level, and **PA5 at 0 V ≤ 0.20 V** (the floor of the buffered DAC's guaranteed range). PA6 ≠ PA5 → shunt not seated, redo P1a. **LD2 lighting from the 6.64 V row up is expected, not a fail.** No pass mark on the upper rows: **the shortfall column is the result.** It maps where the LED load starts to bite, and it is the measurement that decides whether SB21 ever comes off (`DECISIONS.md` R2-3). The floor matters more than the ceiling (blueprint §3.5, *Range*): write the floor × 3.32 too | pass ☐ ; floor × 3.32 = ____ V |
+| P9 | Laptop: terminal in `host/`, then `mkdir h4` there (the CSVs go into `h4/`; the host does not create it), `P=<port>` | done ☐ |
+| P1a | **Nucleo mod: PA5–PA6 shunt on. SB21 stays fitted.** USB unplugged, Nucleo not seated. On the top-side morpho pins, fit a 2.54 mm shunt across **CN10-11 (PA5)** and **CN10-13 (PA6)**. *The F303RE has no DAC2: the sweep DAC is DAC1_OUT2 on PA5, and the board takes it at PA6. With SB21 fitted, LD2 and its 510 Ω resistor load PA5. Nothing in this session needs the levels where that matters, so SB21 is not removed (`DECISIONS.md` R2-3). Not measured: P1b is skipped* | shunt ☐ |
+| P1b | **Skipped** (Daniel, 2026-10-30): least bench time. Nothing it measured is checked at H4: the LED load on PA5, the shunt, the gate DAC. See *What skipping P1b leaves unmeasured* below. An unseated shunt leaves the board's sweep input floating, so Block 1's sweep would not follow the command | — |
 | P2 | Seat the Nucleo on J7/J8; check against README *Footprint orientation*. The CN10-11/13 shunt stays on. J3 and J4 jumpers on **RNG1** | done ☐ |
 | P3 | **Board 1's C1 is empty.** Loupe: both C1 pads bare and flat. Nothing is fitted to C1 at H4 (Block 2) | C1 empty ☐ |
 | P4 | **Pad, then heatsink on Q1.** Trim the Sil-Pad K-10 (cut for TO-220) to Q1's TO-126 tab. Fit it between the tab and the heatsink (Boyd 577500B00000G, slide-on); the heatsink must still grip firmly with the pad in place. Board unpowered. DMM: **(a)** heatsink to **TP7 (+15 V)**: expect **OL**, which proves the pad insulates. **(b)** heatsink to **TP27**: expect **OL**. Either reading not OL, or a loose heatsink: refit, re-measure; no Block 4 until both pass | grips ☐ ; (a) ____ ; (b) ____ |
@@ -55,67 +54,28 @@ printout is the step's clock**. No stopwatch. `--vgs` defaults to 0.
 | P7 | Build a **reversed barrel lead**: plug centre to supply −, sleeve to supply + | done ☐ |
 | P8 | Kit: thermometer for step 14. For step 13a: a **10 kΩ** resistor (§8 assortment) with a mini-grabber on each lead. No soldering iron: nothing is soldered at H4. *The C0G kit on hand is 1.5 / 2.2 / 2.7 / 4.7 pF; the 3.3 and 3.9 pF parts are gone (2026-10-25). None of it is used at the bench* | done ☐ |
 
-**P1b sheet.** Ideal PA5 = code / 4095 × V_3V3, with V_3V3 as read in the
-first hold (the DAC's reference is the Nucleo's 3V3). The codes are what the
-firmware sends for each `--vds`. Shortfall = ideal − measured.
+**What skipping P1b leaves unmeasured** (Daniel, 2026-10-30).
 
-| `--vds` (V) | Code | PA5 at 3.300 V (ref.) | Ideal PA5 at your V_3V3 (V) | PA5 measured (V) | Shortfall (mV) | PA6 (V) | LD2 lit? |
-|---|---|---|---|---|---|---|---|
-| 0 | 0 | 0.000 | 0 | ____ | — | ____ | ____ |
-| 6.64 | 2482 | 2.000 | ____ | ____ | ____ | ____ | ____ |
-| 8.30 | 3102 | 2.500 | ____ | ____ | ____ | ____ | ____ |
-| 9.96 | 3723 | 3.000 | ____ | ____ | ____ | ____ | ____ |
-| 10.29 | 3846 | 3.099 | ____ | ____ | ____ | ____ | ____ |
-| 10.96 | 4095 | 3.300 | ____ | ____ | ____ | ____ | ____ |
-
-**Gate rows** (PA4, DAC1_OUT1; no LED on it):
-
-| `--vgs` (V) | Code | PA4 at 3.300 V (ref.) | Ideal PA4 at your V_3V3 (V) | PA4 measured (V) | Shortfall (mV) | × 3.32 at the gate (mV) |
-|---|---|---|---|---|---|---|
-| 3.0 | 1121 | 0.903 | ____ | ____ | ____ | ____ |
-| 10.95 | 4093 | 3.298 | ____ | ____ | ____ | ____ |
-
-V_th bound, normal operation (3.0 V row, × 3.32) = ____ mV ; V_th bound, ceiling (10.95 V row, × 3.32) = ____ mV
-
-V_3V3 = ____ V ; PA4 at 0 V = ____ mV
-
-**What the gate rows mean.** They are the only measurements the gate
-channel gets. **The gate is not measured**: the CSV carries `vgs_set_v`
-only. So a PA4 shortfall makes the real gate lower than `vgs_set_v` by
-shortfall × 3.32, and that goes straight into V_th uncorrected: V_th reads
-high by up to that amount. The two rows bound different cases. Record
-both, separately:
-
-- **3.0 V row: normal operation.** PA4 = 0.90 V, inside the buffered DAC's
-  guaranteed 0.2 V to VDDA − 0.2 V. It stands for a 2N7000's 2.6–3.6 V
-  steps (PA4 = 0.78–1.08 V) if the DAC's error changes little across that
-  0.3 V. It is one point, not a sweep, so that is an assumption.
-- **10.95 V row: the ceiling case.** PA4 = 3.298 V, above VDDA − 0.2 V
-  (blueprint §3.5, *Range*). It bounds gate steps near full scale only.
-  The ceiling is a saturation, not a gain error, so this row says nothing
-  about steps inside the guaranteed range (PA4 ≤ 3.1 V, ≤ 10.29 V at the
-  gate).
-
-**The failure mode to watch.** A family that mixes in-range and
-above-range steps falls short at its top steps only. That is not a
-uniform offset. It tilts the sqrt(I_D) fit and moves V_th, while no single
-reading looks wrong: each top step only looks like slightly less current
-than expected. Only these two rows, read together, show it: a small
-normal-operation bound and a large ceiling bound. Step 10 is affected the same way: its Zener
-check runs at the real gate, P1b's PA4 × 3.32, not 10.95 V.
-
-**What the sheet decides.** The buffered DAC is rated for 5 kΩ or more. LD2
-and its 510 Ω resistor draw more than that from PA5 ≈ 2.0–2.3 V, which is
-**6.6–7.8 V at the feedback node** (depending on the LED's forward voltage;
-estimate, not measured). Above that, `vds_set_v` is not what the DAC
-produced, and **full-range sweeps to 10 V may fall short until SB21 is
-addressed.** The host's series-drop diagnostic (`extract --diagnostics`,
-`plot --diagnostic`) therefore fits only rows with `vds_set_v` ≤ 6.6 V by
-default; `--vds-set-max` changes the limit once this sheet shows where the
-shortfall starts. Nothing in this session's sweeps or measurements needs
-the upper rows: Block 1 and steps 11–12 stay at 6 V (PA5 = 1.81 V); steps
-14 and 15 go higher, and their notes say why the shortfall does not change
-what they test.
+- **The gate is not measured**: the CSV carries `vgs_set_v` only. Any
+  shortfall on PA4 makes the real gate lower than `vgs_set_v` by
+  shortfall × 3.32, and V_th reads high by that amount, uncorrected. Inside
+  the buffered DAC's guaranteed range (PA4 ≤ 3.1 V, ≤ 10.29 V at the gate)
+  that error should be small; above it the DAC saturates. **Watch for** a
+  family that mixes in-range and above-range steps: only its top steps fall
+  short, which tilts the sqrt(I_D) fit and moves V_th while no single
+  reading looks wrong. Step 10 runs at 10.95 V, above the range, so its
+  real gate is lower by an unmeasured amount.
+- **The LED load on PA5.** The buffered DAC is rated for 5 kΩ or more. LD2
+  and its 510 Ω resistor draw more than that from PA5 ≈ 2.0–2.3 V, which is
+  **6.6–7.8 V at the feedback node** (estimate, not measured). Above that,
+  `vds_set_v` is not what the DAC produced, and **full-range sweeps to 10 V
+  may fall short.** The host's series-drop diagnostic (`extract
+  --diagnostics`, `plot --diagnostic`) fits only rows with `vds_set_v` ≤
+  6.6 V by default, and that limit stays. Block 1 and steps 11–12 stay at
+  6 V (PA5 = 1.81 V); steps 14 and 15 go higher, and their notes say why
+  the shortfall does not change what they test.
+- **The DAC floor.** Step 8 reads the node at code 0 with the load open, so
+  a high floor fails its |v| ≤ 0.008 V.
 
 **Why P4(a).** Q1's tab is its collector, tied to **+15 V**. Without the pad,
 the heatsink is live at +15 V, and anything grounded touching it shorts the
@@ -182,7 +142,7 @@ step numbers are unchanged.
 | 9 | 1 | **+3V3, clamp conducting.** Unplug the Kelvin pair at J5, wait 5 s, DMM TP8 to TP9, plug back | 3.30 V | 3.20–3.40 V | ____ V | Plug J5 back at once, record, continue |
 | 10 | 1 | **Zener knee.** `HOLD --vgs 10.95 --vds 0.1 --seconds 20 -o h4/10_zener.csv`. At host **t = 10 s**: DMM red TP16, black TP18. *The gate DAC is DAC1_OUT1 on **PA4**, which carries no LED; LD2 loads PA5 only. This step is not affected by SB21. (10.95 V is code 4093, PA4 ≈ 3.298 V, above the buffered DAC's guaranteed VDDA − 0.2 V. That ceiling is a separate open question, blueprint §3.5, and applies to both channels)* | ~0 mV | ≤ 10 mV | ____ mV | Record, continue |
 | 11 | 1 | **Q3 drop under load.** Fit L1. `HOLD --vds 6 --seconds 20 -o h4/11_q3.csv`. At **t = 10 s**: DMM red TP28, black TP7; supply current; the host's i_meas | ≤ 6.5 mV at ~34 mA | ≤ 7 mV | V = ____ mV ; I_supply = ____ mA ; i_meas = ____ mA | Record, continue |
-| 12 | 1 | **R_PTC.** `HOLD --vds 6 --seconds 20 -o h4/12_rptc.csv`. At **t = 10 s**: DMM red TP5, black TP17; the host's i_meas. *6 V is below the 6.6 V limit, so `vds_set_v` is trustworthy here; the host's series-drop check on this file uses it as is (P1b sheet note)* | 40–400 mV at ~26 mA | R = V / i_meas in 1.6–15 Ω | V = ____ mV ; i = ____ mA ; R = ____ Ω | Record, continue |
+| 12 | 1 | **R_PTC.** `HOLD --vds 6 --seconds 20 -o h4/12_rptc.csv`. At **t = 10 s**: DMM red TP5, black TP17; the host's i_meas. *6 V is below the 6.6 V limit, so `vds_set_v` is trustworthy here; the host's series-drop check on this file uses it as is (*What skipping P1b leaves unmeasured*)* | 40–400 mV at ~26 mA | R = V / i_meas in 1.6–15 Ω | V = ____ mV ; i = ____ mA ; R = ____ Ω | Record, continue |
 | 13 | 3 | **Reverse polarity, J1.** Output OFF; disconnect the J2 leads; limit **20 mA**; connect the reversed barrel lead to J1. Output ON for 5 s: read the supply current and TP7 to TP27. Output OFF, remove the lead, reconnect J2, limit back to **100 mA** | 0 mA ; 0.00 V | ≤ 1 mA ; ≤ ±0.10 V | I = ____ ; V = ____ | Output OFF → record → **STOP**, end session |
 | 13a | 3 | **D3 present and the right way round.** Output OFF. Pull the **J3** jumper (this disconnects the sweep output from DUT_D) and unplug the Kelvin pair at **J5**. Clip the 10 kΩ between **TP7** (+15 V) and **TP19** (DUT_D). Output ON, wait 5 s. DMM: TP19 to TP27, then TP7 to TP27. Output OFF, remove the 10 kΩ, J3 back on **RNG1**, J5 back on | TP19 = V_D3 ≈ 13.3–14.7 V (D3 in breakdown at 0.03–0.3 mA) | **TP19 12.0–14.8 V, and ≥ 0.2 V below TP7** | V_D3 = ____ V ; TP7 = ____ V | Record, continue; off-bench, inspect D3 (README *Footprint orientation*). Within 0.2 V of TP7 = D3 missing or open; below 1 V = reversed or shorted |
 
@@ -200,7 +160,7 @@ Scope CH1 on TP3: AC, 50 mV/div, 1 µs/div, trigger auto.
 | 14b | — | **t = 20 s**: DMM red **TP1**, black **TP2** (R_B) | ~10.6 V (32 mA, sim 10) | ≤ 14.85 V (≤ 45 mA) | V_RB = ____ | Record, continue |
 | 14c | — | **t = 30 s**: scope p-p on TP3; the host's i_meas | < 10 mV ; ~107 mA | < 20 mV ; 95–120 mA | p-p = ____ ; i = ____ | Record, continue |
 | 14d | — | **t = 180 s**: TP3–TP4 again; thermometer on the heatsink at the tab | ≤ V_cold ; ~48 °C (26 °C/W) | ≥ 0.60 V ; ≤ 70 °C | V_warm = ____ ; T = ____ °C | **T > 70 °C: output OFF at once** → record → **STOP** |
-| 15 | 2 | **Short recovery: verify the bound.** Jumper on. Scope CH1 → **TP19** (DUT_D), DC, 2 V/div, vertical offset so the **screen centre is +10 V** (shows +2…+18 V), 1 µs/div, trigger rising **10.5 V**, single, armed. `HOLD --vds 10 --seconds 60 --i-limit 165 -o h4/15_recovery.csv`. Any time after host t = 5 s, **pull the jumper**. Read the peak. *`--vds 10` is code 3738, PA5 ≈ 3.01 V, inside the LED-loaded range. The level the node recovers to is about P1b's 9.96 V row, measured PA5 × 3.32 (15 codes lower, ~40 mV), not 10 V. A short level makes the 16 V bound easier to meet, so write it next to the peak* | 13.3–14.8 V: D3 clamping at its breakdown voltage (sim 10's unclamped peak is 14.8 V) | **≤ 16.0 V** | peak = ____ V (no trigger: write "< 10.5"; off the top: write "> 18") ; level from P1b = ____ V | **> 16.0 V: something other than the predicted overshoot is happening.** Save the scope screen to `h4/15_peak.png`, record, continue. Off-bench: find the cause |
+| 15 | 2 | **Short recovery: verify the bound.** Jumper on. Scope CH1 → **TP19** (DUT_D), DC, 2 V/div, vertical offset so the **screen centre is +10 V** (shows +2…+18 V), 1 µs/div, trigger rising **10.5 V**, single, armed. `HOLD --vds 10 --seconds 60 --i-limit 165 -o h4/15_recovery.csv`. Any time after host t = 5 s, **pull the jumper**. Read the peak. *`--vds 10` is code 3738, PA5 ≈ 3.01 V, inside the LED-loaded range. The level the node recovers to may be short of 10 V by an unmeasured amount (P1b skipped). A short level makes the 16 V bound easier to meet, so write it next to the peak: off-bench, `vds_meas_v` in `15_recovery.csv`'s rows after the pull, which the Kelvin pair senses* | 13.3–14.8 V: D3 clamping at its breakdown voltage (sim 10's unclamped peak is 14.8 V) | **≤ 16.0 V** | peak = ____ V (no trigger: write "< 10.5"; off the top: write "> 18") ; level (off-bench, from the CSV) = ____ V | **> 16.0 V: something other than the predicted overshoot is happening.** Save the scope screen to `h4/15_peak.png`, record, continue. Off-bench: find the cause |
 
 **Steps 13a and 15** (D3 fitted by default, Daniel 2026-10-11;
 `DECISIONS.md` D3). Step 15 verifies a bound; it does not decide anything.
