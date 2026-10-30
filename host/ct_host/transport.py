@@ -185,6 +185,17 @@ class SerialTransport:
             target=self._read_loop, name="ct-serial-reader", daemon=True
         )
         self._reader.start()
+        # The first write after the ST-LINK enumerates can be lost (bench,
+        # 2026-10-30). A blank line is a no-op to the firmware's parser, so
+        # it absorbs that loss instead of the first real command.
+        self._write_paced(b"\r\n")
+
+    # The ST-LINK/V2-1 VCP (V2J33M25, macOS) wedges host->target for good,
+    # until a USB replug, when one write is 16 bytes or more; 8-byte writes
+    # 5 ms apart got through (bench, 2026-10-30). The MCU side was checked
+    # over SWD while wedged: no bytes reach PA3.
+    WRITE_CHUNK = 8
+    WRITE_GAP_S = 0.005
 
     @property
     def description(self) -> str:
@@ -204,8 +215,13 @@ class SerialTransport:
             self._queue.put(None)
 
     def send(self, line: str) -> None:
-        self._serial.write((line.rstrip("\r\n") + "\r\n").encode("ascii"))
-        self._serial.flush()
+        self._write_paced((line.rstrip("\r\n") + "\r\n").encode("ascii"))
+
+    def _write_paced(self, data: bytes) -> None:
+        for i in range(0, len(data), self.WRITE_CHUNK):
+            self._serial.write(data[i:i + self.WRITE_CHUNK])
+            self._serial.flush()
+            time.sleep(self.WRITE_GAP_S)
 
     def lines(self, timeout: float | None = 30.0) -> Iterator[str]:
         deadline = None if timeout is None else time.monotonic() + timeout

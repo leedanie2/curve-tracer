@@ -21,7 +21,7 @@ from ct_host.protocol import (
     identify,
     run_sweep,
 )
-from ct_host.transport import SimTransport, Transport, TransportError
+from ct_host.transport import SerialTransport, SimTransport, Transport, TransportError
 
 
 # --------------------------------------------------------------------------
@@ -31,6 +31,28 @@ from ct_host.transport import SimTransport, Transport, TransportError
 def test_sim_transport_satisfies_the_protocol():
     with SimTransport() as transport:
         assert isinstance(transport, Transport)
+
+
+def test_serial_send_never_writes_16_bytes_at_once():
+    # A single write of 16 bytes or more wedges the ST-LINK VCP host->target
+    # until a USB replug (bench, 2026-10-30). No port is opened: the writer
+    # is checked against a stand-in.
+    class Recorder:
+        def __init__(self):
+            self.writes = []
+
+        def write(self, data):
+            self.writes.append(bytes(data))
+
+        def flush(self):
+            pass
+
+    transport = SerialTransport.__new__(SerialTransport)
+    transport._serial = Recorder()
+    transport.send("SET date 2026-10-30T15:45:00Z")
+    writes = transport._serial.writes
+    assert b"".join(writes) == b"SET date 2026-10-30T15:45:00Z\r\n"
+    assert max(len(w) for w in writes) <= SerialTransport.WRITE_CHUNK < 16
 
 
 def test_identify_reports_firmware_and_board():
