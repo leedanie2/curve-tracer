@@ -10,7 +10,10 @@ oscillation check, and one diode I-V plot. Print it and fill in every
 |---|---|---|---|---|
 | **2** | ____ | ____ | ____ | ____ |
 
-**Board 2 is the bring-up board** (`H4_CARD.md` still says board 1).
+**Board 2 is the bring-up board.** The boards are not physically numbered.
+"Board 2" is any of the four untouched boards: C1's two pads bare and flat.
+The fifth, the one with solder residue on C1, was the 0603 practice board
+and is retired from measurements.
 
 **Rules.**
 - Supply output OFF before you touch anything on the board.
@@ -29,9 +32,9 @@ second: `t= N s  vds_meas … V  i_meas … mA`. That `t` is your clock.
 | 1a | **Shunt check, from the top**, using the labelled Arduino socket holes. Nucleo off the board, USB unplugged. Push a piece of solid hookup wire into each hole named, clip the DMM leads to the bare wire ends with alligator clips, DMM on continuity (the beep). **(a) Contact check:** the two **GND** holes on the left power socket (CN6) | Beeps | ☐ | The wires aren't making contact. Fix that and redo (a). Don't go on until it beeps |
 | 1b | **(b)** **SCK/D13** hole ↔ **MISO/D12** hole. The shunt joins PA5 (D13) to PA6 (D12) | Beeps | ☐ | Move the shunt one row, redo (b) and (c) |
 | 1c | **(c)** **SCK/D13** hole ↔ the right socket's **GND** hole | No beep. A faint glow from LD2 is the DMM driving the LED, not a beep | ☐ | The shunt is on GND–PA5. Move it one row, redo (b) and (c). Two moves and still failing: **STOP** |
-| 2 | **Seat the Nucleo** on board 2: CN7 into J7, CN10 into J8, each pin 1 at the socket's square-pad end. Every pin goes into a hole and none is left over. J3 and J4 jumpers on **RNG1** | Seated, no pins left over | ☐ | Pull it out and redo |
+| 2 | **Seat the Nucleo** on board 2: CN7 into J7, CN10 into J8. Pin 1 of CN7 and CN10 is the end nearest the Nucleo's USB connector; that end goes to the square-pad end of J7 and J8. Every pin goes into a hole and none is left over. J3 and J4 jumpers on **RNG1** | Seated, no pins left over | ☐ | Pull it out and redo |
 | 3 | **J6.** L1 (100 nF ‖ 200 Ω, leads ≤ 3 cm) goes to pin 2 (D) and pin 3 (S). Kelvin pair: J5 pin 1 to J6 D, J5 pin 2 to J6 S. Pin 1 (G) stays empty | All four wires tight | ☐ | Retighten |
-| 4 | Nucleo USB to the laptop. Run `python -m ct_host ports`, then `P=<the port>` | The Nucleo is listed | port above | Replug USB, redo. Still not listed: **STOP** |
+| 4 | Nucleo USB to the laptop. Run `python -m ct_host ports`, then set the port, for example `P=/dev/cu.usbmodem103`: use the number `ports` printed | The Nucleo is listed | port above | Replug USB, redo. Still not listed: **STOP** |
 | 5 | **Supply:** 15.00 V, current limit **100 mA**. Output ON with the leads free. DMM on DC V: red probe on the red lead, black probe on the black lead. Output OFF | +14.90 to +15.10 V | ____ V | Negative: the leads are swapped. Fix and redo. *J2 has no reverse-polarity protection* |
 
 **Scope setup** (once, board still unpowered).

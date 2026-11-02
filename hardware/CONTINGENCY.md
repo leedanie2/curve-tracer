@@ -117,7 +117,7 @@ two reasons:
 
 **Since 2026-10-25 the bare run is the only loop measurement** (Daniel).
 C1 is never fitted at H4, so there is no C_f sweep (§3) and no first solder
-operation on board 1.
+operation on the bring-up board.
 
 ### 2C. Unpowered board-share measurement (optional; needs fast edges and an active probe)
 
@@ -146,7 +146,7 @@ recorded as such in `DECISIONS.md` (C1) and `docs/characterization.md`.
 
 **The sweep is retired.** Every row was a hand remove-and-refit of an 0603
 on the inverting node. Hand-fitting 0603 parts is not a skill on hand: the
-P3 practice on board 5 lost the 3.3 pF parts and could not place an 0603
+P3 practice, on one board, lost the 3.3 pF parts and could not place an 0603
 reliably (`DECISIONS.md` R2-2). The C0G kit left is 1.5, 2.2, 2.7 and
 4.7 pF; the 3.3 and 3.9 pF parts are gone.
 

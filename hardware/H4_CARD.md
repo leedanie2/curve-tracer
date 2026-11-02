@@ -9,9 +9,12 @@ Record column.
 |---|---|---|---|---|---|---|---|
 | ____ | ____ | ____ | ____ | ____ | ____ | ____ | ____ |
 
-Board **2** is the bring-up board (Daniel, 2026-11-01). Board 1 is retired
-from measurements: there is solder residue on C1's left pad. Boards 3–5 stay
-untouched. The minimum path to first power-up is `MVP_CARD.md`.
+Board **2** is the bring-up board (Daniel, 2026-11-01). The boards are not
+physically numbered. Exactly one was used for the 0603 soldering practice:
+it is the one with solder residue on C1, and it is retired from
+measurements. The other four are untouched, and the bring-up board is one of
+them, called "board 2" from here on. The minimum path to first power-up is
+`MVP_CARD.md`.
 
 **Rules:**
 

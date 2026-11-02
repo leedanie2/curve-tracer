@@ -669,8 +669,12 @@ spring-ground tip.** TP19 (step 15) is better placed: TP27 is 6.5 mm from it.
 assumed hand-fitting.** C_f could not be known before assembly (§3.1: C_in
 is only estimated, 5–9 pF), so the board shipped with the footprint empty,
 to be fitted by hand at H4 and swept. That assumption did not hold. Daniel
-attempted the P3 practice on board 5, lost the 3.3 pF parts off the bench,
-and could not place an 0603 reliably with the tools on hand. Hand-fitting
+attempted the P3 practice on one board, lost the 3.3 pF parts off the bench,
+and could not place an 0603 reliably with the tools on hand. The boards are
+not physically numbered. That board is the one with solder residue on C1,
+and it is retired from measurements. The other four are untouched; the
+bring-up board is one of them, called "board 2" from here on (Daniel,
+2026-11-01). Hand-fitting
 was a real constraint the card did not account for. It also sat badly with
 the 2026-10-11 decision below, zero hand-soldering, which covered every
 part on the order but not the one left to fit by hand.

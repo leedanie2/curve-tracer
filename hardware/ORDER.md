@@ -13,6 +13,10 @@ not settled by this file; they are listed under *Verify yourself* at the end.
 
 All 5 boards are assembled (Daniel, 2026-10-11): spares against a soldering
 accident, a reversed supply or a blown op-amp, with no second spin.
+**Board status, 2026-11-01:** the boards are not physically numbered.
+Exactly one was used for the 0603 soldering practice; it has solder residue
+on C1 and is retired from measurements. The other four are untouched, and
+the bring-up board is one of them, called "board 2" (`DECISIONS.md` R2-2).
 
 **JLCPCB status, 2026-10-11:** **paid**, order **W2026101205158610**
 (PCB Y2-13791044A, PCBA SMT026101162484-13791044A), built from commit
