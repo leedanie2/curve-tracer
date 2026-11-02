@@ -9,7 +9,9 @@ Record column.
 |---|---|---|---|---|---|---|---|
 | ____ | ____ | ____ | ____ | ____ | ____ | ____ | ____ |
 
-Board **1** is the bring-up board. Boards 2–5 stay untouched.
+Board **2** is the bring-up board (Daniel, 2026-11-01). Board 1 is retired
+from measurements: there is solder residue on C1's left pad. Boards 3–5 stay
+untouched. The minimum path to first power-up is `MVP_CARD.md`.
 
 **Rules:**
 
@@ -47,7 +49,7 @@ printout is the step's clock**. No stopwatch. `--vgs` defaults to 0.
 | P1a | **Nucleo mod: PA5–PA6 shunt on. SB21 stays fitted.** USB unplugged, Nucleo not seated. On the top-side morpho pins, fit a 2.54 mm shunt across **CN10-11 (PA5)** and **CN10-13 (PA6)**. *The F303RE has no DAC2: the sweep DAC is DAC1_OUT2 on PA5, and the board takes it at PA6. With SB21 fitted, LD2 and its 510 Ω resistor load PA5. Nothing in this session needs the levels where that matters, so SB21 is not removed (`DECISIONS.md` R2-3). Not measured: P1b is skipped* | shunt ☐ |
 | P1b | **Skipped** (Daniel, 2026-10-30): least bench time. Nothing it measured is checked at H4: the LED load on PA5, the shunt, the gate DAC. See *What skipping P1b leaves unmeasured* below. An unseated shunt leaves the board's sweep input floating, so Block 1's sweep would not follow the command | — |
 | P2 | Seat the Nucleo on J7/J8; check against README *Footprint orientation*. The CN10-11/13 shunt stays on. J3 and J4 jumpers on **RNG1** | done ☐ |
-| P3 | **Board 1's C1 is empty.** Loupe: both C1 pads bare and flat. Nothing is fitted to C1 at H4 (Block 2) | C1 empty ☐ |
+| P3 | **Board 2's C1 is empty.** Loupe: both C1 pads bare and flat. Nothing is fitted to C1 at H4 (Block 2) | C1 empty ☐ |
 | P4 | **Pad, then heatsink on Q1.** Trim the Sil-Pad K-10 (cut for TO-220) to Q1's TO-126 tab. Fit it between the tab and the heatsink (Boyd 577500B00000G, slide-on); the heatsink must still grip firmly with the pad in place. Board unpowered. DMM: **(a)** heatsink to **TP7 (+15 V)**: expect **OL**, which proves the pad insulates. **(b)** heatsink to **TP27**: expect **OL**. Either reading not OL, or a loose heatsink: refit, re-measure; no Block 4 until both pass | grips ☐ ; (a) ____ ; (b) ____ |
 | P5 | Build **L1**: 100 nF ceramic ‖ 200 Ω 1 W, leads ≤ 3 cm, to J6 pins 2 (D) and 3 (S). DMM: L1's resistance (used off-bench for the full-scale ADC check against `11_q3.csv`). Build a **jumper** for J6 D–S | R_L1 = ____ Ω |
 | P6 | Build the **Kelvin pair**: J5 pin 1 → J6 D, J5 pin 2 → J6 S | done ☐ |

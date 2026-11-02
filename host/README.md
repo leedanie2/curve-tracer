@@ -19,7 +19,7 @@ ct_host/
   spice.py       .model cards
   plot.py        live family plot, static plots, series-drop diagnostic
   cli.py         python -m ct_host capture | plot | extract | model | ports
-tests/           135 tests, every one against the simulator
+tests/           137 tests, every one against the simulator
 ```
 
 `parse_cmrr_log.py`, `parse_current_limit.py` and `parse_tran_overshoot.py`
@@ -312,6 +312,9 @@ included.
   `I_S` to about ±10%.
 - **Overlay comparison against LTspice** (blueprint §5 item 5) is not
   implemented.
-- **Nothing here has been run against hardware.** Every figure in this file
-  comes from the simulator. The serial transport in particular has never
-  opened a real port.
+- **Only the serial link has run on hardware.** On 2026-10-30 `hold` ran
+  against a Nucleo-F303RE over the ST-LINK VCP (macOS), after the transport
+  was changed to pace its writes. A single write of 16 bytes or more wedges
+  the VCP until a USB replug, so `SerialTransport` writes 8-byte chunks
+  5 ms apart (commit `2debc57`). No device has been measured, and every
+  figure in this file comes from the simulator.

@@ -46,7 +46,7 @@ shunts and the 200 Ω 1 W (*LCSC delivery* below).
 | C_f 3.3 pF, fitted as C1 | H4 Block 2, run 1. First power-up is now with C1 empty (2026-10-24) | **In hand** (DigiKey 2nd) |
 | C_f 1.5 / 2.2 / 2.7 / 3.9 / 4.7 pF | H4 Block 2 (the C_f sweep) | **In hand** (DigiKey 2nd) |
 | Q1 heatsink, Boyd 577500B00000G | P4; H4 Block 4 | **In hand** (DigiKey) |
-| Sil-Pad K-10 insulator | P4; H4 Block 4 | **In hand** (DigiKey) |
+| Sil-Pad K-10 insulator | P4; H4 Block 4 | **Missing at the bench** as of 2026-11-01 (Daniel). Received 2026-10-15 (DigiKey). Block 4 not run |
 | The boards | Everything | **Outstanding:** shipped, DHL 3074485864, delivery estimated Wed Oct 21 |
 | Nucleo-F303RE and USB Mini-B cable | P1 onward | **Outstanding:** cabinet, not yet checked |
 | Jumper shunts, 2.54 mm: three, for J3, J4 and the Nucleo's CN10-11/13 (added 2026-10-24, `firmware/README.md`) | P1a, P2 | **In hand** (LCSC C100114, 50, received 2026-10-26) |
@@ -394,6 +394,8 @@ it if it meets the spec exactly.
     DigiKey **BER114-ND**. It is cut for TO-220, so trim it to the tab with
     scissors. The TO-126 shape (Bergquist 1009AC-60) is no longer stocked
     at DigiKey.
+  - **Missing at the bench as of 2026-11-01** (Daniel). Block 4 is not
+    run, and `MVP_CARD.md` runs Q1 with no heatsink.
   - ⚠ **Check that the slide-on heatsink still grips with the pad in
     place.** H4 step P4 now checks both: heatsink to **TP7 (+15 V)** must
     read **OL** (the pad insulates), as well as heatsink to TP27 (ground),
