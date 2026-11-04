@@ -11,12 +11,39 @@ them out as a SPICE `.model` card. The aim is to close the loop
 It is built as an assembled PCB carrying an STM32 Nucleo-F303RE, with firmware
 in C and a Python host.
 
-> **Status, 2026-11-03:** designed, simulated, fabricated and assembled.
-> **One board has been powered** and its oscillation check run: no sustained
-> oscillation with a 200 Ω ‖ 100 nF load; intermittent ~0.8–1.15 MHz
-> oscillation at open load, C1 empty ([Status](#status)). No device has been
-> measured yet. Every other performance figure below comes from simulation
-> and says which one.
+## Status, 2026-11-03
+
+Every claim below is one of four things. **Measured** means on the bench,
+from the board. **Simulated only** means LTspice, ngspice or the firmware
+simulator, with no bench result yet. **Done** covers work that needs no
+measurement. **Not done** is what's left. Nothing in this README goes past
+its row.
+
+| Claim | Status | Evidence |
+|---|---|---|
+| Analog design: stability into capacitive loads, current limiter, sense-amp CMRR | Simulated only | LTspice sims 02–11, [below](#simulation-results) |
+| Schematic and 2-layer PCB, DRC/ERC clean, topology checker | Done | `hardware/review/pass2/` |
+| Five boards fabricated and fully assembled by JLCPCB | Done | `hardware/ORDER.md` |
+| Firmware runs on the Nucleo; host link works | Measured | 2026-10-30, 2026-11-03 holds (`host/h4/`) |
+| Board powers up; loop quiet into 200 Ω ‖ 100 nF at 6 V | Measured | 2026-11-03, [Block 1](#block-1-measurements-first-power-up-board-2) |
+| Loop stable with nothing connected (C1 empty) | **Measured: fails.** Oscillates at 0.8–1.15 MHz | [The open-load oscillation](#a-measured-finding-the-open-load-oscillation) |
+| Root cause of the oscillation | Analysis and simulation | Sims 12–14 |
+| A 3.3 pF C1 fixes it | Simulated only (TI's op-amp model, one operating point) | Sim 14; not fitted, since 0603 can't be hand-fitted here |
+| 470 Ω across the device keeps the loop quiet | Simulated only | Sim 13; bench test is next session's step 13 |
+| Voltage and current accuracy against a DMM | Not done | Next session, step 15 |
+| R_p subtraction, extraction, `.model` card, ngspice overlay | Done, tested on simulated data only | `host/`, 159 tests; [demo figures](host/README.md#from-a-capture-to-the-overlay) |
+| Diode parameters from a real diode | **TBD**, next session | `hardware/MVP_CARD.md` §D |
+| Measured vs simulated overlay, real diode | **TBD**, next session | `python -m ct_host overlay` |
+| MOSFET parameters from a real part | **TBD**, stretch goal of the next session | |
+| Blueprint §6 closed loop: build a circuit with the extracted model, compare | Not done | |
+| Short-circuit and thermal test (H4 Block 4) | Not done | No heatsink insulator at the bench |
+| Current ranges 2 and 3 (fitted on the board) | Not done | Out of scope |
+
+**The headline figure goes here**: one real diode, measured against the
+ngspice simulation of its extracted model, with residuals. The pipeline that
+draws it is built and tested. On simulated data it looks like
+[this](media/demo_overlay_diode_SIMULATED.png), and that figure is labelled
+SIMULATED because it is. The bench data comes from the next session.
 
 ![3D render of the assembled board](hardware/review/pass2/p2_3d.png)
 
@@ -24,40 +51,61 @@ in C and a Python host.
 Nucleo plugs into the two sockets on the right. Board size 135 × 92 mm, two
 layers.*
 
----
+## What it can measure
 
-## Design targets
+The design envelope. Nothing in it is measured yet unless the row says so.
 
-These are targets, not measured performance.
-
-| | Target |
+| | |
 |---|---|
-| Sweep voltage | 0–10 V at low current; 9.06–9.73 V ceiling at 50 mA (analysis: set by the PTC fuse's resistance) |
-| Sweep current | 0–50 mA |
-| Gate step voltage | 0–10 V |
-| Current ranges | Three shunts (1 Ω, 100 Ω, 10 kΩ) are fitted. **Only range 1 (0–50 mA) is in the current scope**, with a 40.3 µA LSB |
-| Voltage sense | Kelvin-sensed at the device, 0–10 V |
-| Output | CSV over USB serial; live plot, parameter extraction and `.model` card on the host |
+| **Devices** | Two-terminal devices (diodes, LEDs, resistors) and **N-channel enhancement MOSFETs**. **No BJTs**: the step source is a voltage through 1 kΩ, not a base current. **No P-channel or depletion parts**: the gate source is 0 to +10 V |
+| **Polarity** | **One quadrant.** Drain/anode at 0 to +10 V and current into the device only. No reverse bias |
+| **Voltage** | 0–10 V by design; 9.06–9.73 V is the ceiling at 50 mA (analysis: the PTC fuse's drop). On this board the sweep DAC is guaranteed only from 0.66 V at the node, and above ~6.6 V the Nucleo's LED loads it. Both are estimates, to be measured next session |
+| **Current** | 0–50 mA on range 1, 40.3 µA per ADC count, averaged 64× per point. Hardware limiter ~75 mA (simulated); firmware limit set per device |
+| **Mode** | **DC only.** No pulsed mode, so the device heats at its own dissipation |
+| **Accuracy** | Not yet measured. Block 1's voltage/current ratio agreed with the load resistance to 0.13%, but that ratio cancels a shared reference error, so it is not an accuracy figure |
+| **Until rev 2** | Low-current devices need a resistor (≤ 470 Ω) across them to keep the loop quiet (simulated). The host subtracts its current. That costs resolution at the low end: ~6 µA at 0.6 V for a 0.5% error in R_p |
 
-## Block diagram
+**What it's for.** It replaces the undergraduate I-V lab done by hand with
+a bench supply and two meters, one point at a time, for small diodes, LEDs
+and small N-MOSFETs. It records the curve with four-wire sensing and fits a
+SPICE model from it. **What it isn't:** a general-purpose commercial curve
+tracer or source-measure unit. Those cover high voltage and current, both
+polarities, pulsed measurement, BJTs and picoamp leakage. This covers none of
+them.
 
-```
-   Nucleo-F303RE                     Board
-  ┌──────────────┐
-  │ DAC1_OUT2 PA5├─shunt─► PA6 ─► [×3.32] ─► [OPA2197 + BD139 follower] ─► R_sense ─┬─► R_iso 22Ω ─► PTC ─► shunt ─► DUT drain
-  │              │                                ▲      │                         │                        │            │
-  │              │                                │   [Q2 current limiter]        │                   [buffered     [Kelvin pair
-  │              │                                └─────────── feedback ──────────┘                   diff amp ×20]  ÷4 + buffer]
-  │ ADC1  PA0   ◄├──────────────────────────────────────────────────────────────────────────────────────────┘            │
-  │ ADC2  PC0   ◄├───────────────────────────────────────────────────────────────────────────────────────────────────────┘
-  │ DAC1_OUT1 PA4├─────► [×3.32] ─► [buffer] ─► 1 kΩ ─► DUT gate  (12 V Zener clamp)
-  │ USART2 ◄─────┼─► ST-LINK VCP ─► USB ─► Python host
-  └──────────────┘                                                     DUT source ─► GND        (SMAJ12A TVS on the drain)
-```
+## A measured finding: the open-load oscillation
 
-Per point: set the gate DAC, set the drain DAC, wait to settle, oversample both
-ADCs 64×, send a CSV row. The host recomputes current and voltage from the raw
-accumulators and checks them against the firmware's own numbers.
+**Measured, 2026-11-03, board 2, C1 empty.** Holding 6 V into
+200 Ω ‖ 100 nF, the loop was quiet. With nothing connected it oscillated
+intermittently at **0.79–1.15 MHz**, from over 0.2 V to over 2 V
+peak-to-peak (the scope clipped). The DC
+readings were off by up to 3 mA while it did. Full data is in
+[Block 1](#block-1-measurements-first-power-up-board-2) below and in
+[`docs/characterization.md`](docs/characterization.md).
+
+**Root cause (analysis, checked in LTspice sims 12–14).** With no load, the
+pass transistor (Q1) carries only ~0.2 mA. Its emitter resistance is then
+~130 Ω, and it drives the ~1 nF of the protection diode D3 through ~41 Ω.
+That puts a pole near 0.8 MHz inside the loop. Under the 200 Ω load, Q1 runs
+at 26 mA and the pole moves far out. So the problem depends on the load,
+which is why it shows up well below the ~3 MHz the design had estimated for
+the op-amp's input-capacitance pole. The generic op-amp model reproduces
+the oscillation only with 20–30 pF of input capacitance added. TI's own
+OPA2197 model needs none: at open load it rings at 0.91 MHz, each
+half-cycle 0.83× the last, close to sustained.
+
+**The fix (simulation, sim 14, TI's model).** The board has an empty
+footprint for C1, a capacitor across the feedback resistor. The predicted
+value is **3.4–3.9 pF**. **3.3 pF**, the next stocked value down, cuts the
+open-load ring to 0.40× per half-cycle. That rests on one simulated point:
+6 V, with D3 taken as 1.2 nF. The generic model's figure, 8.6–12.9 pF, would
+over-compensate. C1 is a 0603 part, which I can't fit reliably by hand, so
+it isn't fitted. Rev 2 has the assembler fit it.
+
+**Working around it until then (simulation, sim 13).** A resistor of 470 Ω or
+less clamped across the device keeps the bare loop quiet from 0.1 V up. The
+host subtracts its current using the measured voltage. The next bench session
+tests that first, at 0.1 V and 0.3 V.
 
 ## Design decisions
 
@@ -140,13 +188,9 @@ precision of every figure here.
 (`sim/05_diffamp_mc.cir`). LTspice draws uniform, independent tolerances, so
 this spread is conservative.*
 
-**What the simulations don't cover.** Sim 08 doesn't model the op-amp's input
-capacitance at the inverting node. By hand estimate, it cuts the ~59° margin
-to roughly 10–25° with the compensation footprint empty, so **the bare loop
-may ring hard or oscillate** at first power-up
-([`hardware/CONTINGENCY.md`](hardware/CONTINGENCY.md) §2B). That is what the
-first bench test looked for. It found the oscillation at open load and
-below the predicted frequency: see [Block 1 results](#block-1-results-first-power-up-board-2).
+Sims 02–11 didn't model D3's ~1 nF, the PTC or the Kelvin divider; sim 12
+added them. That is the gap the board fell into at open load: see
+[the finding](#a-measured-finding-the-open-load-oscillation).
 
 ### Host software, closed loop on a simulated device
 
@@ -164,8 +208,32 @@ require the same values back. **Simulated, `ct_sim`:**
 | diode I_S = 2.5 nA | 2.73 nA (9%; quantisation, explained in [`host/README.md`](host/README.md)) |
 | diode R_s = 0.6 Ω | 0.5914 Ω (1.4%) |
 
-137 host tests and the firmware unit suites pass against it. That validates
-the software path only. It says nothing about the analog hardware.
+With a 470 Ω resistor beside the device, its current subtracted, and the
+extracted card run back through ngspice, the simulated diode comes back as
+n = 1.751, I_S = 2.52 nA and R_s = 0.601 Ω, with a 0.63 mV rms residual
+([`host/README.md`](host/README.md#from-a-capture-to-the-overlay)). 159
+host tests and the firmware unit suites pass. That validates the software
+path only. It says nothing about the analog hardware.
+
+## Block diagram
+
+```
+   Nucleo-F303RE                     Board
+  ┌──────────────┐
+  │ DAC1_OUT2 PA5├─shunt─► PA6 ─► [×3.32] ─► [OPA2197 + BD139 follower] ─► R_sense ─┬─► R_iso 22Ω ─► PTC ─► shunt ─► DUT drain
+  │              │                                ▲      │                         │                        │            │
+  │              │                                │   [Q2 current limiter]        │                   [buffered     [Kelvin pair
+  │              │                                └─────────── feedback ──────────┘                   diff amp ×20]  ÷4 + buffer]
+  │ ADC1  PA0   ◄├──────────────────────────────────────────────────────────────────────────────────────────┘            │
+  │ ADC2  PC0   ◄├───────────────────────────────────────────────────────────────────────────────────────────────────────┘
+  │ DAC1_OUT1 PA4├─────► [×3.32] ─► [buffer] ─► 1 kΩ ─► DUT gate  (12 V Zener clamp)
+  │ USART2 ◄─────┼─► ST-LINK VCP ─► USB ─► Python host
+  └──────────────┘                                                     DUT source ─► GND        (SMAJ12A TVS on the drain)
+```
+
+Per point: set the gate DAC, set the drain DAC, wait to settle, oversample both
+ADCs 64×, send a CSV row. The host recomputes current and voltage from the raw
+accumulators and checks them against the firmware's own numbers.
 
 ## PCB
 
@@ -204,33 +272,9 @@ ignores. A regression test checks that no single write reaches 16 bytes. After
 the fix, two hold runs back to back worked after a replug (commit `2debc57`).
 An ST-LINK firmware upgrade might also fix it. That is untested.
 
-## Status
+## Bench record
 
-**Done**
-- LTspice and Monte Carlo analysis of every analog block (above).
-- Schematic and two-layer PCB; DRC/ERC clean; topology checker.
-- Five boards fabricated and fully assembled by JLCPCB (`hardware/ORDER.md`).
-- Firmware builds for the STM32 and runs on the Nucleo; the serial link to
-  the host works, after the fix above.
-- Host capture, extraction and model generation, tested against `ct_sim`.
-
-**Not done**
-- Board 2 is powered and Block 1 ran (below); it failed at open load, so
-  the diode I-V curve on [`hardware/MVP_CARD.md`](hardware/MVP_CARD.md) has
-  not been run.
-- No real device has been measured, and the closed-loop validation
-  (measure → model → LTspice → build → compare, blueprint §6) has not started.
-- The short-circuit and thermal test (H4 Block 4) waits on an insulator
-  between Q1 and its heatsink.
-- Ranges 2 and 3 are fitted but out of current scope.
-
-**Open questions the bench will answer**
-- How far the Nucleo LED load on PA5 cuts sweeps above ~6.6 V
-  (`DECISIONS.md` R2-3).
-- The buffered DAC is guaranteed only from 0.2 V to VDDA − 0.2 V, which is
-  0.66–10.29 V after the ×3.32 gain, not 0–10.96 V (blueprint §3.5).
-
-### Block 1 results: first power-up, board 2
+### Block 1 measurements: first power-up, board 2
 
 **Measured, 2026-11-03**, from [`hardware/MVP_CARD.md`](hardware/MVP_CARD.md)
 (raw data in `host/h4/mvp_*.csv`; full log in
@@ -252,53 +296,48 @@ or ringing (H4 step 5, not run). C1, the compensation capacitor, is empty.
 The 26 mV under load is over the card's limit, but it is broadband noise,
 not oscillation. The limit allowed less than 2 DAC steps at TP3.
 
-**What it means (analysis and simulation, LTspice sims 12–14; details in
-[`docs/characterization.md`](docs/characterization.md)).** At open load, the
-pass transistor carries only ~0.2 mA. It then drives the ~1 nF of the
-socket's protection diode (D3) through ~41 Ω, and that puts a pole near
-0.8 MHz inside the loop. Under the 100 nF ‖ 200 Ω load, the transistor runs
-at 26 mA and the large capacitor sits safely behind R_iso. That is why the
-problem depends on the load. It is also why it shows up well below the
-~3 MHz crossover the design estimated for the op-amp input pole. With TI's
-own model of the op-amp, the bare loop at open load is near the edge in
-simulation, ringing at 0.91 MHz. A 3.3 pF capacitor in the empty C1
-position damps that ring well, and around 3.4–3.9 pF is the predicted
-value. The generic model's 8.6–12.9 pF would be too much.
+### Next session
 
-### First diode I-V (only if Block 1 passes)
+`hardware/MVP_CARD.md` §D: about 45 minutes, no soldering. In order:
+1. 470 Ω across D–S, held at 0.1 V and 0.3 V with the scope watching.
+2. A calibration sweep of that resistor.
+3. Six accuracy points against a DMM.
+4. One diode with the resistor beside it.
+5. A small N-MOSFET, if there's time.
 
-Not run: Block 1 failed at open load, and a diode sweep starts near open
-load. By simulation (sim 13), a 470 Ω resistor clamped across the socket
-with the diode keeps the loop quiet from 0.1 V up. The host would then
-subtract its current using the measured voltage. That is proposed, not
-done.
-
-| | Result |
-|---|---|
-| Device | _TBD_ |
-| n | _TBD_ |
-| I_S | _TBD_ |
-| R_s | _TBD_ |
-
-*Plot to be added: `host/h4/mvp_10_diode.png`.*
-
----
+Then, at the desk, the model card, the ngspice run and the overlay above.
 
 ## Repository
 
 `hardware/`: KiCad project, decisions record, bring-up cards, order files ·
 `firmware/`: STM32 firmware, host-side simulator `ct_sim`, unit tests ·
-`host/`: Python capture, extraction and model generation · `sim/`: LTspice and
+`host/`: Python capture, extraction, model cards and the ngspice overlay · `sim/`: LTspice and
 Monte Carlo · `docs/`: characterization plans · `curve_tracer_blueprint.md`:
 the design document.
 
 ## Cost
 
-The first build cost about **$283**: four orders in `hardware/ORDER.md`, with
-shipping, duty and tax, excluding the Nucleo-F303RE. Most of that is one-time
-setup, stencil and shipping across five boards. **Each additional instrument
-is about $31**, including the Nucleo (~$18).
+From `hardware/ORDER.md`, at the 2026-10-11 prices:
 
-Low unit cost is not the goal. The 0.1% resistors and three OPA2197s add only
-a few dollars per board. They are what would make the closed-loop result
+| | Total | Per board (÷ 5) |
+|---|---|---|
+| JLCPCB: PCB, assembly and parts | $137.98 | $27.60 |
+| Shipping, duty and sales tax on that order | $97.07 | $19.41 |
+| **Assembled board, all-in** | **$235.05** | **$47.01** |
+| Nucleo-F303RE (DigiKey 497-15105-ND, $20.13 on 2026-10-11) | | $20.13 |
+| **One instrument** | | **$67.14** |
+
+**Not in that figure:**
+- the +15 V bench supply, the scope and the DMM;
+- the USB cable;
+- $48.05 of bring-up and contingency parts (test loads, the C_f kit,
+  heatsinks).
+
+The first build came to **$283.10**: the JLCPCB order plus those parts,
+with the Nucleo from the lab cabinet. Fixed costs dominate a five-board run.
+The extended-part loading fees alone are $55.62, more than the $45.59 of
+components.
+
+Low unit cost isn't the goal. The 0.1% resistors and the three OPA2197s
+add a few dollars per board. They are what would make the closed-loop result
 credible.
