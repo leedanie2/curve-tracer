@@ -126,7 +126,9 @@ def body_centres(refs):
 # record first, then add it.
 THT_VERIFIED = {
     'C16214': 'DC-005 2.0 barrel jack (J1)',
-    'C492401': 'PZ254V-11-02P 1x2 header (J2, J5)',
+    'C492401': 'PZ254V-11-02P 1x2 header (J5; J2 on rev 1)',
+    # Rev 2 (2026-11-03): THT, manualWeld, status yes, minimum 2, loss 1.
+    'C474881': 'KF301-5.0-2P terminal block (J2, rev 2)',
     'C492420': 'PZ254V-12-6P 2x3 header (J3, J4)',
     'C474882': 'KF301-5.0-3P terminal block (J6)',
     'C2897420': 'PM254-2-19-Z-8.5 2x19 socket (J7, J8)',

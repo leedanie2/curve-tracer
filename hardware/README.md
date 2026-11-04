@@ -51,7 +51,7 @@ connection §3 depends on: each op-amp pin, the three gains and the ÷4, the
 §14.5(5) tap position, limiter and clamp polarity (D3 included), the Nucleo
 pin map, star ground, and test-point coverage. It also fixes the list of
 parts on the DUT node (blueprint §3.3), so a part added there fails until its
-current has been checked against range 3. `--self-test` also plants fourteen faults that
+current has been checked against range 3. `--self-test` also plants sixteen faults that
 ERC passes, and fails if any goes uncaught. Change a value on purpose →
 change the matching assertion in the same commit.
 
@@ -157,8 +157,8 @@ It refuses to write the JLCPCB files if the BOM and CPL disagree.
 | File | What it is for |
 |---|---|
 | `fab/jlc/curve-tracer_gerbers.zip` | The quote page upload: Gerbers (Protel names) and Excellon PTH/NPTH, in JLCPCB's documented KiCad settings |
-| `fab/jlc/curve-tracer_bom_jlc.csv` | PCBA BOM upload. 33 lines, one per LCSC part, every one assembled by JLCPCB, through-hole parts and test loops included. No hand-solder lines |
-| `fab/jlc/curve-tracer_cpl_jlc.csv` | PCBA placement upload: 74 rows, PCBA parts only (35 through-hole: J1–J8, Q1 and 26 test loops), rotations corrected per `DECISIONS.md` P-10 |
+| `fab/jlc/curve-tracer_bom_jlc.csv` | PCBA BOM upload. 35 lines (rev 2; 33 on rev 1), one per LCSC part, every one assembled by JLCPCB, through-hole parts and test loops included. No hand-solder lines |
+| `fab/jlc/curve-tracer_cpl_jlc.csv` | PCBA placement upload: 75 rows (rev 2; 74 on rev 1), PCBA parts only (35 through-hole: J1–J8, Q1 and 26 test loops), rotations corrected per `DECISIONS.md` P-10 |
 | `fab/curve-tracer_bom.csv` | Engineering BOM: every line including DNP. TP6 and TP28, bare pads, are not in it |
 | `fab/gerbers/` | The same Gerbers unzipped, for review |
 
@@ -228,7 +228,7 @@ order; there is none between arrival and the Nov 16 freeze.
       ST's pin numbers, which run the other way (`DECISIONS.md` L-1)
 - [ ] Everything in [`ORDER.md`](ORDER.md) ordered, and its **Verify
       yourself** list cleared
-- [ ] In JLCPCB's BOM step all 33 lines match. The through-hole parts
+- [ ] In JLCPCB's BOM step all 35 lines match (33 on rev 1). The through-hole parts
       (J1–J8, Q1, the RH-5001 loops) show as hand-soldered by JLCPCB;
       nothing is unmatched
 - [ ] `tools/check_topology.py --self-test` passes on the frozen schematic

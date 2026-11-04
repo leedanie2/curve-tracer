@@ -17965,82 +17965,15 @@
 			)
 		)
 	)
-	(symbol
-		(lib_id "power:+15V")
-		(at 48.26 243.84 90)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "8245226b-a299-5789-b0bb-80b64e419e99")
-		(property "Reference" "#PWR019"
-			(at 48.26 243.84 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
+(label "VIN"
+		(at 48.26 243.84 180)
+		(effects
+			(font
+				(size 1.27 1.27)
 			)
+			(justify right bottom)
 		)
-		(property "Value" "+15V"
-			(at 49.53 240.03 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 48.26 243.84 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 48.26 243.84 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" ""
-			(at 48.26 243.84 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "ed8bc375-f8b5-54fd-a897-5c8af7f78e51")
-		)
-		(instances
-			(project "curve-tracer"
-				(path "/e0596715-75b4-5600-a613-447428ff345e"
-					(reference "#PWR019")
-					(unit 1)
-				)
-			)
-		)
+		(uuid "f086de3f-6fed-434a-ab0f-1086db7d77c0")
 	)
 	(symbol
 		(lib_id "power:+3V3")
@@ -19888,7 +19821,7 @@
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp yes)
+		(dnp no)
 		(uuid "9f30a7da-fcba-5888-915c-04d2951c0584")
 		(property "Reference" "C1"
 			(at 116.84 49.53 0)
@@ -19901,7 +19834,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "3.3p C0G (DNP)"
+		(property "Value" "4.7p C0G"
 			(at 116.84 52.07 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -19936,7 +19869,7 @@
 				(justify left)
 			)
 		)
-		(property "Description" "C_f across R_f. 3.3 pF hand-fitted at H4 P3; the C_f sweep may change it (CONTINGENCY.md §2)"
+		(property "Description" "C_f across R_f. Rev 2: 4.7 pF fitted by JLCPCB (DECISIONS.md R2-4)"
 			(at 114.3 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -19948,7 +19881,7 @@
 				(justify left)
 			)
 		)
-		(property "MPN" "0603CG3R3B500NT"
+		(property "MPN" "0603CG4R7B500NT"
 			(at 114.3 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -19972,7 +19905,7 @@
 				(justify left)
 			)
 		)
-		(property "LCSC" "C2836771"
+		(property "LCSC" "C313086"
 			(at 114.3 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -19996,7 +19929,7 @@
 				(justify left)
 			)
 		)
-		(property "Assembly" "DNP"
+		(property "Assembly" "PCBA"
 			(at 114.3 50.8 0)
 			(hide yes)
 			(show_name no)
@@ -25663,7 +25596,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
+		(property "Footprint" "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2_1x02_P5.00mm_Horizontal"
 			(at 55.88 243.84 0)
 			(hide yes)
 			(show_name no)
@@ -25685,7 +25618,7 @@
 				)
 			)
 		)
-		(property "Description" "Supply header (§14.4)"
+		(property "Description" "Bench supply input, 5 mm screw terminal; pin 1 on VIN, behind Q3 (rev 2, REV2.md E4, O1)"
 			(at 55.88 243.84 0)
 			(hide yes)
 			(show_name no)
@@ -25696,7 +25629,7 @@
 				)
 			)
 		)
-		(property "MPN" "PZ254V-11-02P"
+		(property "MPN" "KF301-5.0-2P"
 			(at 55.88 243.84 0)
 			(hide yes)
 			(show_name no)
@@ -25707,7 +25640,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "XFCN"
+		(property "Manufacturer" "Cixi Kefa"
 			(at 55.88 243.84 0)
 			(hide yes)
 			(show_name no)
@@ -25718,7 +25651,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C492401"
+		(property "LCSC" "C474881"
 			(at 55.88 243.84 0)
 			(hide yes)
 			(show_name no)
