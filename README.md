@@ -11,10 +11,12 @@ them out as a SPICE `.model` card. The aim is to close the loop
 It is built as an assembled PCB carrying an STM32 Nucleo-F303RE, with firmware
 in C and a Python host.
 
-> **Status, 2026-11-01:** designed, simulated, fabricated and assembled. **No
-> board has been powered yet.** Every performance figure below comes from
-> simulation and says which one. Bench results go in [Status](#status) as they
-> come in.
+> **Status, 2026-11-03:** designed, simulated, fabricated and assembled.
+> **One board has been powered** and its oscillation check run: no sustained
+> oscillation with a 200 Ω ‖ 100 nF load; intermittent ~0.8–1.15 MHz
+> oscillation at open load, C1 empty ([Status](#status)). No device has been
+> measured yet. Every other performance figure below comes from simulation
+> and says which one.
 
 ![3D render of the assembled board](hardware/review/pass2/p2_3d.png)
 
@@ -143,7 +145,8 @@ capacitance at the inverting node. By hand estimate, it cuts the ~59° margin
 to roughly 10–25° with the compensation footprint empty, so **the bare loop
 may ring hard or oscillate** at first power-up
 ([`hardware/CONTINGENCY.md`](hardware/CONTINGENCY.md) §2B). That is what the
-first bench test looks for.
+first bench test looked for. It found the oscillation at open load and
+below the predicted frequency: see [Block 1 results](#block-1-results-first-power-up-board-2).
 
 ### Host software, closed loop on a simulated device
 
@@ -212,9 +215,9 @@ An ST-LINK firmware upgrade might also fix it. That is untested.
 - Host capture, extraction and model generation, tested against `ct_sim`.
 
 **Not done**
-- No board has been powered. Bring-up starts with
-  [`hardware/MVP_CARD.md`](hardware/MVP_CARD.md): power-up, an oscillation
-  check, then one diode I-V curve.
+- Board 2 is powered and Block 1 ran (below); it failed at open load, so
+  the diode I-V curve on [`hardware/MVP_CARD.md`](hardware/MVP_CARD.md) has
+  not been run.
 - No real device has been measured, and the closed-loop validation
   (measure → model → LTspice → build → compare, blueprint §6) has not started.
 - The short-circuit and thermal test (H4 Block 4) waits on an insulator
@@ -222,8 +225,6 @@ An ST-LINK firmware upgrade might also fix it. That is untested.
 - Ranges 2 and 3 are fitted but out of current scope.
 
 **Open questions the bench will answer**
-- Whether the loop oscillates with the compensation footprint empty
-  (above).
 - How far the Nucleo LED load on PA5 cuts sweeps above ~6.6 V
   (`DECISIONS.md` R2-3).
 - The buffered DAC is guaranteed only from 0.2 V to VDDA − 0.2 V, which is
@@ -231,23 +232,46 @@ An ST-LINK firmware upgrade might also fix it. That is untested.
 
 ### Block 1 results: first power-up, board 2
 
-*To be filled in from `hardware/MVP_CARD.md`. Pass bands and their
-derivation are on the card.* A pass here shows no sustained oscillation
-under a DC hold. It does not measure phase margin or ringing (H4 step 5, not
-run).
+**Measured, 2026-11-03**, from [`hardware/MVP_CARD.md`](hardware/MVP_CARD.md)
+(raw data in `host/h4/mvp_*.csv`; full log in
+[`docs/characterization.md`](docs/characterization.md)). A pass here shows
+no sustained oscillation under a DC hold. It does not measure phase margin
+or ringing (H4 step 5, not run). C1, the compensation capacitor, is empty.
 
 | Measurement | Pass band | Result |
 |---|---|---|
-| Supply current at power-up | 3–25 mA | _TBD_ |
-| Scope baseline at TP3, idle (B) | < 10 mV p-p | _TBD_ |
-| Hold 6 V into 100 nF ‖ 200 Ω: p-p at TP3 | ≤ B + 5 mV | _TBD_ |
-| … measured V, I | 4.8–5.5 V, 23–29 mA | _TBD_ |
-| Hold 6 V, open load: p-p at TP3 | ≤ B + 5 mV | _TBD_ |
-| … measured V, I | 5.7–6.2 V, ≤ 0.5 mA | _TBD_ |
-| Oscillation frequency, if any | — | _TBD_ |
-| **Block 1 verdict** | | _TBD_ |
+| Supply current at power-up | 3–25 mA | 3 mA, supply in CV (rails not checked) |
+| Scope baseline at TP3, idle (B) | < 10 mV p-p | 12.0 mV, board powered |
+| Hold 6 V into 95.2 nF ‖ 202 Ω (measured): p-p at TP3 | ≤ B + 5 mV | 12–30 mV; 26.8 mV, and 26.0 mV with the probe ground moved. Broadband, no periodic component |
+| … measured V, I | 4.8–5.5 V, 23–29 mA | 5.193 V, 25.74 mA (5.193 V / 202 Ω = 25.71 mA) |
+| Hold 6 V, open load: p-p at TP3 | ≤ B + 5 mV | **Oscillates**: > 0.2 V to > 2 V p-p (clipped), varying run to run |
+| … measured V, I | 5.7–6.2 V, ≤ 0.5 mA | 6.006–6.192 V, 0.83–3.0 mA; the largest oscillation gave the largest errors |
+| Oscillation frequency | — | ~0.79 MHz (read while clipped) and 1.149 MHz |
+| **Block 1 verdict** | | **Fail**: no sustained oscillation with a 200 Ω ‖ 100 nF load; intermittent ~0.8–1.15 MHz oscillation at open load, C1 empty |
+
+The 26 mV under load is over the card's limit, but it is broadband noise,
+not oscillation. The limit allowed less than 2 DAC steps at TP3.
+
+**What it means (analysis and simulation, LTspice sims 12–14; details in
+[`docs/characterization.md`](docs/characterization.md)).** At open load, the
+pass transistor carries only ~0.2 mA. It then drives the ~1 nF of the
+socket's protection diode (D3) through ~41 Ω, and that puts a pole near
+0.8 MHz inside the loop. Under the 100 nF ‖ 200 Ω load, the transistor runs
+at 26 mA and the large capacitor sits safely behind R_iso. That is why the
+problem depends on the load. It is also why it shows up well below the
+~3 MHz crossover the design estimated for the op-amp input pole. With TI's
+own model of the op-amp, the bare loop at open load is near the edge in
+simulation, ringing at 0.91 MHz. A 3.3 pF capacitor in the empty C1
+position damps that ring well, and around 3.4–3.9 pF is the predicted
+value. The generic model's 8.6–12.9 pF would be too much.
 
 ### First diode I-V (only if Block 1 passes)
+
+Not run: Block 1 failed at open load, and a diode sweep starts near open
+load. By simulation (sim 13), a 470 Ω resistor clamped across the socket
+with the diode keeps the loop quiet from 0.1 V up. The host would then
+subtract its current using the measured voltage. That is proposed, not
+done.
 
 | | Result |
 |---|---|

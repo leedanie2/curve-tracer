@@ -1,0 +1,49 @@
+* 13_parallel_load.cir -- sim 12's circuit (bare loop, C1 empty) with a
+* resistor R_p across D-S, held at low levels, for the diode demo: a diode
+* is off below ~0.5 V, so R_p is the only load at the start of its sweep.
+*
+* C_in is taken at sim 12's fitted values, 20 pF and 30 pF: the smallest that
+* reproduce the open-load oscillation measured on 2026-11-03 (sim 12). They
+* are effective values that lump every unmodelled phase lag, not a measured
+* capacitance. cd3 brackets D3 at low bias.
+* lcase 1 open; 2-9 R_p = 10k, 4.7k, 2.2k, 1k, 680, 470, 330, 200; 10 100 nF alone.
+* Parse: python3 host/parse_osc.py sim/13_parallel_load.raw
+
+XU1 inp inm vcc 0 oa level2 Avol=1Meg GBW=10Meg Slew=20Meg Ilimit=65m Rail=0 Vos=0 En=0 Enk=0 In=0 Ink=0 Rin=500Meg
+V2 inp 0 PWL(0 0 2u 0 2.1u {vds/3.32} 150u {vds/3.32} 150.01u {vds/3.32+0.0015} 150.2u {vds/3.32+0.0015} 150.21u {vds/3.32})
+RG inm 0 10k
+Rf fb inm 23.2k
+Cin inm 0 {cin}
+V1 vcc 0 15
+Rbase base oa 330
+XQ1 vcc base e BD139
+D1 e base 1N4148
+Q2 base e fb 0 2N3904
+Rsense e fb 10
+Cprobe e 0 12p
+Rprobe e 0 10Meg
+Riso fb load 22
+Rptc load ptcout 8.4
+Rsh ptcout dut 1
+Cd3 dut 0 {cd3}
+Rkel dut 0 400k
+RL dut 0 {RLv}
+CL dut 0 {CLv}
+
+.model D D
+.lib C:\users\crossover\AppData\Local\LTspice\lib\cmp\standard.dio
+.model NPN NPN
+.model PNP PNP
+.lib C:\users\crossover\AppData\Local\LTspice\lib\cmp\standard.bjt
+.include models/BD139.LIB
+.lib UniversalOpAmp2.lib
+
+.step param lcase list 1 2 3 4 5 6 7 8 9 10
+.step param vds list 0.1 0.2 0.3 0.6 1.0 1.5 6
+.step param cin list 20p 30p
+.step param cd3 list 0.5n 1.2n
+.param RLv=table(lcase,1,1e9,2,10k,3,4.7k,4,2.2k,5,1k,6,680,7,470,8,330,9,200,10,1e9)
+.param CLv=table(lcase,1,1f,2,1f,3,1f,4,1f,5,1f,6,1f,7,1f,8,1f,9,1f,10,100n)
+.tran 0 300u 0 5n
+.save V(e) V(dut) V(oa) I(Rsh)
+.end

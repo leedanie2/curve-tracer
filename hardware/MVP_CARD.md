@@ -33,12 +33,13 @@ second: `t= N s  vds_meas … V  i_meas … mA`. That `t` is your clock.
 | 1b | **(b)** **SCK/D13** hole ↔ **MISO/D12** hole. The shunt joins PA5 (D13) to PA6 (D12) | Beeps | ☐ | Move the shunt one row, redo (b) and (c) |
 | 1c | **(c)** **SCK/D13** hole ↔ the right socket's **GND** hole | No beep. A faint glow from LD2 is the DMM driving the LED, not a beep | ☐ | The shunt is on GND–PA5. Move it one row, redo (b) and (c). Two moves and still failing: **STOP** |
 | 2 | **Seat the Nucleo** on board 2: CN7 into J7, CN10 into J8. Pin 1 of CN7 and CN10 is the end nearest the Nucleo's USB connector; that end goes to the square-pad end of J7 and J8. Every pin goes into a hole and none is left over. J3 and J4 jumpers on **RNG1** | Seated, no pins left over | ☐ | Pull it out and redo |
-| 3 | **J6.** L1 (100 nF ‖ 200 Ω, leads ≤ 3 cm) goes to pin 2 (D) and pin 3 (S). Kelvin pair: J5 pin 1 to J6 D, J5 pin 2 to J6 S. Pin 1 (G) stays empty | All four wires tight | ☐ | Retighten |
+| 3 | **J6.** Find the pins first: **G is the end by the ▲ mark, D is the middle** (it beeps to TP19), S is the other end. On board 2 the wire openings face into the board, toward D3/TP19; that is how it was assembled and is fine. L1 (100 nF ‖ 200 Ω, leads ≤ 3 cm) goes to D and S. Kelvin pair: J5 pin 1 (HI) to J6 D, J5 pin 2 (LO) to J6 S. G stays empty | All four wires tight | ☐ | Retighten |
 | 4 | Nucleo USB to the laptop. Run `python -m ct_host ports`, then set the port, for example `P=/dev/cu.usbmodem103`: use the number `ports` printed | The Nucleo is listed | port above | Replug USB, redo. Still not listed: **STOP** |
-| 5 | **Supply:** 15.00 V, current limit **100 mA**. Output ON with the leads free. DMM on DC V: red probe on the red lead, black probe on the black lead. Output OFF | +14.90 to +15.10 V | ____ V | Negative: the leads are swapped. Fix and redo. *J2 has no reverse-polarity protection* |
+| 5 | **Supply (KD3005P).** Its **A display shows the actual current, not the limit**, so the limit is set into a short. **LOCK must be off** (hold the VOLTAGE knob to toggle it). Turn the CURRENT knob fully down. Short the red and black leads together, output ON, and turn CURRENT up until the A display reads **0.100**. Output OFF, remove the short. Set **15.00 V**. Output ON with the leads free. DMM on DC V: red probe on the red lead, black probe on the black lead. Output OFF | +14.90 to +15.10 V | ____ V | Negative: the leads are swapped. Fix and redo. *J2 has no reverse-polarity protection* |
 
 **Scope setup** (once, board still unpowered).
-1. Press **Default Setup**. Set the switch on the probe body to **10×**.
+1. Press **Save/Recall**, then **Recall Factory Setup**. The TDS3034C has
+   no Default Setup button. Set the switch on the probe body to **10×**.
 2. CH1 menu: Probe **10×**, Coupling **AC**, Bandwidth limit **ON** (20 MHz).
 3. Volts/div **20 mV**. Time/div **1 µs**.
 4. Trigger: Source **CH1**, Mode **Auto**, Level **0 mV**.
@@ -53,8 +54,8 @@ In Auto mode the trace is drawn even when nothing triggers it.
 
 | # | Do | Pass | Record | Fail → |
 |---|---|---|---|---|
-| 6 | Supply red lead to J2 **"+15V"**, black lead to J2 **"GND"**. Output ON. Read the supply's current display after 5 s | 3–25 mA, and the supply is not in CC (current limit) | ____ mA | **STOP** |
-| 7 | **Baseline.** Nothing is running, so the loop can't oscillate (CONTINGENCY §2B). Read Pk-Pk | Flat, fuzzy line; Pk-Pk < 10 mV | B = ____ mV | Check the probe tip, the ground clip and 10× in both places. Then record B and go on |
+| 6 | Push a **female jumper wire** onto each J2 pin, then clip the supply's red lead to the jumper on J2 **"+15V"** and the black lead to the jumper on J2 **"GND"**. Never clip straight onto J2: an alligator clip there can bridge both pins. Output ON. Read the supply's A display (actual current) after 5 s | 3–25 mA, and the supply is not in CC (current limit) | ____ mA | **STOP** |
+| 7 | **Baseline, board powered.** Supply output ON from step 6; no `HOLD` running. Nothing is running, so the loop can't oscillate (CONTINGENCY §2B). Read Pk-Pk. A reading taken with the output OFF is not B | Flat, fuzzy line; Pk-Pk < 10 mV | B = ____ mV | Check the probe tip, the ground clip and 10× in both places. Then record B and go on |
 | 8 | **L1 load.** `HOLD --vds 6 --seconds 60 -o h4/mvp_08_hold_L1.csv`. Between t = 20 and 40 s: **(a)** scope Pk-Pk; **(b)** one terminal line | (a) ≤ B + 5 mV, trace looks like step 7's. (b) vds_meas 4.8–5.5 V, i_meas 23–29 mA | (a) ____ mV ; (b) ____ V, ____ mA | (a) Read Frequency, f = ____ MHz. (b) Record it. Either way, go to 9 and stop after it |
 | 9 | Output OFF. Take L1 off J6; the Kelvin pair stays. Output ON. `HOLD --vds 6 --seconds 60 -o h4/mvp_09_hold_open.csv`. Read as step 8 | (a) ≤ B + 5 mV. (b) vds_meas 5.7–6.2 V, \|i_meas\| ≤ 0.5 mA | (a) ____ mV ; (b) ____ V, ____ mA | As step 8 |
 

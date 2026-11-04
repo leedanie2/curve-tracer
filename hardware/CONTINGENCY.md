@@ -41,7 +41,29 @@ R2-2).
 | 2b | L1, BW off | ____ | ____ | — |
 | 3 | open | ____ | ____ | 03_osc_open.csv |
 
-Predicted C_f, filled in off-bench from §3: C_in = ____ pF ; C_f = ____ pF
+**Filled in, 2026-11-03, board 2, from `MVP_CARD.md`** (its steps 8–9 stand
+in for H4 2 and 3; 2b was not run). All measured. 6 V hold, BW limit 20 MHz,
+AC coupling, 10× probe on TP3. Idle baseline B = 12.0 mV p-p, powered.
+
+| MVP step | Load | Probe ground | f (MHz) | p-p at TP3 | vds_meas, i_meas | File |
+|---|---|---|---|---|---|---|
+| 8 | L1 (202 Ω ‖ 95.2 nF, measured) | TP27 | none: broadband, counter read noise | 12–30 mV over t = 20–40 s | 5.193 V, 25.74 mA | `mvp_08_hold_L1.csv` |
+| 8b | L1 | TP27 | none at 1 µs/div (counter: 235 MHz, i.e. noise) | 26.8 mV | 5.192 V, 25.75 mA | `mvp_08b_hold_L1.csv` |
+| 8c (A2) | L1 | TP9, lead flat | "no ref crossing" | 26.0 mV | 5.192 V, 25.74 mA | `mvp_08c_hold_L1.csv` |
+| 9 | open, Kelvin pair in | TP9 | ~0.787 (read while clipped) | > 205 mV (clipped at 20 mV/div) | 6.006 V, 0.830 mA | `mvp_09_hold_open.csv` |
+| 9b | open | TP9 | 1.149 (~4.3 div/cycle at 200 ns/div) | > 2.05 V (clipped at 200 mV/div) | 6.192 V, 2.998 mA | `mvp_09b_hold_open.csv` |
+| 9c | open | TP9 | not cleanly periodic (trigger Auto) | ~0.56 V at 1 V/div | 6.007 V, 0.832 mA | `mvp_09c_hold_open.csv` |
+
+V and I are the 62-row means of each CSV. A1 sorts both open-load
+frequencies into A3 (0.3–20 MHz). Step 8's excess over B is broadband and
+did not move with the probe ground (A2), so it is not an oscillation. The
+amplitude at open load changed from run to run, and the run with the largest
+oscillation (9b) had the largest DC errors. The session stopped there (card
+step 9 fail branch); the diode was not run.
+
+Predicted C_f, filled in off-bench from §3: **C_in (effective) = 20–30 pF ;
+C_f = 8.6–12.9 pF by §1, not to be fitted.** Analysis and simulation (sims
+12–14), 2026-11-03: see §3A below for why this is not a fit value.
 
 **Off-bench after A3.** The predicted C_f is the record. Turning it into a
 fix is one of three routes (§7), and the choice is Daniel's:
@@ -168,6 +190,38 @@ and the load as well as the C_in pole. So off-bench:
    the oscillation is not the C_in pole and C_f is not the fix: §7.
 
 Until that sim is run, the only C_f figure is §2A's estimate, 2.2–3.9 pF.
+
+### 3A. Board 2, 2026-11-03: what §3 gave, and why it is not a fit value
+
+*Analysis and simulation, sims 12–14 (`sim/README.md`). The full write-up is
+in `docs/characterization.md`, under the 2026-11-02/03 bench log entry.*
+
+- **Step 2 had to change.** L1 did not oscillate, so f was matched at open
+  load. L1 was then checked, rather than the other way round. Sim 12 (sim
+  10/11's topology plus the PTC, shunt, D3, Kelvin divider and probe; the
+  generic op-amp macro-model) sustains an oscillation only at open load, and
+  only from **C_in ≈ 20–30 pF**: 0.67–0.99 MHz against the bench's
+  0.79–1.15 MHz. L1 stays quiet at every C_in up to 30 pF. Step 3 then gives
+  C_f = 8.6–12.9 pF.
+- **Step 4's cross-check fails in spirit.** 20–30 pF is 2–4× §2A's 5–9 pF,
+  and it sits at the edge of the 2–20 pF window. The measured f is well below
+  the ~3 MHz crossover of §2B, so the phase runs out at ~1 MHz. The C_in pole
+  alone cannot do that. Sim 12 rings near 0.8 MHz at open load with
+  C_in = 0. That mode is Q1 at ~0.2 mA bias driving D3's ~1 nF, and C_in
+  only erodes its damping.
+- **With TI's model the fit value falls away.** Sim 14 uses TI's OPAx197
+  model, which has its own input capacitance (6.4 pF per input, 1.6 pF
+  across them) and adds no C_in. At open load with C1 empty it rings at
+  0.91 MHz, each half-cycle 0.83× the last: near-marginal, as on the bench.
+  So sim 12's 20–30 pF is mostly excess phase the macro-model lacks. Under
+  L1 it is quiet (sim 14b). §1 with the model's 8 pF plus the board's
+  ≤ 1 pF gives **C_f ≈ 3.4–3.9 pF**, §2A's upper bracket. 3.3 pF cuts the
+  open-load ring to 0.40× per half-cycle (sim 14, one point: 6 V, D3
+  1.2 nF). 8.6–12.9 pF would be the *too much C_f* failure below.
+- **The load test (§4) applies.** The fault depends on the load: quiet into
+  L1, oscillating open. That points away from R_B and at the load side. A
+  resistor across D–S quiets it in simulation: ≤ 470 Ω from 0.1 V up
+  (sim 13).
 
 **What H4 can and cannot claim.** Blueprint §3.1 asks for the loop to be
 measured with C_f fitted and swept, and for no stability result to come

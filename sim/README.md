@@ -387,3 +387,137 @@ lowers every onset figure as Q2 warms.
 ```
 python3 host/parse_current_limit.py sim/11_limit_sizing.raw
 ```
+
+## 12_bare_loop_cin.cir — bare loop with a stray C_in at IN−, held at 6 V
+
+Written 2026-11-03, after board 2 oscillated at open load (CONTINGENCY A3).
+It is CONTINGENCY §3's procedure: add C_in at IN−, C1 empty, and step it
+until the simulated oscillation matches the bench.
+
+**Circuit:** sim 10/11's topology (feedback after `R_sense`, B-E clamp, Q2
+limiter), plus what the board has between FB_SENSE and the socket: `R_iso`
+22 Ω, the PTC at 8.4 Ω, the 1 Ω range-1 shunt, D3 as a capacitor
+(`cd3`), the 400 kΩ Kelvin divider, and the scope's 10× probe on TP3
+(12 pF ‖ 10 MΩ). `R_f` is the board's 23.2 kΩ. The op-amp is sims 08–11's
+`UniversalOpAmp2` (GBW 10 MHz, no excess phase, no input capacitance), with
+slew raised to the OPA2197's 20 V/µs. The 8.4 Ω PTC is inferred from the
+bench, not measured: (6.001 − 5.193) V / 25.74 mA − 23 Ω, which also
+absorbs any DAC error. D3's capacitance is in no datasheet on hand;
+distributor listings for other makers' SMAJ12A give 0.8–1.3 nF at 0 V, less
+at 6 V, so `cd3` is bracketed at 0.5, 1.2 and 2.2 nF.
+
+**Sweeps:** `cin` 0, 5, 9, 15, 20, 30 pF × load (open; 200 Ω ‖ 100 nF) ×
+`cd3`, 36 runs, ~30 s. The DAC steps 0 → 6 V at 2 µs; a 5 mV kick at the
+node at 150 µs; p-p and frequency at TP3 over the last 50 µs.
+
+**Results (simulated, LTspice, sim 12):**
+
+| `cin` | open, D3 0.5 nF | open, 1.2 nF | open, 2.2 nF | 200 Ω ‖ 100 nF, all `cd3` |
+|---|---|---|---|---|
+| 0–15 pF | quiet | quiet | quiet | quiet |
+| 20 pF | 1.24 V p-p, 0.986 MHz | 1.90 V, 0.893 MHz | quiet (rings, decays) | quiet |
+| 30 pF | 3.39 V, 0.954 MHz | 4.48 V, 0.780 MHz | 4.18 V, 0.673 MHz | quiet |
+
+Under the 200 Ω ‖ 100 nF load the node sits at 5.185 V, 25.94 mA (bench:
+5.193 V, 25.74 mA into 202 Ω; partly circular, since the PTC value came from
+that reading). Below the threshold the open-load loop rings after the kick
+at 0.8–2.6 MHz and decays more slowly as `cin` rises: at `cin` = 0 each
+half-cycle is ~0.3× the last, at 15 pF and 1.2 nF 0.93–0.95×. The ~0.8 MHz
+ring is there even at `cin` = 0. Sustained oscillation runs at a lower
+frequency than that small-signal ring: it is large-signal, with the follower
+cutting off on each down-swing (see `docs/characterization.md`).
+
+All runs need Gmin stepping for the operating point; all succeed.
+
+```
+python3 host/parse_osc.py sim/12_bare_loop_cin.raw
+```
+
+## 13_parallel_load.cir — the smallest resistor across D–S that keeps it quiet
+
+Written 2026-11-03 for the diode demo. A diode sweep starts at open load,
+because the diode is off below ~0.3–0.4 V on range 1, so the question is
+what resistor `R_p`, clamped across D–S with the diode, keeps the loop free
+of sustained oscillation from 0.1 V up.
+
+**Circuit:** sim 12's, at its fitted `cin` of 20 pF (the threshold) and
+30 pF (margin), `cd3` 0.5 and 1.2 nF (D3 near zero bias).
+
+**Sweeps:** load (open; `R_p` 10 k, 4.7 k, 2.2 k, 1 k, 680, 470, 330,
+200 Ω; 100 nF alone) × level (0.1, 0.2, 0.3, 0.6, 1.0, 1.5, 6 V) × `cin` ×
+`cd3`, 280 runs, ~3 min.
+
+**Results (simulated, LTspice, sim 13).** Sustained oscillation, p-p at TP3:
+
+| `R_p` | `cin` 20 pF (both `cd3`) | `cin` 30 pF, `cd3` 0.5 nF | `cin` 30 pF, `cd3` 1.2 nF |
+|---|---|---|---|
+| open | 0.6–6 V | 0.2–6 V | 0.2–6 V |
+| 10 k, 4.7 k | 0.1–1.5 V | 0.1–6 V | 0.1–6 V |
+| 2.2 k | 0.1–0.3 V | 0.1–0.3 V | 0.1–1.5 V |
+| 1 k | quiet | quiet | **0.1–0.3 V**, 105–274 mV p-p |
+| 680 | quiet | quiet | **0.1 V**, 97 mV p-p, 0.76 MHz |
+| **470, 330, 200** | **quiet** | **quiet** | **quiet** |
+| 100 nF alone | quiet | quiet | quiet |
+
+470 Ω is the largest value quiet in all 28 level × corner cases. The
+100 nF-alone row shows that a large capacitance quiets the loop with almost
+no bias current, so the mechanism is not bias alone.
+
+```
+python3 host/parse_osc.py sim/13_parallel_load.raw
+```
+
+## 14_bare_loop_opa197.cir, 14b_l1_opa197.cir — sim 12 with TI's OPAx197 model
+
+Written 2026-11-03. Sims 08–13 use LTspice's generic `UniversalOpAmp2`,
+which has one pole and no excess phase. In sim 12 the fitted 20–30 pF
+"C_in" therefore stands in for every lag that model lacks. This sim swaps in
+the vendor model to see how much of that lag is real.
+
+**The model is not in git** (TI copyright). Fetch it once:
+
+```
+curl -sSL -o "$TMPDIR/sboma34.zip" https://www.ti.com/lit/zip/sboma34
+unzip -o -j "$TMPDIR/sboma34.zip" OPAx197.LIB -d sim/models
+```
+
+That is `OPAx197.LIB`, Final 1.3, 23 Jun 2022. It models input capacitance:
+C_COM 6.4 pF from each input to ground and C_DIFF 1.6 pF across them. That
+answers §2A's open question for the model: 6.4 pF is per input. So `cin` is
+0 here, and C1 (C_f, across R_f) is stepped instead.
+
+**Slow.** TI's E2E forum reports the same. Once a ring decays below
+~0.1 mV, the timestep collapses and the run never finishes. Each run stops at
+14 µs, and the 0 → 6 V start-up step at 2 µs is the only excitation. The
+metric is the start-up ring's frequency and the median ratio of successive
+half-cycle peaks over 3–14 µs. A ratio near 1 is near-marginal.
+
+**Sweeps:** `cf` 0, 3.3 pF, D3 1.2 nF. Sim 14 is open load. Sim 14b is
+L1 (200 Ω ‖ 100 nF). With L1, LTspice finds no operating point for TI's
+model (Gmin and source stepping both fail), so 14b starts from zero
+(`uic`). Its 6 V step charges 100 nF and is still settling at 14 µs, so its
+metric is the p-p left after a cubic fit to the settling over 10–14 µs.
+Each L1 run takes ~5 s. Each open-load run takes ~1 min. A first combined
+deck stalled for over an hour at the L1 operating point and was split.
+
+**Results (simulated, LTspice, sims 14 and 14b), V(e) at TP3:**
+
+| Load | `cf` | Ring f | Half-cycle ratio | First peak | Residual 10–14 µs |
+|---|---|---|---|---|---|
+| open | 0 | 0.91 MHz | **0.83** | 616 mV | — |
+| open | 3.3 pF | 1.1–1.6 MHz (few cycles) | **0.40** | 129 mV | — |
+| L1 | 0 | — | — | — | 0.24 mV p-p |
+| L1 | 3.3 pF | — | — | — | 0.24 mV p-p |
+
+With no C_in added, the bare loop at open load is near-marginal at
+0.91 MHz. Sim 12 needed 20–30 pF of C_in to reach that, so that figure
+mostly stands in for excess phase the macro-model lacks. 3.3 pF in C1 damps
+the ring well. Under L1 it is quiet either way. The ring decays here where
+the bench's was sustained, so the model is somewhat optimistic. The open
+3.3 pF ring is too damped to give a firm frequency: 1.10 MHz over 3–6.4 µs,
+1.55 MHz over 3–14 µs.
+
+```
+python3 host/parse_osc.py sim/14_bare_loop_opa197.raw --ring 3e-6 14e-6
+python3 host/parse_osc.py sim/14b_l1_opa197.raw --residual 10e-6 14e-6
+```
