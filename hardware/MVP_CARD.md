@@ -114,8 +114,10 @@ Supply output OFF before every change at J6.
 | ____ | ____ | ____ Ω | ____ Ω | ____ | ____ | ____ |
 
 **Parts.**
-- **R_p**: 470 Ω, any wattage, from the drawers. Fallbacks, in hand: 330 Ω
-  1 W (the R4 spares, LCSC C172941) and 200 Ω 1 W (L1's resistor, C172930).
+- **R_p**: 470 Ω, any wattage, from the drawers. Fallbacks, in this
+  order: **L1** (measured quiet at 6 V on 2026-11-03), then **330 Ω**, any
+  lab resistor of 1/4 W or more. The most the card puts in it is ~40 mW
+  (3.65 V in 15c).
 - **L1**: as measured on 2026-11-02, 95.2 nF ‖ 202 Ω.
 - One 1N4148 or 1N400x.
 - Optional, for step 18: a 2N7000 or BS170.
@@ -162,15 +164,18 @@ The expected readings come from R_p's share of the series string:
 |---|---|---|---|---|
 | 13a | Output OFF. Clamp R_p in J6 D–S, with the Kelvin wires. Output ON. `HOLD --vds 0.1 --seconds 20 -o h4/mvp_13a_hold_rp_0v1.csv` | No periodic wave | Pk-Pk ____ mV ; ____ V, ____ mA | Read Frequency: f = ____ MHz. Go to 13c |
 | 13b | `HOLD --vds 0.3 --seconds 20 -o h4/mvp_13b_hold_rp_0v3.csv` | No periodic wave | Pk-Pk ____ mV ; ____ V, ____ mA | As 13a |
-| 13c | **Only if 13a or 13b failed.** Output OFF. Swap R_p for the 330 Ω 1 W. Redo 13a and 13b. If either fails again, swap to the 200 Ω 1 W and redo them once more. Record the R_p you end on in the header, and use it from here on | Both holds pass | R_p used: ____ Ω ; Pk-Pk ____ / ____ mV | 200 Ω also oscillates: skip 14, 15a–c, 16, 17 and 18. Do 15d–15f (L1), then **STOP** |
+| 13c | **Only if 13a or 13b failed.** Output OFF. Swap R_p for **L1**. Redo 13a and 13b (expect 0.087 V, 0.43 mA and 0.260 V, 1.29 mA). If either fails again, swap L1 for the **330 Ω** and redo them once more (expect 0.091 V, 0.28 mA and 0.274 V, 0.83 mA). Record the R_p you end on in the header, with 202 Ω as R_DMM for L1, and use it from here on | Both holds pass | R_p used: ____ ; Pk-Pk ____ / ____ mV | 330 Ω also oscillates: skip 14, 15a–c, 16, 17 and 18. Do 15d–15f (L1), then **STOP** |
+| 13d | **DAC floor.** Look at vds_meas from 13a, on the R_p you ended on | vds_meas ≤ 0.20 V | floor: vds_meas ____ V | Above 0.20 V: record it as the floor. Do 14 and 15, then **STOP before the diode**: skip 16, 17 and 18 |
 
 **The readings at 13a also measure the DAC floor.** With 470 Ω, 13a should
 read about **0.094 V and 0.20 mA**, and 13b about **0.281 V and 0.60 mA**.
-If 13a reads well above 0.094 V, say 0.15 V or more, the sweep DAC is
-holding a floor: its buffered output is guaranteed only down to 0.2 V,
-0.66 V at the node (blueprint §3.5). That is a result, not a fail. Record
-it. The loop then never runs lower than that floor, so the hold still tests
-the lowest point the diode sweep can reach.
+If 13a reads well above 0.094 V, the sweep DAC is holding a floor: its
+buffered output is guaranteed only down to 0.2 V, 0.66 V at the node
+(blueprint §3.5). The loop then never runs lower than that floor, so the
+hold still tests the lowest point the diode sweep can reach. Up to 0.20 V
+the floor is a result, not a fail: record it and go on. Above 0.20 V, 13d
+stops the session before the diode, so the floor can be checked against
+what the diode curve would still show (Daniel, 2026-11-03).
 
 ### 14 (b). R_p alone: calibrate it
 
@@ -187,7 +192,8 @@ where the sweep starts, which is the DAC floor again.
 During each hold, at t = 10–15 s, read the terminal line, then put the DMM
 (DC V) across **J6 D and S**. D is the middle screw and S is the end away
 from ▲. The instrument's current is compared with V_DMM / R, where R is
-R_DMM for R_p and 202 Ω for L1.
+R_DMM for R_p and 202 Ω for L1. **If R_p is L1 (13c), skip 15a–15c**:
+15d–15f are the same load.
 
 **Pass, per row:** |vds_meas − V_DMM| ≤ 2% of V_DMM + 10 mV, and
 |i_meas − V_DMM / R| ≤ 3% + 0.10 mA. The bands allow for the firmware's
@@ -218,7 +224,7 @@ measured only up to ~26 mA.
 
 | # | Do | Pass | Record | Fail → |
 |---|---|---|---|---|
-| 16 | Output OFF. Take L1 out. Clamp R_p back in D–S, then the diode: **anode to D (middle), banded end to S**. Twist the leads and tug each wire. Output ON | All wires tight | ☐ | Retighten |
+| 16 | Output OFF. If R_p is L1, leave it in. Otherwise take L1 out and clamp R_p back in D–S. Then the diode: **anode to D (middle), banded end to S**. Twist the leads and tug each wire. Output ON | All wires tight | ☐ | Retighten |
 | 17 | `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100 --i-limit 40 --device <part> --r-parallel h4/mvp_14_rp.csv -o h4/mvp_17_diode_rp.csv`. **Output OFF.** Then `python -m ct_host extract h4/mvp_17_diode_rp.csv --type diode`. The R_p current is subtracted using the step 14 fit, and the header records it | `end : ok` or `ilimit`; no periodic wave during the capture; n is 1.0–2.5 | end ____ ; n ____ ; I_S ____ ; R_s ____ ; R_p auto ____ Ω | n is near 0 or negative: the diode is backwards. Flip it and redo once. A periodic wave: record f and Pk-Pk, keep the file, go on |
 
 `R_p auto` is the host's cross-check: R_p fitted from this capture's own
@@ -247,10 +253,13 @@ The model, the simulation and the overlay are desk work
 - **The expected readings** use the series string R_iso 22 Ω + PTC 8.4 Ω
   (implied by Block 1) + shunt 1 Ω, and the measured L1.
 - **The 40 mA limit** is the total current, and R_p takes its share:
-  3 mA at 1.5 V and 6 mA at 3 V.
+  3 mA at 1.5 V and 6 mA at 3 V with 470 Ω, 7 and 15 mA with L1.
 - **R_p's cost.** The host subtracts V / R_p from every reading. Gain
   error in the instrument's current reading cancels, because step 14
   fits R_p with the same current reading. What does not cancel is drift in
   R_p and the fit's own error. At 0.5% of 470 Ω that is ~6 µA at 0.6 V:
   3% of a 0.2 mA diode current, which is where the diode fit's floor sits
-  (5 LSB).
+  (5 LSB). It scales as 1/R_p: ~9 µA (5%) with 330 Ω and ~15 µA (7%)
+  with L1.
+- **The fallbacks' expected readings** use the same string: 202 / 233.4 =
+  0.865 of the command for L1, 330 / 361.4 = 0.913 for 330 Ω.
