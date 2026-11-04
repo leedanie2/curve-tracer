@@ -350,7 +350,10 @@ driven, so C_DIFF counts to ground) plus the board's share at IN-, under
 from 0.83× to **0.40×** per half-cycle, and its first peak from 616 to
 129 mV. **8.6–12.9 pF would over-compensate**: that is CONTINGENCY's *too
 much C_f* failure. C_f damps the load-side mode in (b); it does not remove
-it. Sim 14 is one point (6 V, D3 1.2 nF), not a sweep.
+it. Sim 14 is one point (6 V, D3 1.2 nF). Sims 14c and 14d add 2.2 and
+4.7 pF at 6 V, and 0.1 and 0.3 V with C1 empty and 3.3 pF: damping
+improves steadily up to 4.7 pF, and 3.3 pF is quiet at both low levels
+(`sim/README.md`).
 
 **(b) Why it is quiet with L1 and oscillates at open load.** *Analysis,
 checked against sims 12 and 13.*

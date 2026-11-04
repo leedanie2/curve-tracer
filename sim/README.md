@@ -521,3 +521,54 @@ the bench's was sustained, so the model is somewhat optimistic. The open
 python3 host/parse_osc.py sim/14_bare_loop_opa197.raw --ring 3e-6 14e-6
 python3 host/parse_osc.py sim/14b_l1_opa197.raw --residual 10e-6 14e-6
 ```
+
+## 14c_cf_bracket_opa197.cir, 14d_low_level_opa197.cir — C1 either side of 3.3 pF, and low levels
+
+Sim 14 with TI's model, open load, D3 1.2 nF, for the rev 2 C1 value
+(`hardware/REV2.md` on the `rev2` branch). **14c** steps C1 to the stocked
+values either side of 3.3 pF, 2.2 and 4.7 pF, at 6 V. **14d** holds 0.1
+and 0.3 V with C1 empty and 3.3 pF. At 0.1 V Q1 carries only ~3 µA, the
+case sim 13 found hardest.
+
+**Run notes.** 14c's 4.7 pF step hit the timestep collapse at 9.30 µs and
+was stopped there after an hour (2 fs of simulated time per second). Its
+raw file was truncated to whole points and read over 3–9.2 µs, and so were
+sim 14's two steps and 14c's 2.2 pF step, for a common window. 14d runs to
+80 µs, ~40 min. Its start-up overshoot recovers slowly through R_f + R_g
+and D3, so 14 µs would have caught that recovery, not the loop.
+
+**Results (simulated, LTspice, TI's OPAx197 model), V(e) at TP3, 6 V step,
+3–9.2 µs:**
+
+| C1 | Sim | Half-cycle ratio | Peak over final | 1% settling after the edge |
+|---|---|---|---|---|
+| 0 | 14 | 0.80 | +1.47 V | 7.1 µs |
+| 2.2 pF | 14c | 0.50 | +0.76 V | 2.7 µs |
+| 3.3 pF | 14 | 0.40 | +0.40 V | 2.1 µs |
+| 4.7 pF | 14c | no ring (0.4 mV) | +0.4 mV; one 0.17 V dip | 0.5 µs |
+
+The edge itself is slew-limited and identical in all four: 90% in 0.33 µs.
+
+**Low levels (14d), residual p-p after a cubic fit:**
+
+| Level | C1 | 40–60 µs | 60–80 µs |
+|---|---|---|---|
+| 0.1 V | 0 | 8.68 mV | 0.23 mV (0.23 MHz, ratio 0.62) |
+| 0.3 V | 0 | 2.69 mV | 0.03 mV |
+| 0.1 V | 3.3 pF | 0.01 mV | 0.00 mV |
+| 0.3 V | 3.3 pF | 0.00 mV | 0.00 mV |
+
+**What it says.** In this model, damping improves steadily from 0 to
+4.7 pF. 4.7 pF shows none of CONTINGENCY's *too much C_f* failure, and
+C1's ±0.1 pF tolerance is far inside the 2.2–4.7 pF bracket. With C1
+empty the low levels ring and decay without sustaining. That is the same
+optimism as sim 14: the bench sustained at open load where the model
+decays. With 3.3 pF both levels are quiet within 40 µs. All of this is
+one vendor model, open load only.
+
+```
+python3 host/parse_osc.py sim/14c_cf_bracket_opa197.raw --ring 3e-6 9.2e-6   # after truncating, see above
+python3 host/parse_osc.py sim/14d_low_level_opa197.raw --ring 60e-6 80e-6
+python3 host/parse_osc.py sim/14d_low_level_opa197.raw --residual 40e-6 60e-6
+python3 host/parse_osc.py sim/14d_low_level_opa197.raw --residual 60e-6 80e-6
+```

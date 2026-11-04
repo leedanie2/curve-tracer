@@ -218,6 +218,10 @@ in `docs/characterization.md`, under the 2026-11-02/03 bench log entry.*
   ≤ 1 pF gives **C_f ≈ 3.4–3.9 pF**, §2A's upper bracket. 3.3 pF cuts the
   open-load ring to 0.40× per half-cycle (sim 14, one point: 6 V, D3
   1.2 nF). 8.6–12.9 pF would be the *too much C_f* failure below.
+  Sims 14c and 14d (2026-11-03) bracket it: at 6 V the ring damps
+  steadily from 2.2 to 4.7 pF, with no sign of the too-much side at
+  4.7 pF, and 3.3 pF is quiet at 0.1 and 0.3 V too. Same model, open load
+  only.
 - **The load test (§4) applies.** The fault depends on the load: quiet into
   L1, oscillating open. That points away from R_B and at the load side. A
   resistor across D–S quiets it in simulation: ≤ 470 Ω from 0.1 V up
