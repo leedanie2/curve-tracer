@@ -185,6 +185,11 @@ def run_checks(nl, report, fw=None):
     g = 1 + val('R1') / val('R2')
     chk(f'sweep gain 1 + R1/R2 = {g:.4f} (§3.1: 3.32)', abs(g - 3.32) < 1e-9)
     chk('C_f (C1) footprint across R_f', between('C1', 'FB_SENSE', 'OPA_SWEEP_IN-'))
+    # Rev 2 fits C1 by JLCPCB at 4.7 pF (DECISIONS.md R2-4); rev 1 left it DNP.
+    chk('C_f (C1) 4.7 pF C0G, fitted (PCBA), LCSC C313086 (R2-4)',
+        nl.comps['C1']['value'].startswith('4.7p') and 'C0G' in nl.comps['C1']['value']
+        and nl.comps['C1']['fields'].get('Assembly') == 'PCBA'
+        and nl.comps['C1']['fields'].get('LCSC') == 'C313086')
     chk('R_B (R3) 330 Ω, op-amp output to BD139_B',
         between('R3', 'OPA_SWEEP_OUT', 'BD139_B') and val('R3') == 330)
     chk('Q1 BD139: B=BD139_B, C=+15V, E=BD139_E',
@@ -252,13 +257,16 @@ def run_checks(nl, report, fw=None):
             and between(c, adc, 'GND') and on(d, 3) == adc and on(d, 1) == 'GND' and on(d, 2) == '+3V3')
 
     # power and ground
-    # J1 reverse-polarity protection (DECISIONS.md Q3). Drain and source swapped
+    # Reverse-polarity protection (DECISIONS.md Q3). Drain and source swapped
     # still powers the board, through the channel, and protects nothing: the
     # body diode then conducts a reversed supply straight onto the rail.
-    chk('Q3 P-FET: D=VIN (J1), S=+15V, G=RP_GATE; J1 pin 1 on VIN only',
+    # Rev 2 puts the bench input J2 behind Q3 too (REV2.md E4); on rev 1 it
+    # went straight to +15V.
+    chk('Q3 P-FET: D=VIN (J1, J2), S=+15V, G=RP_GATE; both inputs on VIN only',
         on('Q3', 3) == 'VIN' and on('Q3', 2) == '+15V' and on('Q3', 1) == 'RP_GATE'
         and on('J1', 1) == 'VIN' and on('J1', 2) == 'GNDPWR'
-        and {r for r, _ in nl.nets.get('VIN', [])} == {'J1', 'Q3', 'TP28'})
+        and on('J2', 1) == 'VIN' and on('J2', 2) == 'GNDPWR'
+        and {r for r, _ in nl.nets.get('VIN', [])} == {'J1', 'J2', 'Q3', 'TP28'})
     chk('Q3 gate: D6 12 V Zener cathode at source, anode at gate; R25 gate to GNDPWR',
         on('D6', 1) == '+15V' and on('D6', 2) == 'RP_GATE' and 'C12' in nl.comps['D6']['value']
         and between('R25', 'RP_GATE', 'GNDPWR'))
@@ -328,6 +336,8 @@ FAULTS = [
     ('Q3 gate Zener reversed', [('D6', 1, 'RP_GATE'), ('D6', 2, '+15V')]),
     ('output clamp D3 reversed', [('D3', 1, 'GNDPWR'), ('D3', 2, 'DUT_D')]),
     ('output clamp D3 back to DNP', [('D3', 'field:Assembly', 'DNP')]),
+    ('bench input J2 back on +15V, around Q3 (rev 1)', [('J2', 1, '+15V')]),
+    ('C_f (C1) back to DNP', [('C1', 'field:Assembly', 'DNP')]),
     ('a pull-down added to the DUT node, unreviewed (§3.3)', [('R24', 1, 'DUT_D')]),
 ]
 

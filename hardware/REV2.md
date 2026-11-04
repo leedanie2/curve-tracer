@@ -1,32 +1,45 @@
-# Rev 2 scope
+# Rev 2
 
-**Status: scoped, not designed, not ordered.** This file says what a second
-board revision changes and what it would cost. It has no CAD changes and no
-fab files. **Daniel approves the item list before any CAD starts**, and
-decides separately whether to order. The rev 1 record is `DECISIONS.md`
-(R2-1 to R2-4 are the items rev 1 already carried forward) and `ORDER.md`.
+**Status: approved and laid out, not ordered** (2026-11-03). Daniel
+approved E1, E2, E4, O1 and O4, and deferred E3, O2 and O3 to a later
+revision. The CAD is done on the `rev2` branch, and the JLCPCB fab files
+are in `fab/`. **Daniel places the order himself.** The rev 1 record is
+`DECISIONS.md` (R2-1 to R2-4 are the items rev 1 carried forward) and
+`ORDER.md`.
 
-The items are split in two:
-- **Essential (E1–E4).** These fix what a lab user hits on rev 1: the
-  oscillation, finding the pins, the device's position, and a reversed lead.
-- **Optional (O1–O4).** Each one stands alone, and any of them can be dropped
-  without touching the rest.
-
-Every item gives its risk, meaning what could go wrong with the change
-itself, and how rev 2's bring-up would show it.
-
-| # | Item | Parts cost, 5 boards | CAD | Risk |
+| # | Item | Status | Parts cost, 5 boards | Risk |
 |---|---|---|---|---|
-| E1 | C1 = 4.7 pF, fitted by JLCPCB | +$3.30 | BOM field | **Medium**: the value rests on one vendor model |
-| E2 | G/D/S on the silkscreen at J6 | $0 | silkscreen | Low |
-| E3 | J6 turned to face the board edge | $0 | hand re-route of DUT_D (Kelvin HI) | **Medium**: hand-routed analog net |
-| E4 | J2 through Q3 (reverse-polarity protection) | $0 | one net change | Low |
-| O1 | J2 becomes a 5 mm screw terminal | +$0.52 | footprint swap | Low |
-| O2 | A ground pad by TP3 | $0 | copper | Low |
-| O3 | DAC_SWEEP routed to PA5, no Nucleo jumper | $0 | re-route | Low to medium |
-| O4 | "TAB +15 V" and "USB ▲" on the silkscreen | $0 | silkscreen | None |
+| E1 | C1 = 4.7 pF, fitted by JLCPCB | **Done** | +$3.30 | **Medium**: the value rests on one vendor model |
+| E2 | G/D/S on the silkscreen at J6 | **Done** | $0 | Low |
+| E3 | J6 turned to face the board edge | Deferred | $0 | **Medium**: hand-routed analog net |
+| E4 | J2 through Q3 (reverse-polarity protection) | **Done** | $0 | Low |
+| O1 | J2 becomes a 5 mm screw terminal | **Done** | +$0.52 | Low |
+| O2 | A ground pad by TP3 | Deferred | $0 | Low |
+| O3 | DAC_SWEEP routed to PA5, no Nucleo jumper | Deferred | $0 | Low to medium |
+| O4 | **Q1's tab sits at +15 V with no heatsink** (the MVP card's top rule). **Nucleo orientation:** the card explains which end of CN7/CN10 is pin 1 (MVP step 2) | "▲ NUCLEO USB END ▲" between J7 and J8, at the end where the Nucleo's USB connector sits. **"TAB = +15 V" needs nothing**: rev 1 already has it, in the heatsink keep-out ("FIT Q1 HEATSINK / BEFORE SHORT TEST / TAB = +15 V"). This file listed it by mistake | none | **None** |
 
-## Essential
+## Deferred, and why
+
+Daniel deferred these three (2026-11-03). What they have in common: each
+changes copper on or beside a hand-routed analog net, for a convenience a
+lab user can live without. Leaving them out keeps rev 2's analog routing
+identical to rev 1's. The one change inside the loop is C1, so rev 2's
+bench results compare directly with rev 1's.
+- **E3, J6 turned to the edge.** This re-routes DUT_D, which carries the
+  Kelvin HI tap (routing policy net 6), by hand. DRC and
+  `check_topology.py` prove connectivity, not where the tap sits. E2's
+  labels fix the part of the problem that cost bench time: finding the pins.
+- **O2, ground pad by TP3.** It puts new copper next to the loop's output
+  and near the IN− no-pour area. The scope's clip lead to TP9 works, and
+  was used for both sessions. With C1 fitted there should be no oscillation
+  left to probe at TP3.
+- **O3, DAC_SWEEP to PA5.** This re-routes DAC_SWEEP (routing policy net
+  9), which drives IN+ of the loop amplifier. It removes one jumper on the
+  Nucleo, but the LED load stays (SB21 stays fitted), so it doesn't meet
+  R2-3. It would also make rev 1 and rev 2 need different Nucleo setups
+  (shunt or no shunt), a new way to get a dead sweep.
+
+## Essential (E1, E2, E4 done; E3 deferred)
 
 ### E1. C1 populated by JLCPCB: 4.7 pF C0G ±0.1 pF
 
@@ -89,11 +102,13 @@ the middle, S is the other end.
 **Rev 2.** Put "G", "D" and "S" on F.Silkscreen beside each J6 position,
 readable with the wire openings facing you. **No cost.**
 
-**Risk: low.** The risk is a label on the wrong pin, made at the same
-time as E3's rotation. Check it against the pad numbers in the footprint
-(pin 1 G, 2 D, 3 GNDPWR) and in JLCPCB's 3D view, which is the view that
-caught Q1's reversed tab on rev 1. Silkscreen too close to pads draws a
-DFM warning; it's moved, not ignored.
+**Risk: low.** The risk is a label on the wrong pin. **Done:** the
+labels sit at x 53.2, between J6 and D3, at each pad's y: G at 124.0
+(pin 1, the square pad), D at 119.0 (pin 2, DUT_D), S at 114.0 (pin 3,
+GNDPWR). That matches the footprint and `check_topology.py`'s J6
+assertion. DRC has no silkscreen warnings. With E3 deferred, J6 keeps
+rev 1's orientation, so the openings, and the labels beside them, face
+into the board toward D3.
 
 ### E3. J6 turned to face the board edge
 
@@ -148,7 +163,7 @@ through Q3. **No new parts.**
 - **The check.** A reversed lead at the supply's current limit: the board
   draws nothing and +15V reads 0 V.
 
-## Optional
+## Optional (O1 and O4 done; O2 and O3 deferred)
 
 | # | Issue on rev 1 | Rev 2 change | Cost | Risk |
 |---|---|---|---|---|
@@ -176,31 +191,93 @@ LED load stays.
 - **Kelvin sense routed to J6 on the board.** That would drop the J5 wires,
   but the board would then sense at the terminal, not at the device.
 
-## BOM delta
+## BOM delta (as built)
 
 | Ref | Rev 1 | Rev 2 | LCSC | JLCPCB tier | Effect on 5 boards |
 |---|---|---|---|---|---|
 | C1 (E1) | DNP | 4.7 pF C0G ±0.1 pF 0603, FH 0603CG4R7B500NT | C313086 | extended SMD | +$3.09 loading fee, +$0.19 parts (20, JLCPCB's minimum), +$0.02 joints |
-| J2 (O1) | PZ254V-11-02P header (line shared with J5), on +15V | KF301-5.0-2P screw terminal, on VIN | C474881 | extended THT | +$0.61 parts; J2/J5 line −$0.09 |
-| — | — | ground pad by TP3 (O2); silkscreen G/D/S (E2), TAB +15 V, USB ▲ (O4) | — | — | $0 |
+| J2 (O1) | PZ254V-11-02P header (line shared with J5), on +15V | KF301-5.0-2P screw terminal, on VIN | C474881 | extended THT, hand-soldered by JLCPCB | +$0.61 parts (6: 5 plus 1 attrition, $0.1019); J2/J5 line −$0.09 |
+| — | — | silkscreen: G/D/S (E2), ▲ NUCLEO USB END ▲ (O4), +15V / GND moved beside J2 | — | — | $0 |
 
-Net changes, no parts: J2 to VIN (E4), J6 rotated (E3), DAC_SWEEP to
-CN10-11 (O3).
+Net change, no parts: J2 pin 1 from +15V to VIN (E4). Two copper changes:
+- J2's rev 1 tie to +15V comes out. C5 and TP7 stay joined, as before.
+- A 0.6 mm VIN track on F.Cu, 35.2 mm long, runs from J2 pin 1 up the
+  left edge, between J1's pads 2 and 3, to J1 pin 1.
+
+## Parts, confirmed 2026-11-03
+
+**C1, C313086, on LCSC's own page**
+(`lcsc.com/product-detail/C313086.html`). The page's text, verbatim:
+- title: "0603CG4R7B500NT | Ceramic Capacitors | FH | LCSC"
+- Key Attributes: "CAP CER 4.7pF 50V C0G 0603"
+- specifications: Capacitance "4.7pF"; Temperature Coefficient "C0G";
+  Voltage Rating "50V"; Packaging "0603"; Manufacturer "FH"
+- summary: "Features 4.7pF and C0G. From $0.0046, 2,500 in stock."
+
+The page states no tolerance. ±0.1 pF comes from the "B" in FH's part
+number, per FH's code table (`README.md`, contingency parts). The PDF the
+page links to wasn't downloadable without a browser.
+
+JLCPCB's part record (cart.jlcpcb.com, `getComponentDetail`):
+- C313086: extended, SMT, 2,523 in stock, minimum 20, attrition 10,
+  $0.0094.
+- C474881 (KF301-5.0-2P): extended, **THT, manualWeld** (JLCPCB solders it
+  by hand), status yes, 49,355 in stock, minimum 2, attrition 1, $0.1019.
+  It is now in `tools/export_fab.py`'s `THT_VERIFIED`.
+
+## CAD, done 2026-11-03 on `rev2`
+
+| Check | Result |
+|---|---|
+| ERC (`kicad-cli sch erc --severity-all`) | 0 violations |
+| DRC (`--severity-all --schematic-parity`) | 0 violations, 0 unconnected, 0 parity issues. The same as rev 1. A first pass gave 38 silkscreen warnings from J2's fields, which had come out visible; now hidden |
+| `check_topology.py --self-test` | 60/60 checks, 16 of 16 planted faults caught. New: J2 pin 1 on VIN and VIN = {J1, J2, Q3, TP28}; C1 4.7 pF C0G, PCBA, C313086. New faults: J2 back on +15V; C1 back to DNP |
+| Semantic diff against rev 1 (footprints, pads, tracks, drawings, zones) | Only the changes above: C1, J2 and its pad 1 net, the two +15V segments out, four VIN segments in, six silkscreen texts |
+| `tools/export_fab.py` | JLC BOM 35 lines (33 on rev 1), CPL 75 rows (74), BOM and CPL agree |
+
+**Renders** (`review/rev2/`):
+- `rev2_3d_before_after.png`: J2, C1, J6, rev 1 against rev 2, 3D.
+- `rev2_j2_before_after.png`, `rev2_j6_before_after.png` and
+  `rev2_usb_before_after.png`: copper and silkscreen.
+- `rev2_3d_top.png`: the whole top.
+
+**Choices made in the CAD:**
+- **J2 at rot 270**, so the wire entry faces the left board edge. J6's rot
+  90 faces into the board, so this is the same footprint turned 180°.
+  Pin 1 (VIN) is on top, nearer J1.
+- **G / D / S sit between J6 and D3, rotated 90°**, upright for someone
+  facing J6's wire openings. "D" prints over the 1.2 mm DUT_D track
+  (silkscreen on solder mask, which JLCPCB prints).
+- **Rev 1's stencil already had C1's paste apertures.** The paste layer
+  doesn't change.
+
+**In JLCPCB's order flow, before paying** (README, footprint orientation;
+the 3D view caught Q1's reversed tab on rev 1):
+- [ ] In the BOM step, all 35 lines match, with C1 = C313086 and
+  J2 = C474881.
+- [ ] Tilt the 3D placement preview. **J2's wire openings face the left
+  board edge**, and its body sits on its two pads, not offset. J2 is the
+  only new through-hole part, and the terminal family's rotation was only
+  checked at rot 90 (J6) on rev 1.
+- [ ] C1 sits on its two pads beside R1.
+- [ ] Every rev 1 preview check still holds: Q1's tab, the SOT-23s, J7/J8.
 
 ## Cost, 5 assembled boards
 
-Rev 1's JLCPCB quote (`ORDER.md`, 2026-10-11) plus the delta above. Duty
-and tax are scaled at rev 1's rates (35.0% and 7.0% of merchandise), and
-shipping is taken as rev 1's DHL charge. **This is not a new quote.** Fees,
-part prices and the tariff may have moved since 2026-10-11.
+Rev 1's JLCPCB quote (`ORDER.md`, 2026-10-11) plus the delta above, with
+part prices re-checked on 2026-11-03. Duty and tax are scaled at rev 1's
+rates (35.0% and 7.0% of merchandise), and shipping is taken as rev 1's
+DHL charge. **This is an estimate, not a quote.** JLCPCB's quote page
+gives the real figure once the files are uploaded. The deferred items cost
+$0, so the approved set costs the same as all items would have.
 
-| | Rev 1, paid | Rev 2, essential only | Rev 2, all items |
-|---|---|---|---|
-| Merchandise | $137.98 | $141.28 | $141.80 |
-| Shipping, DHL Express DDP | $31.59 | $31.59 | $31.59 |
-| Duty + disbursement fee | $48.30 + $7.52 | $49.45 + $7.52 | $49.64 + $7.52 |
-| Sales tax | $9.66 | $9.89 | $9.93 |
-| **Total** | **$235.05** | **~$239.73** ($47.95 per board) | **~$240.47** ($48.09 per board) |
+| | Rev 1, paid | Rev 2, as approved |
+|---|---|---|
+| Merchandise | $137.98 | $141.80 |
+| Shipping, DHL Express DDP | $31.59 | $31.59 |
+| Duty + disbursement fee | $48.30 + $7.52 | $49.64 + $7.52 |
+| Sales tax | $9.66 | $9.93 |
+| **Total** | **$235.05** | **~$240.47** ($48.09 per board) |
 
 ## Lead time, from rev 1's dates
 
@@ -211,17 +288,7 @@ part prices and the tariff may have moved since 2026-10-11.
 | Packed for DHL | by 2026-10-17 | 6 |
 | DHL's delivery estimate | Wed 2026-10-21 | 10 |
 
-So it is **about 10 days from order to door**, plus the CAD work before an
-order can go in: roughly one to two working days for every item. E3 is
-most of it: the J6 re-route by hand. The rest is the J2 net change
-(and O3's), the silkscreen, then DRC/ERC, `check_topology.py`, the fab
-export and the placement preview. With only E1, E2 and E4, CAD is about
-half a day. The repo doesn't record the day rev 1's boards actually
-arrived.
-
-**Against the plan.** Bench work stops on 2026-11-15. With the CAD done by
-2026-11-05 and the order placed that day, the boards would arrive around
-**2026-11-15**, the last bench day. Any later and they arrive after it.
-So rev 2 can't be measured inside the current plan. It is worth ordering
-only if bench time after November 15 is available, or as a design that is
-specified here and left unordered.
+So it is **about 10 days from order to door**. The CAD is done, so an
+order placed on 2026-11-04 arrives around **2026-11-14**, one day before
+bench work stops on 2026-11-15. Any later and it arrives after. The repo
+doesn't record the day rev 1's boards actually arrived.

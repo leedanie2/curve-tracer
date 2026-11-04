@@ -1,4 +1,5 @@
 Comment,Designator,Footprint,LCSC Part #
+4.7p C0G,C1,C_0603_1608Metric,C313086
 100n X7R 50V,"C2,C6,C7,C8",C_0603_1608Metric,C14663
 10n X7R 50V,"C3,C4",C_0603_1608Metric,C57112
 10u 50V,C5,CP_Elec_5x5.4,C47023118
@@ -8,8 +9,9 @@ SMAJ12A,D3,D_SMA,C113957
 BAT54S,"D4,D5",SOT-23,C7420333
 PTC 100mA hold,F1,Fuse_1206_3216Metric,C70065
 15V IN,J1,BarrelJack_Horizontal,C16214
-PZ254V-11-02P,"J2,J5",PinHeader_1x02_P2.54mm_Vertical,C492401
+15V BENCH,J2,"TerminalBlock_Phoenix_MKDS-1,5-2_1x02_P5.00mm_Horizontal",C474881
 PZ254V-12-6P,"J3,J4",PinHeader_2x03_P2.54mm_Vertical_RangeSelect,C492420
+KELVIN  HI / LO,J5,PinHeader_1x02_P2.54mm_Vertical,C492401
 DUT  G / D / S,J6,"TerminalBlock_Phoenix_MKDS-1,5-3_1x03_P5.00mm_Horizontal",C474882
 PM254-2-19-Z-8.5,"J7,J8",PinSocket_2x19_P2.54mm_Vertical_NucleoCarrier,C2897420
 BD139,Q1,TO-126-3_Vertical,C27866
