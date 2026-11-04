@@ -572,3 +572,29 @@ python3 host/parse_osc.py sim/14d_low_level_opa197.raw --ring 60e-6 80e-6
 python3 host/parse_osc.py sim/14d_low_level_opa197.raw --residual 40e-6 60e-6
 python3 host/parse_osc.py sim/14d_low_level_opa197.raw --residual 60e-6 80e-6
 ```
+
+## 14e_l1_4p7_opa197.cir, 14f_low_level_4p7_opa197.cir — C1 = 4.7 pF into L1 and at low levels
+
+Rev 2's C1 is 4.7 pF (`hardware/DECISIONS.md` R2-4, 2026-11-03). These two
+cover the cases sim 14c didn't. **14e** is sim 14b (L1, 6 V, `uic`) at
+3.3 and 4.7 pF. **14f** is sim 14d (open load, 0.1 and 0.3 V, 80 µs) at
+4.7 pF. 14e runs in seconds and 14f in ~5 min.
+
+**Results (simulated, LTspice, TI's OPAx197 model), V(e) at TP3:**
+
+| Sim | Load, level | C1 | Residual p-p after a cubic fit |
+|---|---|---|---|
+| 14e | L1, 6 V, 10–14 µs | 3.3 pF | 0.24 mV (matches 14b) |
+| 14e | L1, 6 V, 10–14 µs | 4.7 pF | 0.24 mV |
+| 14f | open, 0.1 V, 40–60 and 60–80 µs | 4.7 pF | 0.00 / 0.00 mV |
+| 14f | open, 0.3 V, 40–60 and 60–80 µs | 4.7 pF | 0.00 / 0.00 mV |
+
+4.7 pF is as quiet as 3.3 pF in every case simulated. The `--ring` parse of
+14f reports a ratio of 1.0 at 0.1 V. That is sub-µV numerical noise: its
+first peak rounds to 0.0 mV.
+
+```
+python3 host/parse_osc.py sim/14e_l1_4p7_opa197.raw --residual 10e-6 14e-6
+python3 host/parse_osc.py sim/14f_low_level_4p7_opa197.raw --residual 40e-6 60e-6
+python3 host/parse_osc.py sim/14f_low_level_4p7_opa197.raw --residual 60e-6 80e-6
+```

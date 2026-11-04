@@ -247,7 +247,9 @@ not tested.
   the size on this board: it had no stray C_in and no R_iso.
 - **Rounding.** §3's computed C_f rounds to the smaller stocked value
   when it falls between two, because the over-compensated side is the Phase
-  0 failure.
+  0 failure. **Superseded for rev 2's C1** (4.7 pF, not 3.3 pF;
+  DECISIONS R2-4, 2026-11-03): the bench is less damped than TI's model,
+  and that model shows no over-compensation at 4.7 pF.
 
 ## 4. The alternates
 

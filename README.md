@@ -28,7 +28,7 @@ its row.
 | Board powers up; loop quiet into 200 Ω ‖ 100 nF at 6 V | Measured | 2026-11-03, [Block 1](#block-1-measurements-first-power-up-board-2) |
 | Loop stable with nothing connected (C1 empty) | **Measured: fails.** Oscillates at 0.8–1.15 MHz | [The open-load oscillation](#a-measured-finding-the-open-load-oscillation) |
 | Root cause of the oscillation | Analysis and simulation | Sims 12–14 |
-| A 3.3 pF C1 fixes it | Simulated only (TI's op-amp model, one operating point) | Sim 14; not fitted, since 0603 can't be hand-fitted here |
+| C1 in the 2.2–4.7 pF range damps it | Simulated only (TI's op-amp model, open load and 200 Ω ‖ 100 nF) | Sims 14–14f; not fitted, since 0603 can't be hand-fitted here. Rev 2 specifies 4.7 pF |
 | 470 Ω across the device keeps the loop quiet | Simulated only | Sim 13; bench test is next session's step 13 |
 | Voltage and current accuracy against a DMM | Not done | Next session, step 15 |
 | R_p subtraction, extraction, `.model` card, ngspice overlay | Done, tested on simulated data only | `host/`, 159 tests; [demo figures](host/README.md#from-a-capture-to-the-overlay) |
@@ -94,13 +94,15 @@ the oscillation only with 20–30 pF of input capacitance added. TI's own
 OPA2197 model needs none: at open load it rings at 0.91 MHz, each
 half-cycle 0.83× the last, close to sustained.
 
-**The fix (simulation, sim 14, TI's model).** The board has an empty
+**The fix (simulation, sims 14–14f, TI's model).** The board has an empty
 footprint for C1, a capacitor across the feedback resistor. The predicted
-value is **3.4–3.9 pF**. **3.3 pF**, the next stocked value down, cuts the
-open-load ring to 0.40× per half-cycle. That rests on one simulated point:
-6 V, with D3 taken as 1.2 nF. The generic model's figure, 8.6–12.9 pF, would
-over-compensate. C1 is a 0603 part, which I can't fit reliably by hand, so
-it isn't fitted. Rev 2 has the assembler fit it.
+value is **3.4–3.9 pF**. At 6 V open load, 3.3 pF cuts the ring to 0.40×
+per half-cycle, and 4.7 pF removes it, with no sign of over-compensation.
+The generic model's figure, 8.6–12.9 pF, would over-compensate. Because the
+bench was less damped than TI's model, rev 2 specifies **4.7 pF**
+(`hardware/DECISIONS.md` R2-4). That rests on one vendor model. C1 is a
+0603 part, which I can't fit reliably by hand, so it isn't fitted on rev 1.
+Rev 2 has the assembler fit it.
 
 **Working around it until then (simulation, sim 13).** A resistor of 470 Ω or
 less clamped across the device keeps the bare loop quiet from 0.1 V up. The
@@ -161,8 +163,8 @@ not hidden:
   loads the DAC and may cut sweeps above about 6.6 V (estimated, not yet
   measured; `DECISIONS.md` R2-3).
 - **The empty compensation-capacitor footprint assumed hand-fitting**, a
-  0603 part, which I could not do reliably. Rev 2 has JLCPCB fit it at the
-  measured value (`DECISIONS.md` R2-2).
+  0603 part, which I could not do reliably. Rev 2 has JLCPCB fit it, at
+  4.7 pF (`DECISIONS.md` R2-2, R2-4).
 
 ## Simulation results
 
@@ -299,10 +301,13 @@ not oscillation. The limit allowed less than 2 DAC steps at TP3.
 ### Next session
 
 `hardware/MVP_CARD.md` §D: about 45 minutes, no soldering. In order:
-1. 470 Ω across D–S, held at 0.1 V and 0.3 V with the scope watching.
+1. 470 Ω across D–S, held at 0.1 V and 0.3 V with the scope watching. If
+   it oscillates, the 200 Ω ‖ 100 nF load that was quiet in Block 1 takes
+   its place.
 2. A calibration sweep of that resistor.
 3. Six accuracy points against a DMM.
-4. One diode with the resistor beside it.
+4. One diode with the resistor beside it, unless the DAC's floor reads
+   above 0.2 V; then the session stops here.
 5. A small N-MOSFET, if there's time.
 
 Then, at the desk, the model card, the ngspice run and the overlay above.

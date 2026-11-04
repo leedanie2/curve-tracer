@@ -695,7 +695,7 @@ Consequences, all 2026-10-25:
 oscillates, that is CONTINGENCY §3's value, rounded to a stocked 0603 C0G
 ±0.1 pF part. If it does not oscillate, C1 stays DNP and the footprint
 records that it was checked empty. Either way it is not left open for
-hand-fitting again.
+hand-fitting again. **The value is 4.7 pF: [R2-4](#r2-4) (2026-11-03).**
 
 <a id="r2-3"></a>**R2-3 — The sweep DAC carries an LED load; a rev 2 must not**
 (Daniel, 2026-10-25). The F303RE has no DAC2 (found 2026-10-23; J7/J8). The
@@ -736,6 +736,38 @@ applies to it. It has only the buffered-range ceiling both channels share
 
 **Rev 2: either use an MCU or board with a free buffered DAC output for the
 sweep, or do not route the sweep through a pin with an LED on it.**
+
+<a id="r2-4"></a>**R2-4 — Rev 2's C1 is 4.7 pF, not 3.3 pF** (Daniel, 2026-11-03).
+**This supersedes CONTINGENCY §3's round-down rule for rev 2's C1** and
+fills in R2-2's "the measured value". The part is FH 0603CG4R7B500NT,
+C0G, 50 V, tolerance code B (±0.1 pF), LCSC **C313086**, an extended part.
+Reasoning:
+
+- **The bench is less damped than TI's model.** On board 2 the open-load
+  oscillation was sustained (Block 1, 2026-11-03). Sim 14, with TI's
+  OPAx197 model, has the same loop ringing and decaying, at 0.83× per
+  half-cycle. Any C_f margin taken from the model should therefore lean
+  toward more damping.
+- **4.7 pF shows no over-compensation in simulation.** At 6 V open load
+  (sims 14 and 14c, 3–9.2 µs), the half-cycle ratio is 0.80, 0.50 and
+  0.40 for C1 = 0, 2.2 and 3.3 pF. At 4.7 pF there is no ring: one 0.17 V
+  dip, settled to 1% in 0.5 µs. The slew-limited edge is the same at every
+  value. Into L1 (sim 14e), 4.7 pF leaves 0.24 mV p-p, the same as
+  3.3 pF. At 0.1 and 0.3 V open load (sim 14f), it is quiet: 0.00 mV p-p from
+  40 µs, as 3.3 pF is.
+- **Why the round-down rule existed.** Blueprint §3.1's analysis puts too
+  much C_f at the Phase 0 C_comp mechanism (β rising where the follower's
+  phase lag sits), which is the worse failure. That is analysis. The vendor
+  model, which includes the follower, does not show it at 4.7 pF.
+
+**The risk that remains.** All the evidence for 4.7 pF is one vendor
+model. The ideal C_f is 0.431 · C_in. With the model's 8 pF plus ≤ 1 pF of
+board, that is 3.4–3.9 pF, so 4.7 pF is 0.8–1.3 pF over. If TI's 6.4 pF is
+for both inputs rather than each one (the datasheet doesn't say; the model
+treats it as per input), the ideal is ~2.2 pF and 4.7 pF is ~2.5 pF over.
+That is close to §3.1's 2.66 pF too-much case, which the analysis puts at
+25.4% overshoot. Rev 2's first bring-up checks it: Block 1 at open load
+and into L1, then the overshoot step.
 
 ## Assembly — JLCPCB assembles everything; nothing is hand-soldered
 

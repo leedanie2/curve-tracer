@@ -1,0 +1,59 @@
+* 14e_l1_4p7_opa197.cir -- sim 14b (L1, 200 ohm || 100 nF) at C1 = 4.7 pF, the
+* rev 2 value (hardware/DECISIONS.md, 2026-11-03). Otherwise identical to
+* 14b_l1_opa197.cir, whose notes follow.
+*
+* (14b:) the 6 V step charges 100 nF and is still settling at 14 us. The
+* metric is the p-p left after a cubic fit to that settling over 10-14 us.
+*
+* From sim 14:
+*
+* TI's model (OPAx197.LIB, Final 1.3, 23JUN2022, from ti.com/lit/zip/sboma34)
+* carries the input capacitance itself: C_COM 6.4 pF from each input to MID
+* and C_DIFF 1.6 pF across them. So cin here is the board's share at IN- only
+* (CONTINGENCY 2A: under ~1 pF), and C1 (C_f, across R_f) is stepped.
+* TI's model is slow in LTspice (TI E2E reports the same), and below ~0.1 mV
+* of ring it collapses the timestep, so each run stops at 14 us and the
+* start-up step (0 -> 6 V at 2 us) is the only excitation: there is no kick.
+* Parse: python3 host/parse_osc.py sim/14e_l1_4p7_opa197.raw --residual 10e-6 14e-6
+* The model is not committed (TI copyright); fetch it as sim/README.md says.
+
+XU1 inp inm vcc 0 oa OPAx197
+V2 inp 0 PWL(0 0 2u 0 2.1u {vds/3.32})
+RG inm 0 10k
+Rf fb inm 23.2k
+Cin inm 0 {cin}
+C1 fb inm {cf}
+V1 vcc 0 15
+Rbase base oa 330
+XQ1 vcc base e BD139
+D1 e base 1N4148
+Q2 base e fb 0 2N3904
+Rsense e fb 10
+Cprobe e 0 12p
+Rprobe e 0 10Meg
+Riso fb load 22
+Rptc load ptcout 8.4
+Rsh ptcout dut 1
+Cd3 dut 0 {cd3}
+Rkel dut 0 400k
+RL dut 0 {RLv}
+CL dut 0 {CLv}
+
+.model D D
+.lib C:\users\crossover\AppData\Local\LTspice\lib\cmp\standard.dio
+.model NPN NPN
+.model PNP PNP
+.lib C:\users\crossover\AppData\Local\LTspice\lib\cmp\standard.bjt
+.include models/BD139.LIB
+.include models/OPAx197.LIB
+
+.param vds=6
+.param cin=0
+.step param cf list 3.3p 4.7p
+.param lcase=2
+.param cd3=1.2n
+.param RLv=table(lcase,1,1e9,2,200)
+.param CLv=table(lcase,1,1f,2,100n)
+.tran 0 14u 0 5n uic
+.save V(e) V(dut) V(oa) I(Rsh)
+.end
