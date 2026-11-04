@@ -16,10 +16,12 @@ ct_host/
     common.py    Estimate, FitRange, LinearFit -- uncertainties and visible ranges
     mosfet.py    V_th, beta / KP, lambda, R_DS(on), subthreshold
     diode.py     n, I_S, R_s
+  parallel.py    R_p: a resistor across D-S with the device, and its current
+                 taken back out
   spice.py       .model cards
   plot.py        live family plot, static plots, series-drop diagnostic
   cli.py         python -m ct_host capture | plot | extract | model | ports
-tests/           137 tests, every one against the simulator
+tests/           153 tests, every one against the simulator
 ```
 
 `parse_cmrr_log.py`, `parse_current_limit.py` and `parse_tran_overshoot.py`
@@ -155,6 +157,55 @@ contact resistance). Until the board's PTC is measured, `cal_r_ptc_ohm` reads
 `unset` and the report says to measure it, quoting the R_PTC the fit implies.
 Pass a fresh measurement after a trip with `--r-ptc OHM` (`extract
 --diagnostics`) or `r_ptc_ohm=` (`vds_delta_report`, `plot_vds_delta`).
+
+---
+
+## A resistor across D–S: `--r-parallel`
+
+Board 2's sweep loop oscillates at open load with C1 empty (Block 1,
+2026-11-03; `docs/characterization.md`). A diode or MOSFET is an open load
+at the bottom of its sweep. By simulation (sim 13), 470 Ω or less clamped
+across D–S in J6 keeps the loop quiet from 0.1 V up. The firmware can't tell
+that resistor, R_p, from the device. The host subtracts `V / R_p` from every
+row, using the Kelvin-sensed voltage, as the firmware already does for the
+Kelvin divider's `V / 400k`.
+
+```sh
+python -m ct_host capture  ... --device R_p -o h4/rp.csv            # R_p alone
+python -m ct_host extract  h4/rp.csv --type resistor                # I = V/R + offset
+python -m ct_host capture  ... --device 1N4148 --r-parallel h4/rp.csv -o h4/d.csv
+python -m ct_host extract  h4/d.csv                                 # R_p applied from the header
+```
+
+`--r-parallel` takes one of three sources:
+
+- **A calibration capture of R_p alone** (the primary). The fit uses the
+  instrument's own readings, so gain errors in current and voltage cancel:
+  what is subtracted is what the instrument reads through R_p.
+- **A value in ohms**, for example from a DMM. Gain error in the instrument
+  does not cancel against it.
+- **`auto`**: R_p fitted from the capture itself, where the device carries
+  no current. That means rows below 0.25 V for a diode, and the lowest gate
+  step for a MOSFET family. It needs rows down there. A sweep DAC with a
+  floor above 0.25 V leaves none, and the fit then says so.
+
+`capture --r-parallel` records the value, its standard error, the method
+and the source in the header (`host_r_parallel_*`). `annotate` adds the
+same record to a capture taken without it. `extract`, `model` and `plot`
+apply the recorded R_p by default; `--r-parallel` on them overrides it, and
+`none` turns it off. Whenever one is applied, the auto-fit is printed beside
+it as a cross-check. The model card and the plot name R_p and its source.
+The series-drop diagnostic keeps using the total current, because R_p's
+current drops across R_iso like the device's does.
+
+**What it costs.** The subtraction's error is `V · σ_R / R_p²`: a fixed
+current at a given voltage, so it matters most at the smallest device
+currents. At 0.5% of 470 Ω and 0.6 V it is 6 µA. That is 3% of 0.2 mA,
+which is where the diode fit's floor already sits (5 current LSB). On the
+simulator a step 14 calibration fits R_p within 0.1%, and the diode
+(n = 1.75, I_S = 2.5 nA, R_s = 0.6 Ω, with 470 Ω beside it) comes back as
+n = 1.751, I_S = 2.52 nA, R_s = 0.601 Ω. Without the subtraction the
+same capture reads n = 7.4 (`tests/test_parallel.py`).
 
 ---
 

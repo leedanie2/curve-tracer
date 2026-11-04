@@ -364,13 +364,20 @@ printf 'SET n 50\nSET vgs_list 2.5,3.0,3.5\nSWEEP\n' | ./build/ct_sim --dut mosf
 | `diode` | `I = Is(exp(V/nVt) − 1)`; `--is`, `--n-diode`, `--rs` |
 | `resistor` | ohmic; `--rload`. The simplest way to trip the current limit |
 
+Front-end options, for any `--dut`: `--rptc OHM` (the drain-path PTC; off
+by default), `--rdiv OHM` (the Kelvin divider; 400 kΩ by default),
+`--rpar OHM` (a resistor clamped across D–S with the DUT, which the firmware
+reports as DUT current; off by default) and `--dac-floor V` (the lowest node
+voltage the sweep DAC reaches; ideal by default).
+
 The simulator models the **whole signal chain**, not just the device: the
 commanded voltage becomes a node voltage, the DUT draws current, that current
 drops across `R_iso` and the shunt, and what remains is what ADC2 would
 Kelvin-sense. So `vds_set_v` and `vds_meas_v` differ in simulation for the
 same physical reason they differ on the bench, and the tests can assert the
-23 Ω relationship above. **The simulator has no PTC**, so its delta is the
-low edge of the board's band, I × 23 Ω, not the middle of it.
+23 Ω relationship above. **The simulator has no PTC unless `--rptc` is
+given**, so by default its delta is the low edge of the board's band,
+I × 23 Ω, not the middle of it.
 
 **It is a test fixture, not a circuit simulator.** No reactive elements, no
 settling, no loop dynamics — sims 08–11 in `sim/` cover those. Its purpose is

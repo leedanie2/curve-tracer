@@ -286,7 +286,8 @@ def vds_delta_report(sweep: Sweep, *, r_iso_ohm: float | None = None,
         r_ptc_ohm = cal.r_ptc_ohm
     expected_r = r_iso_ohm + shunt + (r_ptc_ohm or 0.0)
 
-    rows = [r for r in sweep.valid_rows if r.i_ma > i_floor_ma]
+    # Total current: an R_p across D-S drops across R_iso like the device does.
+    rows = [r for r in sweep.valid_rows if r.i_total_ma > i_floor_ma]
     n_all = len(rows)
     if vds_set_max_v is not None:
         rows = [r for r in rows if r.vds_set_v <= vds_set_max_v]
@@ -295,7 +296,7 @@ def vds_delta_report(sweep: Sweep, *, r_iso_ohm: float | None = None,
         return DeltaReport(0, 0.0, 0.0, None, expected_r, 0.0, True, r_ptc_ohm,
                            n_above, vds_set_max_v)
 
-    i_a = np.array([r.i_ma for r in rows]) / 1000.0
+    i_a = np.array([r.i_total_ma for r in rows]) / 1000.0
     delta = np.array([r.vds_set_v - r.v_dut for r in rows])
 
     fitted = None

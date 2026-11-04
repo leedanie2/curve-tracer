@@ -45,7 +45,7 @@ def _header(name: str, params, source: str | None, extra: list[str]) -> list[str
 
 def mosfet_model_card(params: MosfetParams, *, name: str = "EXTRACTED",
                       source: str | None = None,
-                      level: int = 1) -> str:
+                      level: int = 1, notes: list[str] | tuple = ()) -> str:
     """An NMOS ``.model`` card.
 
     Only the parameters that were actually measured are emitted. Nothing is
@@ -81,6 +81,7 @@ def mosfet_model_card(params: MosfetParams, *, name: str = "EXTRACTED",
     else:
         detail.append(f"* subthresh. : not measured -- "
                       f"{params.subthreshold.reason.splitlines()[0]}")
+    detail += [f"* {note}" for note in notes]
 
     body = [f".model {name} NMOS (",
             f"+   LEVEL = {level}",
@@ -94,7 +95,8 @@ def mosfet_model_card(params: MosfetParams, *, name: str = "EXTRACTED",
 
 
 def diode_model_card(params: DiodeParams, *, name: str = "EXTRACTED",
-                     source: str | None = None) -> str:
+                     source: str | None = None,
+                     notes: list[str] | tuple = ()) -> str:
     """A diode ``.model`` card."""
     detail = [
         f"* n          : {params.n}",
@@ -103,6 +105,7 @@ def diode_model_card(params: DiodeParams, *, name: str = "EXTRACTED",
     if params.rs is not None:
         detail.append(f"* R_s        : {params.rs}")
     detail.append(f"* fit range  : {params.fit.range.rule}")
+    detail += [f"* {note}" for note in notes]
 
     body = [f".model {name} D (",
             f"+   IS = {params.i_s.value:.6g}",

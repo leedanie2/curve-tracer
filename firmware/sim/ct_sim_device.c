@@ -57,7 +57,18 @@ void ct_sim_set_sink(ct_sim_t *s, ct_sim_sink_fn fn, void *user)
     s->sink_user = user;
 }
 
+static float device_current_a(const ct_sim_t *s, float vgs, float vds);
+
 float ct_sim_dut_current_a(const ct_sim_t *s, float vgs, float vds)
+{
+    float i = device_current_a(s, vgs, vds);
+    if (s->r_par > 0.0f && vds > 0.0f) {
+        i += vds / s->r_par;
+    }
+    return i;
+}
+
+static float device_current_a(const ct_sim_t *s, float vgs, float vds)
 {
     if (vds <= 0.0f) {
         return 0.0f;
@@ -214,6 +225,10 @@ static void sim_operating_point(ct_sim_t *s, float *v_dut, float *i_a)
 {
     float v_node = ct_sweep_code_to_volts(s->sweep_code);
     float vgs    = ct_gate_code_to_volts(s->gate_code);
+    /* A buffered DAC output does not reach ground (blueprint §3.5). */
+    if (v_node < s->dac_floor_v) {
+        v_node = s->dac_floor_v;
+    }
     solve_operating_point(s, v_node, vgs, v_dut, i_a);
 }
 

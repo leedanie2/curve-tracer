@@ -5,6 +5,8 @@
     python -m ct_host extract data/run.csv --type mosfet
     python -m ct_host model   data/run.csv --type mosfet --name 2N7000_EXT
     python -m ct_host plot    data/run.csv --save iv.png
+    python -m ct_host extract data/rp.csv --type resistor
+    python -m ct_host annotate data/run.csv --r-parallel data/rp.csv
 
 Every command accepts either a saved CSV or a live source, and ``--sim``
 stands in for an instrument everywhere ``--port`` would go. That is what makes
@@ -18,9 +20,10 @@ import datetime as _dt
 import sys
 from pathlib import Path
 
-from .csvio import Sweep, parse, save
+from .csvio import ContractError, Sweep, add_host_meta, parse, save
 from .dataset import VDS_SET_MAX_V, vds_delta_report
 from .extract import FitError, extract_diode, extract_mosfet
+from .parallel import ParallelR, auto_fit, fit_sweep_resistor, from_meta, resolve, subtract
 from .protocol import SweepRequest, run_hold, run_sweep
 from .recompute import CalibrationMismatch, recompute
 from .spice import diode_model_card, mosfet_model_card
@@ -41,6 +44,11 @@ def _source_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--sim-n", type=float)
     parser.add_argument("--sim-rs", type=float)
     parser.add_argument("--sim-rload", type=float)
+    parser.add_argument("--sim-rptc", type=float)
+    parser.add_argument("--sim-rpar", type=float, metavar="OHM",
+                        help="simulate a resistor across D-S with the DUT")
+    parser.add_argument("--sim-dac-floor", type=float, metavar="V",
+                        help="lowest node voltage the simulated DAC reaches")
     parser.add_argument("--sim-noise", type=float)
 
 
@@ -61,6 +69,8 @@ def _open_transport(args: argparse.Namespace):
             dut=args.sim, noise=args.sim_noise, vth=args.sim_vth,
             k=args.sim_k, lam=args.sim_lambda, is_=args.sim_is,
             n_diode=args.sim_n, rs=args.sim_rs, rload=args.sim_rload,
+            rptc=args.sim_rptc, rpar=args.sim_rpar,
+            dac_floor=args.sim_dac_floor,
         )
     from .transport import SerialTransport
     return SerialTransport(args.port, baudrate=args.baud)
@@ -94,6 +104,49 @@ def _checked(sweep: Sweep, *, strict: bool) -> Sweep:
         return recompute(sweep, check=False)
 
 
+def _resolve_rp(spec: str, sweep: Sweep | None = None) -> ParallelR:
+    try:
+        return resolve(spec, sweep)
+    except (ValueError, FitError) as exc:
+        print(f"error: --r-parallel: {exc}", file=sys.stderr)
+        raise SystemExit(2) from None
+
+
+def _with_rp(sweep: Sweep, spec: str | None, *, report: bool = True) -> Sweep:
+    """Subtract R_p: from ``--r-parallel`` if given, else the CSV's record.
+
+    ``--r-parallel none`` turns a recorded R_p off. Whenever one is applied,
+    the auto-fit is reported beside it as a cross-check.
+    """
+    if spec == "none":
+        return sweep
+    rp = _resolve_rp(spec, sweep) if spec else from_meta(sweep)
+    if rp is None:
+        return sweep
+    if report:
+        print(rp_report(sweep, rp), file=sys.stderr)
+    return subtract(sweep, rp)
+
+
+def rp_report(sweep: Sweep, rp: ParallelR) -> str:
+    lines = ["R_p across D-S, subtracted from every row as V / R_p",
+             rp.describe()]
+    v = [r.v_dut for r in sweep.valid_rows]
+    if v and rp.stderr is not None:
+        hi = max(v)
+        lines.append(f"  its standard error adds ±{rp.current_error_ma(hi) * 1000:.2g} uA "
+                     f"at {hi:.3g} V, this capture's highest voltage, and "
+                     f"proportionally less below it")
+    if rp.method != "auto":
+        fit, reason = auto_fit(sweep)
+        if fit is None:
+            lines.append(f"  cross-check, auto-fit: {reason}")
+        else:
+            lines.append(f"  cross-check, auto-fit: R = {fit.r} over {fit.n} rows, "
+                         f"{(fit.r.value / rp.ohm - 1) * 100:+.2f}% from the value used")
+    return "\n".join(lines) + "\n"
+
+
 # --------------------------------------------------------------------------
 # Commands
 # --------------------------------------------------------------------------
@@ -122,7 +175,13 @@ def cmd_capture(args: argparse.Namespace) -> int:
               f"kept in the file; it records where the device ran away.",
               file=sys.stderr)
 
-    out = save(sweep, args.output, source=source_description)
+    extra: list[tuple[str, str]] = []
+    if args.r_parallel:
+        rp = _resolve_rp(args.r_parallel, recompute(sweep, check=False))
+        print("\n" + rp_report(recompute(sweep, check=False), rp).rstrip(),
+              file=sys.stderr)
+        extra = rp.meta_items()
+    out = save(sweep, args.output, source=source_description, extra=extra)
     print(f"\nwrote {out}  ({len(sweep.rows)} rows)", file=sys.stderr)
 
     if live is not None and args.save_plot:
@@ -164,6 +223,20 @@ def cmd_extract(args: argparse.Namespace) -> int:
     sweep = _checked(_load(args.csv), strict=not args.allow_mismatch)
     kind = args.type or _guess_kind(sweep)
 
+    if kind == "resistor":
+        try:
+            fit = fit_sweep_resistor(sweep)
+        except FitError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        print(f"Resistor fit\n  device : {sweep.meta.device}"
+              + ("   [SIMULATED -- not a bench measurement]"
+                 if sweep.meta.is_simulated else "") + "\n")
+        print(fit.describe())
+        print(f"  lowest V reached: {fit.v_lo:.4f} V (the sweep's floor)")
+        return 0
+
+    sweep = _with_rp(sweep, args.r_parallel)
     try:
         if kind == "mosfet":
             params = extract_mosfet(
@@ -193,13 +266,16 @@ def cmd_extract(args: argparse.Namespace) -> int:
 def cmd_model(args: argparse.Namespace) -> int:
     sweep = _checked(_load(args.csv), strict=not args.allow_mismatch)
     kind = args.type or _guess_kind(sweep)
+    sweep = _with_rp(sweep, args.r_parallel)
+    notes = ([f"R_p        : {sweep.r_parallel.label}"]
+             if sweep.r_parallel is not None else [])
     try:
         if kind == "mosfet":
             card = mosfet_model_card(extract_mosfet(sweep), name=args.name,
-                                     source=args.csv)
+                                     source=args.csv, notes=notes)
         else:
             card = diode_model_card(extract_diode(sweep), name=args.name,
-                                    source=args.csv)
+                                    source=args.csv, notes=notes)
     except FitError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -220,7 +296,7 @@ def cmd_plot(args: argparse.Namespace) -> int:
 
     from .plot import plot_family, plot_vds_delta
 
-    sweep = _checked(_load(args.csv), strict=False)
+    sweep = _with_rp(_checked(_load(args.csv), strict=False), args.r_parallel)
     if args.diagnostic:
         plot_vds_delta(sweep, r_ptc_ohm=args.r_ptc,
                        vds_set_max_v=args.vds_set_max)
@@ -232,6 +308,19 @@ def cmd_plot(args: argparse.Namespace) -> int:
         print(f"wrote {args.save}", file=sys.stderr)
     if args.show:
         plt.show()
+    return 0
+
+
+def cmd_annotate(args: argparse.Namespace) -> int:
+    sweep = _checked(_load(args.csv), strict=False)
+    rp = _resolve_rp(args.r_parallel, sweep)
+    try:
+        add_host_meta(args.csv, rp.meta_items(), replace_existing=args.force)
+    except ContractError as exc:
+        print(f"error: {exc}; pass --force to replace it", file=sys.stderr)
+        return 2
+    print(rp_report(sweep, rp).rstrip(), file=sys.stderr)
+    print(f"wrote the R_p record into {args.csv}", file=sys.stderr)
     return 0
 
 
@@ -248,6 +337,15 @@ def cmd_ports(_: argparse.Namespace) -> int:
 def _vds_set_max(text: str) -> float | None:
     """``--vds-set-max``: a voltage, or ``none`` to fit every row."""
     return None if text.lower() == "none" else float(text)
+
+
+def _rp_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--r-parallel", metavar="OHM|auto|CSV|none",
+        help="subtract V/R_p for a resistor across D-S: a calibration "
+             "capture of R_p alone (primary), a value in ohms, auto (fit "
+             "this capture's low end), or none. Default: the R_p recorded "
+             "in the CSV header, if any")
 
 
 def _guess_kind(sweep: Sweep) -> str:
@@ -273,6 +371,10 @@ def build_parser() -> argparse.ArgumentParser:
     _sweep_args(p)
     p.add_argument("-o", "--output", required=True)
     p.add_argument("--live", action="store_true", help="plot as it arrives")
+    p.add_argument("--r-parallel", metavar="OHM|auto|CSV",
+                   help="a resistor clamped across D-S with the device: record "
+                        "it in the header (a calibration capture of it alone, "
+                        "a value in ohms, or auto to fit this capture)")
     p.add_argument("--save-plot", metavar="PNG")
     p.set_defaults(func=cmd_capture)
 
@@ -292,7 +394,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("extract", help="extract parameters from a CSV")
     p.add_argument("csv")
-    p.add_argument("--type", choices=["mosfet", "diode"])
+    p.add_argument("--type", choices=["mosfet", "diode", "resistor"],
+                   help="resistor: fit I = V/R + offset, e.g. R_p alone")
+    _rp_arg(p)
     p.add_argument("--vds-slice", type=float,
                    help="measured drain voltage for the threshold fit")
     p.add_argument("--vgs-range", type=float, nargs=2, metavar=("LO", "HI"))
@@ -318,11 +422,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--type", choices=["mosfet", "diode"])
     p.add_argument("--name", default="EXTRACTED")
     p.add_argument("-o", "--output")
+    _rp_arg(p)
     p.add_argument("--allow-mismatch", action="store_true")
     p.set_defaults(func=cmd_model)
 
     p = sub.add_parser("plot", help="plot a saved CSV")
     p.add_argument("csv")
+    _rp_arg(p)
     p.add_argument("--save", metavar="PNG")
     p.add_argument("--show", action="store_true")
     p.add_argument("--diagnostic", action="store_true",
@@ -337,6 +443,14 @@ def build_parser() -> argparse.ArgumentParser:
                         "is outside its rated load while SB21 is fitted); "
                         "'none' fits every row")
     p.set_defaults(func=cmd_plot)
+
+    p = sub.add_parser("annotate",
+                       help="record the R_p a saved capture was taken with")
+    p.add_argument("csv")
+    p.add_argument("--r-parallel", required=True, metavar="OHM|auto|CSV")
+    p.add_argument("--force", action="store_true",
+                   help="replace an R_p record already in the file")
+    p.set_defaults(func=cmd_annotate)
 
     p = sub.add_parser("ports", help="list serial ports")
     p.set_defaults(func=cmd_ports)

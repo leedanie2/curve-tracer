@@ -199,12 +199,21 @@ def plot_family(sweep: Sweep, *, ax: Any = None, show_flagged: bool = True,
     label = title or sweep.meta.device
     if sweep.meta.is_simulated:
         label += "   [SIMULATED]"
+    if sweep.r_parallel is not None:
+        ax.text(0.99, 0.01, _wrap(sweep.r_parallel.label), transform=ax.transAxes,
+                ha="right", va="bottom", fontsize=7, color="0.3")
     ax.set_xlabel("V_DS measured at the DUT  (V)")
-    ax.set_ylabel("I_D  (mA)")
+    ax.set_ylabel("I_D  (mA)" if sweep.r_parallel is None
+                  else "I_D, R_p current subtracted  (mA)")
     ax.set_title(label)
     ax.grid(True, alpha=0.3)
     ax.legend(fontsize=8, loc="upper left")
     return ax
+
+
+def _wrap(text: str, width: int = 70) -> str:
+    import textwrap
+    return "\n".join(textwrap.wrap(text, width))
 
 
 def plot_vds_delta(sweep: Sweep, *, ax: Any = None,
@@ -225,8 +234,8 @@ def plot_vds_delta(sweep: Sweep, *, ax: Any = None,
     if ax is None:
         _, ax = plt.subplots(figsize=(7.0, 4.5))
 
-    rows = [r for r in sweep.valid_rows if r.i_ma > 0.5]
-    i_ma = np.array([r.i_ma for r in rows])
+    rows = [r for r in sweep.valid_rows if r.i_total_ma > 0.5]
+    i_ma = np.array([r.i_total_ma for r in rows])
     delta = np.array([r.vds_set_v - r.v_dut for r in rows])
     above = np.array([vds_set_max_v is not None and r.vds_set_v > vds_set_max_v
                       for r in rows], dtype=bool)

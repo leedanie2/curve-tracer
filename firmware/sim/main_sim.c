@@ -51,7 +51,7 @@ static void usage(void)
         "usage: ct_sim [--dut mosfet|diode|resistor] [--noise COUNTS]\n"
         "              [--vth V] [--k A/V^2] [--lambda 1/V]\n"
         "              [--is A] [--n-diode N] [--rs OHM] [--rload OHM]\n"
-        "              [--rptc OHM] [--rdiv OHM]\n"
+        "              [--rptc OHM] [--rdiv OHM] [--rpar OHM] [--dac-floor V]\n"
         "\n"
         "Reads commands on stdin (ID GET SET SWEEP HOLD STOP HELP), writes CSV to\n"
         "stdout. See firmware/README.md for the wire format.\n");
@@ -129,6 +129,10 @@ int main(int argc, char **argv)
             sim.r_ptc = strtof(v, NULL); i++;
         } else if (strcmp(a, "--rdiv") == 0 && v != NULL) {
             sim.r_div = strtof(v, NULL); i++;
+        } else if (strcmp(a, "--rpar") == 0 && v != NULL) {
+            sim.r_par = strtof(v, NULL); i++;
+        } else if (strcmp(a, "--dac-floor") == 0 && v != NULL) {
+            sim.dac_floor_v = strtof(v, NULL); i++;
         } else {
             fprintf(stderr, "ct_sim: unknown option '%s'\n", a);
             usage();

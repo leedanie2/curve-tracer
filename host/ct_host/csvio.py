@@ -29,7 +29,7 @@ from typing import Iterable, Iterator
 __all__ = [
     "Metadata", "Row", "Sweep", "MetaLine", "Columns", "Error", "End",
     "ContractError", "TruncatedTranscript",
-    "parse", "parse_stream", "save",
+    "parse", "parse_stream", "save", "add_host_meta",
 ]
 
 #: Column order, as ``CT_CSV_COLUMNS`` in ``firmware/core/ct_csv.h``.
@@ -224,6 +224,9 @@ class Row:
     raw: str = ""
     i_recomp_ma: float | None = None
     v_recomp_v: float | None = None
+    #: Current through a resistor clamped across D-S with the device, filled
+    #: by :func:`ct_host.parallel.subtract`. ``None`` when there is none.
+    i_parallel_ma: float | None = None
 
     @property
     def valid(self) -> bool:
@@ -236,9 +239,19 @@ class Row:
         return self.flags == ""
 
     @property
-    def i_ma(self) -> float:
-        """Current for analysis: recomputed if available, else as reported."""
+    def i_total_ma(self) -> float:
+        """Everything the instrument drove into J6: the device and any R_p.
+
+        This is what drops across R_iso and the shunt, so the series-drop
+        diagnostic uses it, not :attr:`i_ma`.
+        """
         return self.i_meas_ma if self.i_recomp_ma is None else self.i_recomp_ma
+
+    @property
+    def i_ma(self) -> float:
+        """Device current for analysis: recomputed if available, else as
+        reported, less any R_p current."""
+        return self.i_total_ma - (self.i_parallel_ma or 0.0)
 
     @property
     def v_dut(self) -> float:
@@ -369,6 +382,9 @@ class Sweep:
     raw_text: str = ""
     #: True once recompute() has run and agreement has been checked.
     recomputed: bool = False
+    #: The resistor across D-S whose current has been subtracted, a
+    #: :class:`ct_host.parallel.ParallelR`; ``None`` when nothing was.
+    r_parallel: object | None = None
     _sources: dict[str, str] = field(default_factory=dict, repr=False)
 
     @property
@@ -469,7 +485,8 @@ def parse(text: str | Iterable[str], *, strict: bool = True,
 # --------------------------------------------------------------------------
 
 def save(sweep: Sweep, path: str | os.PathLike[str], *,
-         stamp_date: bool = True, source: str | None = None) -> Path:
+         stamp_date: bool = True, source: str | None = None,
+         extra: Iterable[tuple[str, str]] = ()) -> Path:
     """Write the transcript out, header preserved verbatim.
 
     The bytes the instrument sent are written back unchanged -- header,
@@ -487,6 +504,9 @@ def save(sweep: Sweep, path: str | os.PathLike[str], *,
     taken with ``--device 2N7000`` carries a part name that looks like a bench
     measurement, and ``host_source`` is then the only thing separating a
     modelled curve from a real one.
+
+    ``extra`` adds further ``host_*`` keys, such as the R_p record
+    (:mod:`ct_host.parallel`).
     """
     path = Path(path)
     text = sweep.raw_text
@@ -500,12 +520,45 @@ def save(sweep: Sweep, path: str | os.PathLike[str], *,
     if source is not None and "host_source" not in sweep.meta:
         added.append(f"# host_source: {source}")
 
+    added += [f"# {_host_key(key)}: {value}" for key, value in extra]
+
     if added:
         text = _insert_after_header(
             text, "".join(line + "\r\n" for line in added))
 
     path.write_text(text, newline="")
     return path
+
+
+def add_host_meta(path: str | os.PathLike[str],
+                  items: Iterable[tuple[str, str]], *,
+                  replace_existing: bool = False) -> Path:
+    """Add ``host_*`` keys to a saved capture, after the instrument's header.
+
+    For a record that was not available at capture time, such as the R_p a
+    capture was taken with. A key already in the file raises unless
+    ``replace_existing``, which drops the old line first. Rows and firmware
+    fields are untouched.
+    """
+    path = Path(path)
+    text = path.read_text()
+    items = [(_host_key(k), v) for k, v in items]
+    keys = {k for k, _ in items}
+    present = [k for k in parse(text).meta.keys() if k in keys]
+    if present and not replace_existing:
+        raise ContractError(f"{path} already records {', '.join(present)}")
+    kept = "".join(
+        line for line in text.splitlines(keepends=True)
+        if not any(line.startswith(f"# {k}:") for k in keys))
+    path.write_text(_insert_after_header(
+        kept, "".join(f"# {k}: {v}\r\n" for k, v in items)), newline="")
+    return path
+
+
+def _host_key(key: str) -> str:
+    if not key.startswith("host_"):
+        raise ValueError(f"host-added metadata must be prefixed host_: {key!r}")
+    return key
 
 
 def _insert_after_header(text: str, block: str) -> str:

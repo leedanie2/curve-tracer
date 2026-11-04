@@ -49,6 +49,10 @@ typedef struct {
     float r_iso;            /* blueprint §3.1, 22 ohm */
     float r_ptc;            /* drain-path PTC, ohm; 0 = not modelled */
     float r_div;            /* Kelvin divider across the DUT, ohm; 0 = absent */
+    float r_par;            /* resistor clamped across D-S with the DUT, ohm;
+                             * 0 = absent. The firmware cannot tell it from the
+                             * DUT, so it is part of the reported current */
+    float dac_floor_v;      /* lowest node voltage the sweep DAC reaches; 0 = ideal */
     float shunt_ohm;
     float noise_counts;     /* peak uniform ADC noise, in counts */
 
@@ -106,7 +110,8 @@ void ct_sim_set_sink(ct_sim_t *s, ct_sim_sink_fn fn, void *user);
 ct_device_t ct_sim_device(ct_sim_t *s);
 
 /* Exposed for tests and for main_sim's --dump-iv mode: the DUT current in
- * amps at a given gate and drain voltage, ignoring the front end. */
+ * amps at a given gate and drain voltage, ignoring the front end. It includes
+ * r_par, which sits in J6 with the device. */
 float ct_sim_dut_current_a(const ct_sim_t *s, float vgs, float vds);
 
 #endif /* CT_SIM_DEVICE_H */
