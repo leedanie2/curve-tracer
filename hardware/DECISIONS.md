@@ -769,6 +769,24 @@ That is close to §3.1's 2.66 pF too-much case, which the analysis puts at
 25.4% overshoot. Rev 2's first bring-up checks it: Block 1 at open load
 and into L1, then the overshoot step.
 
+**Kept at 4.7 pF despite that ambiguity** (Daniel, 2026-11-03, approving
+rev 2). Two reasons:
+- **The 25.4% estimate is about a different pole.** It sizes the
+  over-cancelled C_in pole. The oscillation board 2 actually shows comes
+  from the load side: Q1's emitter resistance at its ~0.2 mA open-load bias
+  (r_e ≈ 130 Ω) driving D3's ~1 nF (`docs/characterization.md` (b);
+  CONTINGENCY §2). C_f damps that mode but doesn't remove it, so margin
+  toward more damping goes where the measured problem is.
+- **Overshoot is the safer failure.** Too much C_f, sized for this board,
+  costs overshoot: settling time, and a transient at the DUT that D3
+  bounds. Too little leaves the oscillation already measured, which
+  corrupts every open-load reading.
+
+One qualification for the record: Phase 0's too-much-C_f failure (sim 02)
+was oscillation, not overshoot. That circuit had no R_iso and no stray
+C_in, so it shows the mechanism, not its size on this board
+(CONTINGENCY §3).
+
 ## Assembly — JLCPCB assembles everything; nothing is hand-soldered
 
 **Decision, 2026-10-11 (Daniel): zero hand-soldering.** The 2026-10-06
