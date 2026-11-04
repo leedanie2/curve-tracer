@@ -19,9 +19,10 @@ ct_host/
   parallel.py    R_p: a resistor across D-S with the device, and its current
                  taken back out
   spice.py       .model cards
+  overlay.py     the card simulated in ngspice, and measured vs simulated
   plot.py        live family plot, static plots, series-drop diagnostic
   cli.py         python -m ct_host capture | plot | extract | model | ports
-tests/           153 tests, every one against the simulator
+tests/           159 tests, every one against the simulator
 ```
 
 `parse_cmrr_log.py`, `parse_current_limit.py` and `parse_tran_overshoot.py`
@@ -209,6 +210,49 @@ same capture reads n = 7.4 (`tests/test_parallel.py`).
 
 ---
 
+## From a capture to the overlay
+
+Blueprint §5 item 5 and the end of `device → measurement → model →
+simulation`. One command per step, after a capture:
+
+```sh
+python -m ct_host model    h4/mvp_17_diode_rp.csv --type diode --name D1N4148_CT -o h4/mvp_17_diode.lib
+python -m ct_host simulate h4/mvp_17_diode.lib --like h4/mvp_17_diode_rp.csv -o h4/mvp_17_diode_sim.csv
+python -m ct_host overlay  h4/mvp_17_diode_rp.csv h4/mvp_17_diode_sim.csv --save ../media/overlay_diode.png
+```
+
+The MOSFET path is the same three commands with `--type mosfet`.
+
+- **`model`** extracts and writes the `.model` card. Its comments carry the
+  uncertainties, the fit range, R_p and the source capture.
+- **`simulate`** runs the card in **ngspice** (batch, `brew install
+  ngspice`). A voltage source sits directly across the device, swept over
+  the capture's Kelvin-measured range, with the gate at each step's
+  commanded V_GS. R_iso, the PTC and the shunt are outside the Kelvin sense
+  and so are not in the comparison. The device's own R_s is in the card as
+  `RS`, the value the extraction fitted. Blueprint §6 names LTspice; the
+  card is plain SPICE and runs unchanged there.
+- **`overlay`** draws measured points (R_p subtracted) over the simulated
+  curve, linear and semilog for a diode, with residuals underneath. For a
+  diode the residual is `V_meas − V_model(I_meas)` in mV; for a MOSFET it
+  is `I_meas − I_model(V_meas)` in mA per gate step. Points below the
+  extraction's floor are drawn hollow. A ct_sim capture is titled
+  `[SIMULATED]`, and so is its legend.
+
+`demo/run.sh` runs the whole path on ct_sim data: an R_p calibration, then
+a diode and a 2N7000-like MOSFET, each with 470 Ω beside it. Its outputs are
+in `demo/`, and the figures are
+[`media/demo_overlay_diode_SIMULATED.png`](../media/demo_overlay_diode_SIMULATED.png)
+and [`media/demo_overlay_mosfet_SIMULATED.png`](../media/demo_overlay_mosfet_SIMULATED.png).
+They show that the pipeline works. They say nothing about the hardware.
+
+| Simulated device | Fed in | Recovered through R_p, card, ngspice |
+|---|---|---|
+| Diode | n 1.75, I_S 2.5 nA, R_s 0.6 Ω | n 1.751, I_S 2.52 nA, R_s 0.601 Ω; residual 0.63 mV rms |
+| MOSFET | V_th 2.1 V, KP 0.05, λ 0.01 | V_th 2.099 V, KP 0.0499, λ 0.0101; residual ≤ 0.058 mA (1.4 LSB) |
+
+---
+
 ## Uncertainty, and why two numbers are printed
 
 Every fitted quantity is an `Estimate` with a standard error. The x-intercept
@@ -361,8 +405,6 @@ included.
   error is under 2% with or without the divider. A real ADC's noise
   should supply that dither. Until it is measured, read a simulator
   `I_S` to about ±10%.
-- **Overlay comparison against LTspice** (blueprint §5 item 5) is not
-  implemented.
 - **Only the serial link has run on hardware.** On 2026-10-30 `hold` ran
   against a Nucleo-F303RE over the ST-LINK VCP (macOS), after the transport
   was changed to pace its writes. A single write of 16 bytes or more wedges

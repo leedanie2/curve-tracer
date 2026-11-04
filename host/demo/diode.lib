@@ -1,0 +1,20 @@
+* Diode -- extracted from a curve-tracer measurement
+* generated  : 2026-11-04 00:47:59Z by ct_host
+* device     : 1N4148
+* capture    : demo/diode_rp.csv
+*
+* WARNING: this model was extracted from SIMULATED data
+*          (firmware/sim), not from a bench measurement.
+*          It describes the test fixture's model, not a part.
+*
+* n          : 1.751 ± 0.0045415
+* I_S        : 2.5206e-09 ± 8.6746e-11 A
+* R_s        : 0.60131 ± 0.019876 ohm
+* fit range  : every point carrying resolvable current (I >= 5 current LSB = 0.2015 mA); n, I_S and R_s solved jointly as V = a*ln(I) + b + c*I
+* R_p        : R_p = 470.43 ± 0.33 Ω subtracted (calibration: demo/rp.csv, 100 rows over 0.00101..1.41 V, offset +0.0019 mA)
+*
+.model D1N4148_SIM D (
++   IS = 2.52056e-09
++   N  = 1.75097
++   RS = 0.601314
++ )

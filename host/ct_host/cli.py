@@ -7,6 +7,8 @@
     python -m ct_host plot    data/run.csv --save iv.png
     python -m ct_host extract data/rp.csv --type resistor
     python -m ct_host annotate data/run.csv --r-parallel data/rp.csv
+    python -m ct_host simulate data/d.lib --like data/d.csv -o data/d_sim.csv
+    python -m ct_host overlay  data/d.csv data/d_sim.csv --save overlay.png
 
 Every command accepts either a saved CSV or a live source, and ``--sim``
 stands in for an instrument everywhere ``--port`` would go. That is what makes
@@ -311,6 +313,37 @@ def cmd_plot(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_simulate(args: argparse.Namespace) -> int:
+    from .overlay import read_card, simulate, write_sim
+
+    like = _with_rp(_checked(_load(args.like), strict=False), args.r_parallel,
+                    report=False)
+    try:
+        card = read_card(args.card)
+        sim = simulate(card, like, step=args.step)
+    except (ValueError, FileNotFoundError, RuntimeError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    out = write_sim(sim, args.output, like=args.like)
+    print(f"{sim.meta['simulator']}: {sim.meta['model']}, "
+          f"{len(sim.curves)} curve(s)\nwrote {out}", file=sys.stderr)
+    return 0
+
+
+def cmd_overlay(args: argparse.Namespace) -> int:
+    import matplotlib
+    matplotlib.use("Agg")
+
+    from .overlay import plot_overlay, read_sim
+
+    sweep = _with_rp(_checked(_load(args.csv), strict=False), args.r_parallel)
+    fig = plot_overlay(sweep, read_sim(args.sim), title=args.title)
+    fig.savefig(args.save, dpi=150, facecolor=fig.get_facecolor(),
+                bbox_inches="tight")
+    print(f"wrote {args.save}", file=sys.stderr)
+    return 0
+
+
 def cmd_annotate(args: argparse.Namespace) -> int:
     sweep = _checked(_load(args.csv), strict=False)
     rp = _resolve_rp(args.r_parallel, sweep)
@@ -443,6 +476,25 @@ def build_parser() -> argparse.ArgumentParser:
                         "is outside its rated load while SB21 is fitted); "
                         "'none' fits every row")
     p.set_defaults(func=cmd_plot)
+
+    p = sub.add_parser("simulate",
+                       help="sweep a .model card in ngspice over a capture's range")
+    p.add_argument("card", help="the .model card from `model`")
+    p.add_argument("--like", required=True, metavar="CSV",
+                   help="the capture whose voltage range and gate steps to use")
+    p.add_argument("--step", type=float, default=0.002, metavar="V")
+    p.add_argument("-o", "--output", required=True)
+    _rp_arg(p)
+    p.set_defaults(func=cmd_simulate)
+
+    p = sub.add_parser("overlay",
+                       help="measured vs simulated I-V, with residuals")
+    p.add_argument("csv", help="the capture")
+    p.add_argument("sim", help="the output of `simulate`")
+    p.add_argument("--save", required=True, metavar="PNG")
+    p.add_argument("--title", help="device name for the title")
+    _rp_arg(p)
+    p.set_defaults(func=cmd_overlay)
 
     p = sub.add_parser("annotate",
                        help="record the R_p a saved capture was taken with")
