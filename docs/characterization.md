@@ -844,3 +844,40 @@ it negligible on DC readings.
 3. The gate DAC: V_GS is commanded, not measured.
 4. A MOSFET model card: needs higher V_GS or a moderate-inversion model.
 5. The diode's temperature; the Nexperia figures to be read first-hand.
+
+---
+
+### 2026-11-09 — Off-bench: session 3 planned; sim 16 (100 nF alone)
+
+Session 3 is `hardware/MVP_CARD.md` section E (≤ 30 min, by 2026-11-15):
+a breadboard fixture, the stabiliser checked on it at idle and
+0.2 / 1 / 6 V, holds into 0.1% resistors, and the 1N4148 again.
+
+**Could the stabiliser be 100 nF with no resistor?** *Simulation, sims 16
+and 16b* (`sim/README.md`). TI's model, C1 empty. 100 nF alone across D–S
+doesn't ring anywhere simulated: at the floor (where Q1 carries ~6 µA)
+through a 15 mV step up and back down, and at 1 V and 6 V from start-up.
+That holds both at J6 and on the fixture, 5 cm away behind ~100 nH; the
+fixture adds only an overshoot during the 0 → 6 V charge. Open load at the
+floor, the reference, rings at 155–290 kHz under the same steps. So by
+sim 15's analysis and sim 16, the capacitor is the stabiliser and the
+resistor is not needed. The bench decides: this model has been optimistic
+twice (blueprint §11), and section E tries the cap first with L1 as the
+fallback.
+
+**What the card's 0.1% holds can and can't show** (analysis). V_meas /
+I_meas against a 0.1% resistor is the voltage channel over the current
+channel. An error in the shared 3.300 V reference scales both and cancels,
+so it is not an absolute voltage check. Absolute voltage still rests on
+2026-11-08's DMM comparison (within its ±0.8%). The holds replace the
+±3% of R_DMM, so current gets bounded at ~±0.9% instead of ±3%.
+
+**What a cap-only stabiliser would and wouldn't change** (analysis). It
+removes L1's subtraction (1–3 µA per point of noise, ~1.5 µA systematic,
+drift as L1 warms) and frees the 7–15 mA that L1 takes from the 40 mA
+limit. It doesn't change the current LSB (40.3 µA) or the diode fit's
+0.2 mA floor: those are range 1's. It needs a host change, because the
+−0.087 mA zero is now subtracted only as part of an R_p calibration line.
+And it doesn't suit MOSFET families: with no resistor, the node discharges
+at low levels only through the 33.2 kΩ feedback network (τ ≈ 3 ms), so an
+off gate step would start at the previous step's V_DS.

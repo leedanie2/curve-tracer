@@ -653,3 +653,55 @@ ordering, not the margin.
 python3 host/parse_osc.py sim/15_floor_rp_opa197.raw --ring 3e-6 12e-6
 python3 host/parse_osc.py sim/15_floor_rp_opa197.raw --residual 8e-6 12e-6
 ```
+
+## 16_cap_only_opa197.cir, 16b_cap_only_levels_opa197.cir — 100 nF alone across D–S, and the session-3 fixture
+
+Written 2026-11-09, for MVP card section E. Sim 15 found that L1's 100 nF,
+not its 200 Ω, keeps the loop quiet. Does the capacitor alone do it? A
+resistor-free stabiliser draws no DC, so nothing would need subtracting.
+Without a resistor Q1 carries only the feedback network and the Kelvin
+divider, ~6 µA at the floor (r_e ~4 kΩ): the weakest bias the loop has.
+
+**Circuit:** sim 15's (TI's OPAx197 model, `uic`, C1 empty, D3 1.2 nF).
+The stabiliser is either at J6, or 5 cm away on the session-3 breadboard,
+behind 100 nH and 0.1 Ω for the D and S wires together. 100 nH with 100 nF
+resonates near 1.6 MHz, inside the loop's band, which is why the fixture
+gets its own case.
+
+**Sweeps:**
+- **16, at the floor** (FB_SENSE 0.205 V): cap at J6; cap on the fixture;
+  open load as the reference. Each settles from the start-up step, then the
+  DAC moves one sweep step (15 mV at the node) up at 30 µs and back down at
+  50 µs. 70 µs.
+- **16b, at 1 V and 6 V**: cap at J6 and on the fixture. Start-up step only,
+  25 µs. TI's model collapses its timestep once a run goes quiet, and a
+  first 70 µs version of these crawled at ~1 µs per minute.
+
+**Results (simulated, LTspice, TI's OPAx197 model), V(e) at TP3:**
+
+| Sim | Load | Level | Ring after the step | Residual / note |
+|---|---|---|---|---|
+| 16 | 100 nF at J6 | floor, settled 20–29 µs | none | 0.00 mV |
+| 16 | 100 nF at J6 | +15 mV step | none (smooth charge) | node reaches 0.218 V in 20 µs |
+| 16 | 100 nF at J6 | −15 mV step | none | node stays at 0.219 V: no path down but 33.2 kΩ |
+| 16 | 100 nF on the fixture | floor, both steps | none (µV wiggle, gone in 5 µs) | as at J6 |
+| 16 | open load (reference) | floor, steps | **155 kHz, ratio 0.44 (up); 290 kHz, 0.72 (down)** | 58 mV p-p still left from start-up at 20–29 µs |
+| 16b | 100 nF at J6 | 1 V, 6 V start-up | none | tail 0.12 / 0.96 mV (exponential charge, not a ring) |
+| 16b | 100 nF on the fixture | 1 V | none | 0.12 mV |
+| 16b | 100 nF on the fixture | 6 V | overshoot to 7.35 V at TP3 during the charge, gone by 8 µs; none after | 0.96 mV |
+
+**What it says.** In TI's model, 100 nF with no resistor keeps the loop
+from ringing from the floor to 6 V, at J6 and on the fixture. The open-load
+reference rings under the same steps, so the method can see a ring. The
+weakness is DC, not stability. With no resistor, the node can only fall
+through the 33.2 kΩ feedback network (τ ≈ 3 ms), because the B-E clamp
+can't sink below ~0.6 V. That's harmless for a rising diode sweep, but a
+MOSFET family's off steps would start high. As always with this model
+(blueprint §11), it decides what the bench tries first, not the margin.
+
+```
+python3 host/parse_osc.py sim/16_cap_only_opa197.raw --ring 30.2e-6 49e-6
+python3 host/parse_osc.py sim/16_cap_only_opa197.raw --ring 50.2e-6 69e-6
+python3 host/parse_osc.py sim/16b_cap_only_levels_opa197.raw --ring 3e-6 25e-6
+python3 host/parse_osc.py sim/16b_cap_only_levels_opa197.raw --residual 15e-6 25e-6
+```

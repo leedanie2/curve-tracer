@@ -1,0 +1,62 @@
+* 16b_cap_only_levels_opa197.cir -- sim 16 at 1 V and 6 V. Does 100 nF alone across D-S, no resistor, keep the
+* loop quiet from the DAC floor up? For MVP card session 3 (2026-11-09). If it
+* does, the stabiliser carries no DC current and the host needs no R_p
+* subtraction. TI's model, C1 empty, D3 1.2 nF, otherwise sim 15's circuit.
+*
+* With no resistor, Q1 carries only the feedback network and Kelvin divider:
+* ~6 uA at the floor, r_e ~4 kohm. That is the hardest bias for the loop.
+*
+* Like sim 15 it starts from zero (uic): LTspice finds no operating point for
+* TI's model here either (Gmin and source stepping fail, as in sim 14b).
+*
+* Four runs (k): 100 nF at J6 at 1 and 6 V; the fixture (behind 100 nH and
+* 0.1 ohm) at 1 and 6 V. TI's model collapses its timestep once a run goes
+* quiet, so these end at 25 us and the start-up step (0 -> level at 2 us, a
+* ~70 mA charge into 100 nF at 6 V) is the only excitation.
+* vds is referred to FB_SENSE; with no DC load the node sits at the same level.
+* Parse: python3 host/parse_osc.py sim/16b_cap_only_levels_opa197.raw --ring 3e-6 25e-6
+*        python3 host/parse_osc.py sim/16b_cap_only_levels_opa197.raw --residual 15e-6 25e-6
+* The model is not committed (TI copyright); fetch it as sim/README.md says.
+
+XU1 inp inm vcc 0 oa OPAx197
+V2 inp 0 PWL(0 0 2u 0 2.1u {vds/3.32})
+RG inm 0 10k
+Rf fb inm 23.2k
+Cin inm 0 {cin}
+C1 fb inm {cf}
+V1 vcc 0 15
+Rbase base oa 330
+XQ1 vcc base e BD139
+D1 e base 1N4148
+Q2 base e fb 0 2N3904
+Rsense e fb 10
+Cprobe e 0 12p
+Rprobe e 0 10Meg
+Riso fb load 22
+Rptc load ptcout 8.4
+Rsh ptcout dut 1
+Cd3 dut 0 {cd3}
+Rkel dut 0 400k
+* the stabiliser: at J6 (Lw ~0) or behind the fixture's wires
+Lw dut bb {Lwv} Rser={Rwv}
+CL bb 0 {CLv}
+
+.model D D
+.lib C:\users\crossover\AppData\Local\LTspice\lib\cmp\standard.dio
+.model NPN NPN
+.model PNP PNP
+.lib C:\users\crossover\AppData\Local\LTspice\lib\cmp\standard.bjt
+.include models/BD139.LIB
+.include models/OPAx197.LIB
+
+.param cin=0
+.param cf=0
+.param cd3=1.2n
+.step param k list 1 2 3 4
+.param vds=table(k,1,1,2,6,3,1,4,6)
+.param Lwv=table(k,1,1p,2,1p,3,100n,4,100n)
+.param Rwv=table(k,1,1m,2,1m,3,0.1,4,0.1)
+.param CLv=100n
+.tran 0 25u 0 5n uic
+.save V(e) V(dut) V(oa) I(Rsh)
+.end

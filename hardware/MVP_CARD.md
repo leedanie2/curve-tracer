@@ -7,7 +7,7 @@ oscillation check, and one diode I-V plot. Print it and fill in every
 `host/h4/`. Sections A–C ran on 2026-11-02/03, and Block 1 failed at open
 load. Section D ran on 2026-11-08: **470 Ω across D–S failed** (it
 oscillated), and **L1 is the R_p** from then on. Results are in
-`docs/characterization.md`.
+`docs/characterization.md`. **Section E is session 3**, by 2026-11-15.
 
 | Board | Date | Ambient °C | Diode part no. | Port (`P=`) |
 |---|---|---|---|---|
@@ -282,3 +282,193 @@ The model, the simulation and the overlay are desk work
   instrument's current zero (−0.087 mA that night).
 - **L1's expected readings** use the same string: 200 / 231.4 = 0.864 of
   the command (0.865 with the 202 Ω read on 2026-11-02).
+
+---
+
+## E. Session 3: breadboard fixture, stabiliser, 0.1% accuracy, diode (≤ 30 min)
+
+Board 2, C1 still empty. By 2026-11-15. No soldering; the rules at the top
+of the card still apply. Supply output OFF before every change on the
+breadboard or at J6. The scope stays on **TP3**, ground on **TP9**, set up
+as section A (20 mV/div, 1 µs/div, AC, BW limit, Pk-Pk and Frequency).
+
+| Date | Ambient °C | Stabiliser used | 0.1% parts on hand? | Diode (same as 11-08?) | Port (`P=`) |
+|---|---|---|---|---|---|
+| ____ | ____ | cap / L1 | yes / no | ____ | ____ |
+
+**What this session is for.**
+- A fixture where parts plug into a breadboard, not three wires twisted
+  into one J6 clamp.
+- Whether **100 nF alone across D–S**, with no resistor, keeps the loop
+  quiet from the DAC floor up. Sim 16 says it does. If so, no current
+  needs subtracting beyond the instrument's zero, and these holds measure
+  that zero directly.
+- Current accuracy from 0.1% resistors instead of the DMM's ±3% ohms
+  reading.
+- The 1N4148 again, on the fixture, for the README figure.
+
+**Parts.**
+- A solderless breadboard and three solid-core wires, ~5 cm.
+- **The stabiliser**, permanently in the breadboard across D–S:
+  a **100 nF ceramic capacitor alone**, no resistor, legs ≤ 1 cm into
+  the D and S rows. It draws no DC current.
+- **L1** (200 Ω 1 W ‖ 100 nF, 2026-11-08), as the fallback.
+- If on hand: **0.1% resistors, 100 Ω and 1 kΩ**, any wattage ≥ 1/8 W.
+  The most either sees is 34 mW.
+- The 1N4148 from 2026-11-08 if you can tell it apart; otherwise any
+  1N4148, and say so in the header.
+
+**Time plan.**
+
+| Fixture and setup | (a) stability | (c) 0.1% holds | (d) diode | Spare |
+|---|---|---|---|---|
+| 8 min | 6 min | 6 min | 4 min | 6 min |
+
+If time runs short, drop (c) first. (a) and (d) are the session.
+
+### (b) Before the session, off-bench: sim 16
+
+*Simulation (sims 16 and 16b, TI's OPAx197 model, sim 15's setup, C1
+empty).* **100 nF alone across D–S is quiet in every case
+simulated.** At the floor (0.205 V, where Q1 carries ~6 µA) it settles
+with no ring, and a 15 mV step up and back down rings neither way. At
+1 V and 6 V the start-up charge settles without ringing. With the cap on
+the fixture, behind ~100 nH of wire, the result is the same, apart from an
+overshoot during the 0 → 6 V start-up charge that is gone by 8 µs. Under
+the same steps, open load at the floor rings at 155–290 kHz (half-cycle
+ratio 0.44–0.72), so the method would have seen a ring. One side effect:
+at the floor the cap can only discharge through the 33.2 kΩ feedback
+network, so 20 µs after a 15 mV step down the node has hardly moved
+(0.219 V). That is why (a) tries the cap alone first, with L1 as
+the fallback. The same model was optimistic twice before (blueprint §11),
+so the sim chooses what to try first and the bench decides.
+
+### Setup and the fixture
+
+| # | Do | Pass | Record | Fail → |
+|---|---|---|---|---|
+| 20 | Board unpowered. Pick three breadboard rows a few holes apart and call them **G, D, S**. Run one ~5 cm solid wire from each J6 terminal (G by the ▲ mark, D the middle, S the other end) to its row. Plug J5's Kelvin jumpers into the breadboard **at the device's holes**: HI into the **D row**, LO into the **S row**. Plug the stabiliser into D and S and leave it there all session. G row empty | Every wire tight in J6; each lead firm in its row | ☐ | Retighten. A loose breadboard contact reads as noise or a step in the data |
+| 21 | Steps 4–7 of sections A–B (port, supply 15.00 V, power-up, baseline). Power-up current after 5 s | 3–25 mA, not CC | ____ mA | **STOP** |
+
+The Kelvin pair senses at the device's own breadboard row. So the 5 cm
+wires and J6's clamps are outside the measurement, and only the
+row-to-lead contacts (~10–30 mΩ) are inside it.
+
+### (a) Is the fixture quiet with the stabiliser?
+
+The stabiliser is the 100 nF alone, tested first; L1 is the fallback
+(22e). The cap draws no DC, so each hold reads the node at the command and
+the current at the instrument's zero. 22b–d therefore measure the zero at
+three common-mode voltages, for (c) and (d) to subtract. That is also
+blueprint §7's CMRR test: how far the zero moves with the node voltage.
+
+**Pass for every line: no periodic wave on the scope**, and the Frequency
+readout not locked on a steady value. A periodic wave is a repeating
+shape: at 1 µs/div, ~1 MHz is about one cycle per division. Broadband fuzz
+like 2026-11-08's 20–22 mV is a pass. Each hold runs 20 s; read the scope
+and the terminal at t = 10–15 s. A current outside its band with no
+periodic wave is not a fail: with the cap alone it is the zero, so record
+it and go on. Only a periodic wave sends you to 22e.
+
+| # | Do | Pass | Record | Fail → |
+|---|---|---|---|---|
+| 22a | **Idle**, nothing running, stabiliser in. Read the scope for 10 s | No periodic wave | Pk-Pk ____ mV ; f ____ | 22e |
+| 22b | `HOLD --vds 0.2 --seconds 20 -o h4/s3_22b_hold_0v2.csv` | No periodic wave; vds_meas 0.17–0.23 V (the floor); \|i_meas\| ≤ 0.20 mA | Pk-Pk ____ mV ; ____ V, ____ mA | 22e |
+| 22c | `HOLD --vds 1 --seconds 20 -o h4/s3_22c_hold_1v.csv` | No periodic wave; vds_meas 0.96–1.02 V; \|i_meas\| ≤ 0.20 mA | Pk-Pk ____ mV ; ____ V, ____ mA | 22e |
+| 22d | `HOLD --vds 6 --seconds 20 -o h4/s3_22d_hold_6v.csv` | No periodic wave; vds_meas 5.80–6.10 V; \|i_meas\| ≤ 0.20 mA | Pk-Pk ____ mV ; ____ V, ____ mA | 22e |
+| 22e | **Only on a fail in 22a–d.** Read Frequency (f ____ MHz) and Pk-Pk. Output OFF. Swap the cap for **L1** in the same rows. Output ON; redo 22a–d once (expect 0.19 V, 0.9 mA; 0.865 V, 4.30 mA; 5.19 V, 25.8 mA). If L1 fails here too, the fixture is the difference from 2026-11-08: move L1 to J6 itself, clamped in D–S with the fixture wires, and redo once | Both pass | which stabiliser, where: ____ | Still failing: output OFF and **STOP**. Record f and Pk-Pk |
+
+**If you end on L1:** it must be calibrated on the fixture before (c) and
+(d). `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100
+--i-limit 40 --device L1_Rp -o h4/s3_22f_rp.csv` (1 min); the same three
+pass bands as section D's step 14.
+
+### (c) 0.1% resistors: current against voltage, without the DMM
+
+Only if 0.1% parts are on hand. Each one plugs into the D and S rows
+**beside** the stabiliser, which stays in.
+
+**What this measures, and what it doesn't.** V_meas / I_meas against a
+0.1% resistor is the ratio of the voltage channel to the current channel.
+An error in the shared 3.300 V reference scales both equally and cancels,
+so this does **not** measure the voltage's absolute accuracy. That still
+rests on 2026-11-08's DMM check (−6 mV, inside the DMM's ±0.8%), and no
+new DMM reading is needed. What it replaces is the ±3% of reading R with
+the DMM: current is then known to the voltage's ±0.8% plus 0.1%.
+
+| # | Do | Expected | Pass | Record: vds_meas ; i_meas |
+|---|---|---|---|---|
+| 23a | Output OFF. Plug the **0.1% 100 Ω** into D–S beside the stabiliser. Output ON. `HOLD --vds 2 --seconds 20 -o h4/s3_23a_hold_100r.csv` | Cap: 1.522 V, 15.22 mA. L1: 1.361 V, 20.36 mA total | No periodic wave; V/I within ±1.5% of 100 Ω after the desk corrections below | ____ V ; ____ mA |
+| 23b | Output OFF. Swap it for the **0.1% 1 kΩ**. Output ON. `HOLD --vds 6 --seconds 20 -o h4/s3_23b_hold_1k.csv`. **Skip 23b if the stabiliser is L1**: L1 would carry 25 of the 30 mA, and its warming alone would move the 1 kΩ's share by ~1% | Cap: 5.817 V, 5.82 mA | As 23a, against 1 kΩ | ____ V ; ____ mA |
+
+Output OFF and take the resistor out before (d).
+
+**At the desk:** subtract the current zero at the hold's voltage
+(22b–d's holds, interpolated, with the cap; the `s3_22f` calibration's offset with L1), then compare V / I with the resistor. The ±1.5% band is
+the 1% shunt plus the 0.1% gain and divider resistors. Out of band is a
+measurement, not a fault: it is the shunt's calibration factor, and the
+host can carry it. The two resistors at two currents (15 and 5.8 mA)
+separate a gain error from an offset the zero didn't remove.
+
+### (d) The 1N4148 on the fixture
+
+| # | Do | Pass | Record | Fail → |
+|---|---|---|---|---|
+| 24 | Output OFF. Plug the diode in: **anode in the D row, banded end in the S row**, beside the stabiliser. Output ON. `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100 --i-limit 40 --device 1N4148 -o h4/s3_24_diode.csv` (with L1, add `--r-parallel h4/s3_22f_rp.csv`). **Output OFF.** Then `python -m ct_host extract h4/s3_24_diode.csv --type diode` | `end : ok` or `ilimit`; no periodic wave during the capture; n is 1.0–2.5 | end ____ ; n ____ ; I_S ____ ; R_s ____ | n near 0 or negative: the diode is backwards. Flip it and redo once. A periodic wave: record f and Pk-Pk, keep the file |
+
+■ **Done.** Output OFF, USB out. Hand back this sheet and `host/h4/s3_*`.
+The zero, the model card, the overlay and the README figure are desk work.
+
+**Where section E's numbers come from.**
+- **Series string** as section D: R_iso 22 Ω + PTC 8.4 Ω + shunt 1 Ω =
+  31.4 Ω between FB_SENSE and the node.
+- **With the cap alone** there is no DC load, so the node reads the command
+  (the DAC's −3 to +1%) and the current reads the instrument's zero:
+  −0.087 mA at 0.2–1.3 V on 2026-11-08. A command of 0.2 V sits at the DAC
+  floor, 0.18–0.19 V with code 0. The 0.20 mA band is 5 LSB. It is there
+  to catch Block 1's kind of oscillation-driven DC error (+0.8 to +3 mA),
+  not to grade the zero.
+- **The zero's common-mode term.** Finite CMRR moves the zero with the
+  node voltage. At sim 05's median 88 dB, 6 V gives ~0.24 mA; at its
+  74 dB worst corner, ~1.1 mA. Session 2 could not see it: with L1 in
+  place, a zero that moves in proportion to V looks exactly like a change
+  in 1/R (0.24 mA at 6 V is 1% of L1's current). It may be part of the
+  +0.66% between L1's fit and its DMM reading. 22b–d measure it directly.
+- **L1's readings**: 200 / 231.4 = 0.864 of the command, above the floor.
+- **0.1% holds**: 2 × 100 / 131.4 = 1.522 V and 15.22 mA (23 mW);
+  6 × 1000 / 1031.4 = 5.817 V and 5.82 mA (34 mW). With L1 beside the
+  100 Ω: 66.7 Ω, 1.361 V, 20.36 mA total.
+- **The ±1.5% ratio band** is the shunt's 1% plus the 0.1% resistors in
+  the difference amp and the Kelvin divider. Breadboard contacts inside
+  the Kelvin loop add ~0.05 Ω, 0.05% of 100 Ω.
+- **A sweep with the cap alone.** With no resistor, Q1 runs at µA at the
+  floor and the node settles slowly. Each 15 mV step puts 1.5 nC into the
+  cap, and spread over the ~0.55 ms of sampling per point that is at most
+  2.7 µA (0.07 LSB). Holds have no steps.
+- **Sim 16**: see (b).
+
+**If the cap alone passes (a): what changes at the desk.** Nothing here
+needs the bench.
+- **Host.** The zero is now subtracted only as part of an R_p calibration
+  line, and a capacitor draws no DC to fit. So the host needs a zero of its
+  own: `--zero MA|CSV|auto|none`. CSV takes 22b–d's holds as zero(V); `auto`
+  takes the capture's own off rows (the diode below ~0.4 V); the value is
+  recorded in the header, as R_p is now. `--zero-bracket` moves to it. No
+  `--r-parallel` at all. Without this, (d)'s diode reads n ≈ 1.65 again, as
+  it did on 2026-11-08 before the zero came out.
+- **What it gains.** No V / R_p subtraction: its ~1–3 µA per point of noise
+  and ~1.5 µA systematic go, and so does L1's drift as it warms. The device
+  gets the whole 40 mA limit, where L1 took 7 mA at 1.5 V. **What it
+  doesn't:** the current LSB stays 40.3 µA on range 1, and the diode fit's
+  floor stays 0.2 mA (5 LSB). Low-current resolution is set by the range,
+  not the stabiliser.
+- **Not for MOSFET families.** With no resistor, the node discharges at
+  low levels only through the 33.2 kΩ feedback network (τ ≈ 3 ms; the B-E
+  clamp can't sink below ~0.6 V). An off gate step would start at the last
+  step's V_DS and read ~−85 µA of discharge current. MOSFETs keep L1 until
+  C1 is fitted.
+- **README.** The *Until rev 2* row and *Working around it* (the stabiliser
+  is 100 nF alone for two-terminal parts); the status table (cap-only
+  measured quiet, L1 the MOSFET stabiliser); the headline figure and its
+  numbers from (d), with the zero bracket redone; the accuracy rows and the
+  *Limitations* entry from (c).
