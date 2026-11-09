@@ -60,13 +60,21 @@ def mosfet_model_card(params: MosfetParams, *, name: str = "EXTRACTED",
         f"(1 + lambda*{params.vds_slice:.3f}) = {params.deembed_factor:.4f}",
     ]
     if params.lambda_ is not None:
+        steps = sorted(params.lambda_fits)
         detail.append(f"* lambda     : {params.lambda_}   "
-                      f"(V_A = {params.va})")
+                      f"(V_A = {params.va}); from {len(steps)} gate steps, "
+                      f"V_GS {steps[0]:.3f}..{steps[-1]:.3f} V")
     if params.rds_on is not None:
         detail.append(f"* R_DS(on)   : {params.rds_on}  (not a model "
-                      f"parameter; for reference)")
+                      f"parameter; for reference){_rds_on_window(params)}")
     detail.append(f"* V_DS slice : {params.vds_slice:.4f} V (measured, "
                   f"Kelvin-sensed)")
+    detail += [
+        "* V_GS       : commanded (vgs_set_v), not read back. The gate DAC's",
+        "*              accuracy is unmeasured, so VTO's absolute value",
+        "*              carries that error, in neither its stderr nor the",
+        "*              spread below",
+    ]
     detail.append(f"* fit range  : {params.vth_fit.range.rule}")
     detail += _valid_for(params)
     if params.sensitivity is not None and params.sensitivity.spread is not None:
@@ -120,6 +128,16 @@ def _valid_for(params: MosfetParams) -> list[str]:
             "*          too few to test the square law over this window.",
         ]
     return lines
+
+
+def _rds_on_window(params: MosfetParams) -> str:
+    """Where R_DS(on)'s gate step sits against the V_th fit's window."""
+    if params.rds_on_vgs is None:
+        return ""
+    vgs = params.vth_fit.x
+    where = ("" if vgs.min() <= params.rds_on_vgs <= vgs.max()
+             else ", outside the fit window (valid for, below)")
+    return f"\n*              from V_GS = {params.rds_on_vgs:.3f} V{where}"
 
 
 def diode_model_card(params: DiodeParams, *, name: str = "EXTRACTED",

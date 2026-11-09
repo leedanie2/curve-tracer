@@ -284,7 +284,12 @@ The MOSFET path is the same three commands with `--type mosfet`.
   card's `valid for` line gives the V_GS and I_D span of the points
   actually fitted, read from the fit rather than the arguments, and a
   `WARNING` follows when the V_th fit has one degree of freedom or fewer
-  (three steps).
+  (three steps). With `--vgs-range`, λ is fitted over the same steps, so
+  `LAMBDA` and the de-embedded `KP` describe the window `VTO` does; the
+  comments list λ's steps. R_DS(on) stays a comment, never in the
+  `.model` body, and is marked when its gate step (the top one) is
+  outside the window. V_GS is the commanded value: the gate DAC's
+  accuracy is unmeasured, and the card says so.
 - **`simulate`** runs the card in **ngspice** (batch, `brew install
   ngspice`). A voltage source sits directly across the device, swept over
   the capture's Kelvin-measured range, with the gate at each step's

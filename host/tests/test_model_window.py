@@ -6,7 +6,8 @@ fitted over every step is unsound. These tests check that ``model`` honours
 ``--vds-slice``, ``--vgs-range`` and ``--saturation-margin`` exactly as
 ``extract`` does, that the card states the window it was fitted over, read
 from the fit, and that it warns when that window is too thin to test the
-square law.
+square law. Lambda follows the same window, so LAMBDA and the de-embedded
+KP describe the steps VTO does.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ import pytest
 
 from conftest import KNOWN_MOSFET
 from ct_host.cli import main
+from ct_host.extract import extract_mosfet
 
 H4 = Path(__file__).resolve().parents[1] / "h4"
 MOSFET_11_08 = H4 / "mvp_18_mosfet_rp.csv"
@@ -104,6 +106,39 @@ def test_window_options_change_the_card(sim_csv, capsys):
     assert "V_GS - V_th + 0.90 V" in margin
 
 
+def test_lambda_follows_the_window(mosfet):
+    windowed = extract_mosfet(mosfet, vgs_range=(2.7, 3.5))
+    assert windowed.lambda_fits
+    assert all(2.7 <= vgs <= 3.5 for vgs in windowed.lambda_fits)
+    assert windowed.lambda_.value == pytest.approx(KNOWN_MOSFET["lam"], rel=0.05)
+    # The de-embedding uses the window's lambda.
+    assert windowed.deembed_factor == pytest.approx(
+        1 + windowed.lambda_.value * windowed.vds_slice, rel=1e-9)
+
+    # Without a range, every step with enough saturation points, as before.
+    default = extract_mosfet(mosfet)
+    assert len(default.lambda_fits) > len(windowed.lambda_fits)
+    assert max(default.lambda_fits) > 3.5
+
+
+def test_card_states_lambda_steps_and_r_ds_on_against_the_window(sim_csv, capsys):
+    card = _model(capsys, sim_csv, "--vgs-range", "2.7", "3.5")
+    assert re.search(r"lambda .*from 4 gate steps, V_GS 2\.\d+\.\.3\.\d+ V", card)
+    # R_DS(on) comes from the top step, 3.6 V, which the window excludes.
+    assert re.search(r"from V_GS = 3\.\d+ V, outside the fit window", card)
+    assert "R_DS" not in card.split(".model", 1)[1]
+
+    default = _model(capsys, sim_csv)
+    assert "from 6 gate steps" in default
+    assert "outside the fit window" not in default
+
+
+def test_card_says_v_gs_is_commanded(sim_csv, capsys):
+    card = _model(capsys, sim_csv)
+    assert "V_GS       : commanded (vgs_set_v), not read back" in card
+    assert "gate DAC's" in card and "accuracy is unmeasured" in card
+
+
 def test_a_three_step_window_warns_of_its_one_degree_of_freedom(sim_csv, capsys):
     card = _model(capsys, sim_csv, "--vgs-range", "2.9", "3.5")
     assert "3 points fitted" in _valid_for(card)
@@ -120,7 +155,9 @@ def test_model_reproduces_extract_on_the_11_08_capture(capsys):
     """Same window, same numbers: model must not refit differently.
 
     The pinned values are the 11-08 extract with the header's R_p record
-    (201.31 ohm, zero -0.0874 mA) subtracted.
+    (201.31 ohm, zero -0.0874 mA) subtracted. KP was 0.17521 while lambda
+    came from every step (0.0301 /V); with lambda from the window it is
+    0.17557. V_th and R^2 don't depend on lambda.
     """
     capsys.readouterr()
     assert main(["extract", str(MOSFET_11_08), "--type", "mosfet",
@@ -129,7 +166,7 @@ def test_model_reproduces_extract_on_the_11_08_capture(capsys):
     vth = float(re.search(r"V_th   = ([\d.]+)", printed)[1])
     kp = float(re.search(r"KP\*W/L = ([\d.]+)", printed)[1])
     assert vth == pytest.approx(2.1496, abs=5e-5)
-    assert kp == pytest.approx(0.17521, abs=5e-6)
+    assert kp == pytest.approx(0.17557, abs=5e-6)
     assert "R^2 = 0.999362" in printed
     assert "3 of 13 points over 2.499 .. 2.7 V" in printed
 
@@ -138,5 +175,8 @@ def test_model_reproduces_extract_on_the_11_08_capture(capsys):
     assert _value(card, "KP") == pytest.approx(kp, abs=5e-6)
     assert "V_GS 2.499..2.700 V" in _valid_for(card)
     assert "3 points fitted, at V_DS = 1.500 V" in _valid_for(card)
+    assert _value(card, "LAMBDA") == pytest.approx(0.02867, abs=5e-6)
+    assert "from 3 gate steps, V_GS 2.499..2.700 V" in card
+    assert "from V_GS = 2.801 V, outside the fit window" in card
     assert "WARNING: the V_th fit has 1 degree of freedom" in card
     assert "* R_p        : R_p = 201.31" in card

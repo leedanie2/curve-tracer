@@ -83,6 +83,7 @@ class MosfetParams:
     vth_fit: LinearFit
     lambda_fits: dict[float, LinearFit] = field(default_factory=dict)
     rds_on_fit: LinearFit | None = None
+    rds_on_vgs: float | None = None    # the gate step R_DS(on) came from
     sensitivity: "SensitivityResult | None" = None
     device: str = "unknown"
     simulated: bool = False
@@ -320,6 +321,11 @@ def extract_mosfet(
     then keep only the steps that are actually in saturation at the slice,
     ``V_DS >= V_GS - V_th + margin``, and refit. That iteration is stated in
     the fit range rather than being a hidden heuristic.
+
+    With ``vgs_range`` set, lambda is fitted over the same gate steps, so
+    the de-embedding and the card's LAMBDA describe the window that VTO and
+    KP do. Left ``None``, lambda uses every step with enough saturation
+    points.
     """
     if not sweep.recomputed:
         sweep = recompute(sweep)
@@ -449,7 +455,7 @@ def extract_mosfet(
 
     # -- lambda ------------------------------------------------------------
     lambda_est, lambda_fits = _extract_lambda(
-        fam, vth.value, saturation_margin_v, i_floor_ma
+        fam, vth.value, saturation_margin_v, i_floor_ma, vgs_range=vgs_range
     )
     if lambda_est is None:
         notes.append(
@@ -483,6 +489,7 @@ def extract_mosfet(
 
     # -- the rest ----------------------------------------------------------
     rds_on, rds_fit = _extract_rds_on(fam, vth.value, i_floor_ma)
+    rds_on_vgs = fam.curves[-1].vgs if rds_on is not None else None
     sub = _extract_subthreshold(fam, vth.value, cal)
 
     sens = _sensitivity_result(
@@ -499,6 +506,7 @@ def extract_mosfet(
         rds_on=rds_on, subthreshold=sub,
         vds_slice=v_slice,
         vth_fit=vth_fit, lambda_fits=lambda_fits, rds_on_fit=rds_fit,
+        rds_on_vgs=rds_on_vgs,
         sensitivity=sens,
         device=sweep.meta.device, simulated=sweep.meta.is_simulated,
         notes=tuple(notes),
@@ -506,8 +514,9 @@ def extract_mosfet(
 
 
 def _extract_lambda(fam: Family, vth: float, margin_v: float,
-                    i_floor_ma: float) -> tuple[Estimate | None,
-                                                dict[float, LinearFit]]:
+                    i_floor_ma: float, *,
+                    vgs_range: tuple[float, float] | None = None,
+                    ) -> tuple[Estimate | None, dict[float, LinearFit]]:
     """lambda from the saturation-region slope of I_D against V_DS.
 
     ``I_D = I_sat (1 + lambda V_DS)``, so a straight-line fit gives
@@ -516,11 +525,19 @@ def _extract_lambda(fam: Family, vth: float, margin_v: float,
     uncertainty when it exceeds the individual fit errors, since a real device
     that is not perfectly square-law will disagree between curves by more than
     any single fit admits.
+
+    ``vgs_range``, when given, restricts the gate steps to the threshold
+    fit's window.
     """
     fits: dict[float, LinearFit] = {}
     values: list[tuple[float, float]] = []      # (lambda, variance)
+    window = ("" if vgs_range is None else
+              f", V_GS in {vgs_range[0]:.3f}..{vgs_range[1]:.3f} V")
 
     for curve in fam:
+        if vgs_range is not None and not (
+                vgs_range[0] <= curve.vgs <= vgs_range[1]):
+            continue
         mask = curve.saturation_mask(vth, margin_v)
         v, i = curve.v[mask], curve.i_ma[mask]
         keep = i > i_floor_ma
@@ -530,7 +547,7 @@ def _extract_lambda(fam: Family, vth: float, margin_v: float,
         try:
             lf = fit_line(v, i, fit_range=FitRange(
                 rule=f"V_DS >= V_GS - V_th + {margin_v:.2f} V, "
-                     f"I_D >= {i_floor_ma:.4f} mA",
+                     f"I_D >= {i_floor_ma:.4f} mA{window}",
                 origin="default",
                 lo=float(v.min()), hi=float(v.max()),
                 n_used=int(v.size), n_available=len(curve),

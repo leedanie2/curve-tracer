@@ -295,7 +295,8 @@ The model, the simulation and the overlay are desk work
 - If on hand: **0.1% resistors, 100 Ω and 1 kΩ**, any wattage ≥ 1/8 W
   (the most either sees is 34 mW).
 - **The 1N4148 from 2026-11-08.**
-- The 2N7000 isn't needed. Neither is the DMM.
+- **The 2N7000 from 2026-11-08**, only for the optional (f).
+- The DMM isn't needed.
 
 Board 2, C1 still empty. By 2026-11-15. No soldering; the rules at the top
 of the card still apply. Supply output OFF before every change on the
@@ -315,6 +316,8 @@ as section A (20 mV/div, 1 µs/div, AC, BW limit, Pk-Pk and Frequency).
 - The zero, and the current's gain against the voltage's, from 0.1%
   resistors instead of the DMM's ±3% ohms reading.
 - The 1N4148 again, on the fixture, for the README figure.
+- Optional, (f): the 2N7000 again with fine gate steps, for a MOSFET card
+  with at least 10 steps in its fit.
 
 **Time plan.**
 
@@ -322,7 +325,8 @@ as section A (20 mV/div, 1 µs/div, AC, BW limit, Pk-Pk and Frequency).
 |---|---|---|---|---|
 | 8 min | 6 min | 6 min | 4 min | 6 min |
 
-If time runs short, drop (c). With the cap alone, (c) is where the zero
+(f) is optional and comes on top: about 6 min, or about 4 if the session
+is already on L1. If time runs short, drop (c). With the cap alone, (c) is where the zero
 comes from, so without it the diode takes 11-08's zero (−0.087 mA) as
 given, from a session at another temperature.
 
@@ -436,6 +440,27 @@ The bench `extract` has no zero, so its n reads low (~1.65 on 11-08). That
 is fine for the pass band; the desk run gives the real figure with
 `--zero` (b from (c), or −0.087 if (c) was skipped).
 
+### (f) Optional: the 2N7000 with fine gate steps
+
+Only after (d), and only if 6 minutes are left. MOSFET families can't use
+the cap-only stabiliser (see *Not for MOSFET families* below), so this
+step runs on **L1**. Use **the same 2N7000 as 2026-11-08**: the drain
+range and the current budget below come from its 11-08 curves.
+
+**What it's for.** On 11-08 a Level-1 fit held only over the top three
+steps (2.5–2.7 V): one degree of freedom, too thin for a card. Sixteen
+steps 0.02 V apart across 2.45–2.75 V put ≥ 10 in the same window.
+
+| # | Do | Pass | Record | Fail → |
+|---|---|---|---|---|
+| 25a | **Skip if (a) ended on L1** (22e): it is already in and calibrated. Otherwise output OFF, pull the cap out of D–S and plug **L1** into the same rows. Output ON. Read the scope idle for 10 s. Then calibrate it, watching the scope: `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100 --i-limit 40 --device L1_Rp -o h4/s3_22f_rp.csv` (1 min) | No periodic wave, idle or during the capture; section D's step 14 bands | Pk-Pk ____ mV ; R ____ Ω | A periodic wave: record f and Pk-Pk, output OFF, and skip (f) |
+| 25b | Output OFF. Plug the 2N7000 in **beside L1**. Flat face toward you, legs down, it is S, G, D left to right: spread the legs so each lands in its own row, **S in S, G in G, D in D**. If the rows' order won't allow it, put G in an empty row and jumper that row to the G row: the gate carries no DC, so the jumper is outside the measurement. Tug each leg | Each leg firm in its row | ☐ | Reseat |
+| 25c | Output ON. `python -m ct_host capture --port $P --vgs 2.45,2.47,2.49,2.51,2.53,2.55,2.57,2.59,2.61,2.63,2.65,2.67,2.69,2.71,2.73,2.75 --vds-max 2.5 --n 60 --i-limit 40 --device 2N7000 --r-parallel h4/s3_22f_rp.csv -o h4/s3_25_mosfet.csv` (~10 s). **Output OFF.** Then `python -m ct_host extract h4/s3_25_mosfet.csv --type mosfet --vds-slice 1.1 --vgs-range 2.44 2.76` | `end : ok` or `ilimit`; no periodic wave during the capture; under *V_th fit*, the `range :` line ending `(V_GS)` reads **≥ 10 of** … points | end ____ ; range ____ of ____ ; V_th ____ ; KP*W/L ____ | Fewer than 10, with `end : ilimit`: the part draws more than on 11-08. Keep the file and redo once with every step 0.04 V lower (2.41 … 2.71), `-o h4/s3_25b_mosfet.csv`. A periodic wave: record f and Pk-Pk, keep the file, go on |
+
+The card itself is desk work: `python -m ct_host model h4/s3_25_mosfet.csv
+--type mosfet --vds-slice 1.1 --vgs-range 2.44 2.76`. Its `valid for`
+line states the window it was fitted over.
+
 ■ **Done.** Output OFF, USB out. Hand back this sheet and `host/h4/s3_*`.
 The zero, the model card, the overlay and the README figure are desk work.
 
@@ -466,6 +491,31 @@ The zero, the model card, the overlay and the README figure are desk work.
   cap, and spread over the ~0.55 ms of sampling per point that is at most
   2.7 µA (0.07 LSB). Holds have no steps.
 - **Sim 16**: see (b).
+- **(f)'s gate steps.** 16 is the firmware's longest gate list
+  (`CT_VGS_LIST_MAX`). One gate DAC code is 3.3 / 4095 × 3.32 = 2.68 mV, so
+  steps commanded 0.02 V apart land 18.7 or 21.4 mV apart. V_GS is the
+  commanded value; the gate DAC's accuracy is unmeasured, and that moves
+  V_th's absolute value but not the spacing.
+- **(f)'s slice.** Saturation with the host's 0.5 V margin needs
+  V_DS ≥ V_GS − V_th + 0.5 V: 1.10 V at 2.75 V, with V_th 2.15 V from
+  11-08's three-step fit. Every lower step needs less.
+- **(f)'s current budget, L1's share counted.** Scaled from the 11-08
+  2.70 V curve by the square law, with L1's V / 201.3 Ω and the −0.09 mA
+  zero. At 1.1 V the 2.75 V step draws 32.8 mA and L1 5.5 mA: 38.1 mA
+  total. The node sits 31.7 Ω × I below the command (fitted to 11-08's
+  rows), so with `--vds-max 2.5` the 2.75 V step ends near 1.27 V and
+  39.2 mA, the 2.73 V step peaks at 37.3 mA, and the 2.45 V step reaches
+  1.94 V. The top step dissipates ~42 mW.
+- **Why `--vds-max 2.5`.** The first row over 40 mA ends the whole sweep,
+  not only its step, so a trip below the top step loses every step above
+  it. At `--vds-max 4` the 2.69 V step trips (at 2.5 V), and 2.71–2.75 V
+  are never swept. At 2.5 V, with 5% more current than 11-08 (a warmer
+  part), the 2.73 V step peaks at 38.6 mA and only the 2.75 V step trips,
+  at 1.13 V: still past the slice. The redo's 0.04 V shift takes ~13% off
+  the top step's current.
+- **(f)'s time.** 960 rows at ~6 ms each (firmware README, *Timing*) is
+  ~6 s of sweep. The rest is handling: 25a ~2 min, 25b ~2 min, 25c and
+  its extract ~1–2 min.
 
 **If the cap alone passes (a): what changes at the desk.** Nothing here
 needs the bench.
