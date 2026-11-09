@@ -186,9 +186,20 @@ def plot_family(sweep: Sweep, *, ax: Any = None, show_flagged: bool = True,
         _, ax = plt.subplots(figsize=(7.5, 5.0))
 
     family = family_of(sweep)
-    for curve in family:
-        ax.plot(curve.v, curve.i_ma, linewidth=1.4,
+    # V_GS is an ordered magnitude: one hue, light to dark, so no two steps
+    # share a colour (the default cycle repeats after ten). Curves that rise
+    # clear of zero are labelled at their end as well as in the legend.
+    ramp = plt.get_cmap("Blues")
+    span = max((float(c.i_ma.max()) for c in family if len(c.i_ma)), default=0.0)
+    for k, curve in enumerate(family):
+        color = (ramp(0.35 + 0.6 * k / (len(family) - 1)) if len(family) > 1
+                 else None)
+        ax.plot(curve.v, curve.i_ma, linewidth=1.4, color=color,
                 label=f"V_GS = {curve.vgs:.3f} V")
+        if len(family) > 1 and len(curve.v) and curve.i_ma.max() > 0.04 * span:
+            ax.annotate(f"{curve.vgs:.2f} V", (curve.v[-1], curve.i_ma[-1]),
+                        xytext=(4, 0), textcoords="offset points",
+                        va="center", fontsize=7, color="0.25")
 
     if show_flagged and sweep.flagged_rows:
         ax.plot([r.v_dut for r in sweep.flagged_rows],
@@ -200,14 +211,22 @@ def plot_family(sweep: Sweep, *, ax: Any = None, show_flagged: bool = True,
     if sweep.meta.is_simulated:
         label += "   [SIMULATED]"
     if sweep.r_parallel is not None:
-        ax.text(0.99, 0.01, _wrap(sweep.r_parallel.label), transform=ax.transAxes,
-                ha="right", va="bottom", fontsize=7, color="0.3")
+        # Below the axes, where it cannot sit on a curve near zero.
+        ax.text(1.0, -0.13, _wrap(sweep.r_parallel.label, 100), transform=ax.transAxes,
+                ha="right", va="top", fontsize=7, color="0.3")
     ax.set_xlabel("V_DS measured at the DUT  (V)")
     ax.set_ylabel("I_D  (mA)" if sweep.r_parallel is None
                   else "I_D, R_p current subtracted  (mA)")
     ax.set_title(label)
     ax.grid(True, alpha=0.3)
-    ax.legend(fontsize=8, loc="upper left")
+    if len(family) > 8:
+        # A long family's legend would cover the top curves: put it outside,
+        # and leave room on the right for the end labels.
+        ax.legend(fontsize=7, loc="upper left", bbox_to_anchor=(1.01, 1.0))
+        lo, hi = ax.get_xlim()
+        ax.set_xlim(lo, hi + 0.08 * (hi - lo))
+    else:
+        ax.legend(fontsize=8, loc="upper left")
     return ax
 
 

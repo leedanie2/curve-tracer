@@ -131,21 +131,24 @@ def _with_rp(sweep: Sweep, spec: str | None, *, report: bool = True) -> Sweep:
 
 
 def rp_report(sweep: Sweep, rp: ParallelR) -> str:
-    lines = ["R_p across D-S, subtracted from every row as V / R_p",
+    how = ("V / R_p" if rp.offset_ma is None
+           else "V / R_p + offset (the calibration line, zero included)")
+    lines = [f"R_p across D-S, subtracted from every row as {how}",
              rp.describe()]
     v = [r.v_dut for r in sweep.valid_rows]
     if v and rp.stderr is not None:
         hi = max(v)
         lines.append(f"  its standard error adds ±{rp.current_error_ma(hi) * 1000:.2g} uA "
                      f"at {hi:.3g} V, this capture's highest voltage, and "
-                     f"proportionally less below it")
+                     f"less below it")
     if rp.method != "auto":
         fit, reason = auto_fit(sweep)
         if fit is None:
             lines.append(f"  cross-check, auto-fit: {reason}")
         else:
             lines.append(f"  cross-check, auto-fit: R = {fit.r} over {fit.n} rows, "
-                         f"{(fit.r.value / rp.ohm - 1) * 100:+.2f}% from the value used")
+                         f"{(fit.r.value / rp.ohm - 1) * 100:+.2f}% from the value used; "
+                         f"offset {fit.offset_ma.value:+.4f} mA")
     return "\n".join(lines) + "\n"
 
 

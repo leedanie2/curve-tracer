@@ -2,11 +2,13 @@
 
 Board 2's sweep loop oscillates at open load with C1 empty (Block 1,
 2026-11-03), and a diode or MOSFET is an open load at the bottom of its
-sweep. Sim 13 keeps the loop quiet with 470 ohm or less clamped across D-S
-in J6. The firmware cannot tell that resistor, R_p, from the device, so
+sweep. A resistor clamped across D-S in J6 is meant to keep the loop quiet;
+on the bench (2026-11-08) 470 ohm oscillated and L1, 200 ohm || 100 nF, did
+not. The firmware cannot tell that resistor, R_p, from the device, so
 every reading carries an extra ``V / R_p``. This module subtracts it using
 the Kelvin-sensed voltage, the same way the firmware subtracts the Kelvin
-divider's ``V / 400k``.
+divider's ``V / 400k``. When R_p was fitted (a calibration or ``auto``), the
+fit's offset, the instrument's current zero, is subtracted with it.
 
 Where R_p comes from matters more than its tolerance. Three sources:
 
@@ -14,20 +16,27 @@ Where R_p comes from matters more than its tolerance. Three sources:
   instrument (MVP card step 14), fitted as ``I = V / R + offset``. The fit
   uses the instrument's own readings, so gain errors in the current and the
   voltage reading cancel: what is subtracted is what the instrument reads
-  through R_p, not what a DMM says R_p is. The instrument's current zero
-  is not subtracted; it is in every capture, R_p or not.
+  through R_p, not what a DMM says R_p is. The fit's offset is the
+  instrument's current zero, and it is subtracted too: what comes out is
+  the calibration line, ``V / R + offset``, not ``V / R`` alone. On board 2
+  (2026-11-08) the zero was -0.087 mA, 43% of the diode fit's 0.2 mA floor;
+  left in, it moved n from 1.789 to 1.651 and I_S by 3.2x
+  (docs/characterization.md). Whether the zero is a current offset or a
+  voltage offset, subtracting the whole line gives the device current: an
+  off device reads zero either way.
 - **given**: a number on the command line, such as a DMM reading. A gain
-  error in the instrument does not cancel against it.
+  error in the instrument does not cancel against it, and there is no zero
+  to subtract.
 - **auto**: fitted from the capture itself, over points where the device
   carries no current: below 0.25 V on a diode, the lowest gate step of a
-  MOSFET family. It is the cross-check on the other two, and primary only
-  when nothing else exists. It needs points down there, which a sweep DAC
+  MOSFET family, with its own offset. It is the cross-check on the other
+  two, and primary only when nothing else exists. It needs points down there, which a sweep DAC
   with a floor above 0.25 V does not give (blueprint §3.5).
 
 What it costs: the subtraction's error is ``V * sigma_R / R^2``, a fixed
 current at a given voltage, so it is largest relative to the smallest device
 currents. At 0.5% of 470 ohm and 0.6 V it is 6 uA, 3% of the diode fit's
-0.2 mA floor (5 LSB).
+0.2 mA floor (5 LSB). The zero's standard error adds to it.
 """
 
 from __future__ import annotations
@@ -43,7 +52,7 @@ from .extract.common import Estimate, FitError
 from .recompute import recompute
 
 __all__ = ["ResistorFit", "ParallelR", "fit_resistor", "auto_fit", "resolve",
-           "from_meta", "subtract", "AUTO_V_MAX"]
+           "from_fit", "from_meta", "subtract", "AUTO_V_MAX"]
 
 #: Highest Kelvin voltage the diode auto-fit uses. A 1N4148 carries under
 #: 1 uA there, against 0.5 mA through 470 ohm.
@@ -156,18 +165,38 @@ class ParallelR:
     stderr: float | None
     method: str          # "calibration" | "given" | "auto"
     source: str
+    #: The fit's offset, the instrument's current zero, in mA; subtracted
+    #: with ``V / R_p``. ``None`` for a given value, and for captures
+    #: annotated before the zero was recorded.
+    offset_ma: float | None = None
+    offset_stderr_ma: float | None = None
+
+    def current_ma(self, v: float) -> float:
+        """What is subtracted at Kelvin voltage ``v``: ``V / R_p + offset``."""
+        return v / self.ohm * 1000.0 + (self.offset_ma or 0.0)
 
     def current_error_ma(self, v: float) -> float | None:
-        """The subtraction's standard error at Kelvin voltage ``v``."""
+        """The subtraction's standard error at Kelvin voltage ``v``.
+
+        R and offset are added in quadrature. Fitted over positive V their
+        errors are anti-correlated, so this overstates the error inside the
+        fitted range.
+        """
         if self.stderr is None:
             return None
-        return v * self.stderr / (self.ohm * self.ohm) * 1000.0
+        r_term = v * self.stderr / (self.ohm * self.ohm) * 1000.0
+        return math.hypot(r_term, self.offset_stderr_ma or 0.0)
 
     def meta_items(self) -> list[tuple[str, str]]:
         return [
             ("host_r_parallel_ohm", f"{self.ohm:.6g}"),
             ("host_r_parallel_stderr_ohm",
              "unset" if self.stderr is None else f"{self.stderr:.3g}"),
+            ("host_r_parallel_offset_ma",
+             "unset" if self.offset_ma is None else f"{self.offset_ma:.6g}"),
+            ("host_r_parallel_offset_stderr_ma",
+             "unset" if self.offset_stderr_ma is None
+             else f"{self.offset_stderr_ma:.3g}"),
             ("host_r_parallel_method", self.method),
             ("host_r_parallel_src", self.source),
         ]
@@ -175,7 +204,10 @@ class ParallelR:
     @property
     def label(self) -> str:
         err = "" if self.stderr is None else f" ± {self.stderr:.2g}"
-        return f"R_p = {self.ohm:.5g}{err} Ω subtracted ({self.method}: {self.source})"
+        zero = ("" if self.offset_ma is None
+                else f" and zero {self.offset_ma:+.4f} mA")
+        return (f"R_p = {self.ohm:.5g}{err} Ω{zero} subtracted "
+                f"({self.method}: {self.source})")
 
     def describe(self) -> str:
         return f"  {self.label}"
@@ -189,8 +221,7 @@ def resolve(spec: str, sweep: Sweep | None = None) -> ParallelR:
         fit, reason = auto_fit(sweep)
         if fit is None:
             raise FitError(f"R_p auto-fit {reason}")
-        return ParallelR(fit.r.value, fit.r.stderr, "auto",
-                         f"this capture, {fit.n} rows, {fit.rule}")
+        return from_fit(fit, "auto", f"this capture, {fit.n} rows, {fit.rule}")
     try:
         ohm = float(spec)
     except ValueError:
@@ -208,11 +239,14 @@ def resolve(spec: str, sweep: Sweep | None = None) -> ParallelR:
         raise ContractError(f"{spec} was itself captured with an R_p "
                             f"correction; it is not a capture of R_p alone")
     fit = fit_sweep_resistor(cal)
-    return ParallelR(
-        fit.r.value, fit.r.stderr, "calibration",
-        f"{spec}, {fit.n} rows over {fit.v_lo:.3g}..{fit.v_hi:.3g} V, "
-        f"offset {fit.offset_ma.value:+.4f} mA",
-    )
+    return from_fit(fit, "calibration",
+                    f"{spec}, {fit.n} rows over {fit.v_lo:.3g}..{fit.v_hi:.3g} V")
+
+
+def from_fit(fit: ResistorFit, method: str, source: str) -> ParallelR:
+    """A fitted R_p, carrying the fit's offset (the instrument's zero)."""
+    return ParallelR(fit.r.value, fit.r.stderr, method, source,
+                     fit.offset_ma.value, fit.offset_ma.stderr)
 
 
 def from_meta(sweep: Sweep) -> ParallelR | None:
@@ -222,13 +256,14 @@ def from_meta(sweep: Sweep) -> ParallelR | None:
         return None
     return ParallelR(ohm, sweep.meta.float_or_none("host_r_parallel_stderr_ohm"),
                      sweep.meta.get("host_r_parallel_method", "given"),
-                     sweep.meta.get("host_r_parallel_src", "unrecorded"))
+                     sweep.meta.get("host_r_parallel_src", "unrecorded"),
+                     sweep.meta.float_or_none("host_r_parallel_offset_ma"),
+                     sweep.meta.float_or_none("host_r_parallel_offset_stderr_ma"))
 
 
 def subtract(sweep: Sweep, rp: ParallelR) -> Sweep:
-    """Return a copy with ``V / R_p`` taken out of every row's current."""
+    """Return a copy with ``V / R_p`` and the zero taken out of every row."""
     if not sweep.recomputed:
         sweep = recompute(sweep)
-    rows = [replace(r, i_parallel_ma=r.v_dut / rp.ohm * 1000.0)
-            for r in sweep.rows]
+    rows = [replace(r, i_parallel_ma=rp.current_ma(r.v_dut)) for r in sweep.rows]
     return replace(sweep, rows=rows, r_parallel=rp)

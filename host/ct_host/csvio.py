@@ -541,7 +541,10 @@ def add_host_meta(path: str | os.PathLike[str],
     fields are untouched.
     """
     path = Path(path)
-    text = path.read_text()
+    # Untranslated: the firmware writes CRLF, and a translating read would
+    # rewrite every line of the capture as LF.
+    with open(path, newline="") as fh:
+        text = fh.read()
     items = [(_host_key(k), v) for k, v in items]
     keys = {k for k, _ in items}
     present = [k for k in parse(text).meta.keys() if k in keys]
