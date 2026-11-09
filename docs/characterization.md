@@ -877,7 +877,19 @@ removes L1's subtraction (1–3 µA per point of noise, ~1.5 µA systematic,
 drift as L1 warms) and frees the 7–15 mA that L1 takes from the 40 mA
 limit. It doesn't change the current LSB (40.3 µA) or the diode fit's
 0.2 mA floor: those are range 1's. It needs a host change, because the
-−0.087 mA zero is now subtracted only as part of an R_p calibration line.
+−0.087 mA zero was subtracted only as part of an R_p calibration line:
+`--zero MA|CSV|auto`, built 2026-11-09.
+
+**The zero can't be read with nothing drawing current** (analysis,
+2026-11-09; corrects the first version of this plan). The current channel
+is single-supply and the ADC unipolar, and 11-08's zero is −2.2 counts.
+With L1 the channel sat ~20 counts up, so the zero showed. With the cap
+alone it sits on its floor, 0 counts, and the firmware prints
+i_meas ≈ −V / 400 kΩ. So the card's cap-only holds (22b–d) confirm the
+floor rather than measure the zero. The zero comes from (c), where two
+0.1% resistors at three holds give gain, zero and the common-mode term
+together. The host's `auto` and hold-CSV zeros refuse rows under 5 counts
+for the same reason.
 And it doesn't suit MOSFET families: with no resistor, the node discharges
 at low levels only through the 33.2 kΩ feedback network (τ ≈ 3 ms), so an
 off gate step would start at the previous step's V_DS.
