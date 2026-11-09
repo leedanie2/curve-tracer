@@ -41,7 +41,6 @@ import numpy as np
 
 from .csvio import Sweep
 from .dataset import family_of
-from .plot import is_two_terminal
 from .extract.diode import I_FLOOR_LSB as DIODE_FLOOR_LSB
 from .extract.mosfet import I_FLOOR_LSB as MOSFET_FLOOR_LSB
 from .recompute import Calibration
@@ -217,15 +216,9 @@ def plot_overlay(sweep: Sweep, sim: SimCurves, *, title: str | None = None):
     fig = plt.figure(figsize=(10.0, 6.6), facecolor=SURFACE)
     cal = Calibration.from_sweep(sweep)
     device = title or sweep.meta.device
-    if is_two_terminal(r.vgs_set_v for r in sweep.rows):
-        # A diode-like capture is titled with the device alone; the
-        # [SIMULATED] marker stays, so a ct_sim figure can't pass for a
-        # bench one.
-        head = f"{device} [SIMULATED]" if sweep.meta.is_simulated else device
-    else:
-        head = f"{device}: {_measured_label(sweep).split(',')[0]} vs. simulated with the extracted model"
-        if sweep.meta.is_simulated:
-            head = f"{device} [SIMULATED]: pipeline check on ct_sim data"
+    head = f"{device}: measured vs simulated (extracted model)"
+    if sweep.meta.is_simulated:
+        head = f"{device} [SIMULATED]: pipeline check on ct_sim data"
     fig.suptitle(head, x=0.01, ha="left", fontsize=12, color=INK, y=0.995)
     sub = [f"Model {sim.meta.get('model', '')}, simulated in "
            f"{sim.meta.get('simulator', 'ngspice')}: {sim.meta.get('circuit', '')}."]

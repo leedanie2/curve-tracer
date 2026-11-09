@@ -100,14 +100,15 @@ def test_mosfet_path_simulates_every_gate_step(tmp_path):
     assert main(["overlay", str(cap), str(sim), "--save", str(png)]) == 0
 
 
-def test_a_two_terminal_overlay_is_titled_by_the_device_alone(diode_files):
-    """One gate step at 0 V: no V_GS anywhere, the device name as the title."""
+def test_a_two_terminal_overlay_has_no_v_gs_label(diode_files):
+    """One gate step at 0 V: no V_GS anywhere; the title keeps its description
+    and, on ct_sim data, its [SIMULATED] marker."""
     from ct_host.csvio import parse
     from ct_host.overlay import plot_overlay
     from ct_host.parallel import from_meta, subtract
 
     sweep = parse(diode_files["cap"].read_text(), require_end=True)
     fig = plot_overlay(subtract(sweep, from_meta(sweep)), read_sim(diode_files["sim"]))
-    assert fig._suptitle.get_text() == "1N4148 [SIMULATED]"
+    assert fig._suptitle.get_text() == "1N4148 [SIMULATED]: pipeline check on ct_sim data"
     assert not any("V_GS" in a.get_text()
                    for a in fig.findobj(lambda a: hasattr(a, "get_text")))
