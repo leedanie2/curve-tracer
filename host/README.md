@@ -286,7 +286,9 @@ The MOSFET path is the same three commands with `--type mosfet`.
   `WARNING` follows when the V_th fit has one degree of freedom or fewer
   (three steps). With `--vgs-range`, λ is fitted over the same steps, so
   `LAMBDA` and the de-embedded `KP` describe the window `VTO` does; the
-  comments list λ's steps. R_DS(on) stays a comment, never in the
+  comments list λ's steps. The V_th spread over fit-range choices is drawn
+  from inside the window too, and the card says so; with three steps in
+  the window no step can be dropped, so only the slice varies. R_DS(on) stays a comment, never in the
   `.model` body, and is marked when its gate step (the top one) is
   outside the window. V_GS is the commanded value: the gate DAC's
   accuracy is unmeasured, and the card says so.

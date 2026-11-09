@@ -241,6 +241,10 @@ def cmd_capture(args: argparse.Namespace) -> int:
         print(f"\nNOTE: sweep ended '{sweep.end_reason}'. The flagged row is "
               f"kept in the file; it records where the device ran away.",
               file=sys.stderr)
+        for row in sweep.flagged_rows:
+            print(f"      flagged: V_GS {row.vgs_set_v:.3f} V, V_DS "
+                  f"{row.vds_meas_v:.3f} V, {row.i_meas_ma:.2f} mA "
+                  f"(firmware's reading)", file=sys.stderr)
 
     extra: list[tuple[str, str]] = []
     if args.r_parallel:

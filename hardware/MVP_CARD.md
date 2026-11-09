@@ -455,7 +455,16 @@ steps 0.02 V apart across 2.45–2.75 V put ≥ 10 in the same window.
 |---|---|---|---|---|
 | 25a | **Skip if (a) ended on L1** (22e): it is already in and calibrated. Otherwise output OFF, pull the cap out of D–S and plug **L1** into the same rows. Output ON. Read the scope idle for 10 s. Then calibrate it, watching the scope: `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100 --i-limit 40 --device L1_Rp -o h4/s3_22f_rp.csv` (1 min) | No periodic wave, idle or during the capture; section D's step 14 bands | Pk-Pk ____ mV ; R ____ Ω | A periodic wave: record f and Pk-Pk, output OFF, and skip (f) |
 | 25b | Output OFF. Plug the 2N7000 in **beside L1**. Flat face toward you, legs down, it is S, G, D left to right: spread the legs so each lands in its own row, **S in S, G in G, D in D**. If the rows' order won't allow it, put G in an empty row and jumper that row to the G row: the gate carries no DC, so the jumper is outside the measurement. Tug each leg | Each leg firm in its row | ☐ | Reseat |
-| 25c | Output ON. `python -m ct_host capture --port $P --vgs 2.45,2.47,2.49,2.51,2.53,2.55,2.57,2.59,2.61,2.63,2.65,2.67,2.69,2.71,2.73,2.75 --vds-max 2.5 --n 60 --i-limit 40 --device 2N7000 --r-parallel h4/s3_22f_rp.csv -o h4/s3_25_mosfet.csv` (~10 s). **Output OFF.** Then `python -m ct_host extract h4/s3_25_mosfet.csv --type mosfet --vds-slice 1.1 --vgs-range 2.44 2.76` | `end : ok` or `ilimit`; no periodic wave during the capture; under *V_th fit*, the `range :` line ending `(V_GS)` reads **≥ 10 of** … points | end ____ ; range ____ of ____ ; V_th ____ ; KP*W/L ____ | Fewer than 10, with `end : ilimit`: the part draws more than on 11-08. Keep the file and redo once with every step 0.04 V lower (2.41 … 2.71), `-o h4/s3_25b_mosfet.csv`. A periodic wave: record f and Pk-Pk, keep the file, go on |
+| 25c | Output ON. `python -m ct_host capture --port $P --vgs 2.45,2.47,2.49,2.51,2.53,2.55,2.57,2.59,2.61,2.63,2.65,2.67,2.69,2.71,2.73,2.75 --vds-max 2.5 --n 60 --i-limit 40 --device 2N7000 --r-parallel h4/s3_22f_rp.csv -o h4/s3_25_mosfet.csv` (~10 s). **Output OFF.** Then `python -m ct_host extract h4/s3_25_mosfet.csv --type mosfet --vds-slice 1.1 --vgs-range 2.44 2.76` | `end : ok` or `ilimit`; no periodic wave during the capture; under *V_th fit*, the `range :` line ending `(V_GS)` reads **≥ 10 of** … points; on `ilimit`, the capture's `flagged:` line shows V_DS ≥ 1.1 V | end ____ ; flagged V_GS ____ V_DS ____ ; range ____ of ____ ; V_th ____ ; KP*W/L ____ | A trip below 1.1 V, or fewer than 10: the part draws more than on 11-08. Keep the file and redo once with every step 0.04 V lower (2.41 … 2.71), `-o h4/s3_25b_mosfet.csv`. A periodic wave: record f and Pk-Pk, keep the file, go on |
+
+**A trip above the slice is a pass.** Expect `end : ilimit` at the top
+step. If its `flagged:` line shows V_DS above 1.1 V, that step's slice
+point is already recorded and every lower step is complete, so the file
+is good. The redo is only for a trip below 1.1 V, or one that leaves fewer
+than 10 steps. Rows near the slice are ~0.037 V apart, so a trip flagged
+at 1.10–1.14 V may leave that step's last good row just short of the
+slice. The step then drops out of the fit, and the `range :` count shows
+it.
 
 The card itself is desk work: `python -m ct_host model h4/s3_25_mosfet.csv
 --type mosfet --vds-slice 1.1 --vgs-range 2.44 2.76`. Its `valid for`

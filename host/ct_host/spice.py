@@ -85,6 +85,12 @@ def mosfet_model_card(params: MosfetParams, *, name: str = "EXTRACTED",
             f"{(params.vth.stderr or 0) * 1000:.2f} mV) -- the larger of "
             f"these is the honest uncertainty"
         )
+        if params.sensitivity.vgs_range is not None:
+            lo, hi = params.sensitivity.vgs_range
+            detail.append(
+                f"*              choices drawn only from the gate steps in "
+                f"the V_GS range {lo:.3f}..{hi:.3f} V, at slices they all reach"
+            )
     if params.subthreshold.available:
         detail.append(f"* subthresh. : {params.subthreshold.mv_per_decade}")
     else:

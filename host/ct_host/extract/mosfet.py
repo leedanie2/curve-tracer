@@ -200,6 +200,7 @@ class SensitivityResult:
     n_choices: int
     best: float
     worst: float
+    vgs_range: tuple[float, float] | None = None   # choices drawn inside it
 
     def describe(self) -> str:
         if self.spread is None:
@@ -212,16 +213,25 @@ class SensitivityResult:
 
 
 def vth_sensitivity(sweep: Sweep, *, slices: int = 5,
-                    saturation_margin_v: float = SATURATION_MARGIN_V):
+                    saturation_margin_v: float = SATURATION_MARGIN_V,
+                    vgs_range: tuple[float, float] | None = None):
     """V_th across a grid of slice voltages and gate-point subsets.
 
     Returns a ``pandas.DataFrame``, one row per choice. The point is to make
     the range-selection uncertainty a number that can be compared against the
     fit's standard error rather than an unstated judgement.
+
+    With ``vgs_range``, every choice is drawn from the gate steps inside it,
+    and the slices from the drain span those steps share: the spread then
+    describes the window the threshold fit used, not the whole family.
     """
     import pandas as pd
 
     fam = _family(sweep)
+    if vgs_range is not None:
+        fam = Family(curves=tuple(c for c in fam
+                                  if vgs_range[0] <= c.vgs <= vgs_range[1]),
+                     sweep=fam.sweep)
     lo, hi = fam.common_v_span()
     if not math.isfinite(lo) or hi <= lo:
         return pd.DataFrame(columns=["vds_slice", "drop_low", "drop_high",
@@ -274,6 +284,7 @@ def _sensitivity_result(sweep: Sweep, **kw) -> SensitivityResult | None:
         n_choices=int(values.size),
         best=float(values.min()),
         worst=float(values.max()),
+        vgs_range=kw.get("vgs_range"),
     )
 
 
@@ -493,7 +504,7 @@ def extract_mosfet(
     sub = _extract_subthreshold(fam, vth.value, cal)
 
     sens = _sensitivity_result(
-        sweep, saturation_margin_v=saturation_margin_v
+        sweep, saturation_margin_v=saturation_margin_v, vgs_range=vgs_range
     ) if sensitivity else None
 
     if sens is not None and sens.spread is not None and vth.stderr:

@@ -7,7 +7,8 @@ fitted over every step is unsound. These tests check that ``model`` honours
 ``extract`` does, that the card states the window it was fitted over, read
 from the fit, and that it warns when that window is too thin to test the
 square law. Lambda follows the same window, so LAMBDA and the de-embedded
-KP describe the steps VTO does.
+KP describe the steps VTO does, and so does the V_th spread over fit-range
+choices.
 """
 
 from __future__ import annotations
@@ -133,6 +134,39 @@ def test_card_states_lambda_steps_and_r_ds_on_against_the_window(sim_csv, capsys
     assert "outside the fit window" not in default
 
 
+def test_sensitivity_follows_the_window(mosfet):
+    windowed = extract_mosfet(mosfet, vgs_range=(2.7, 3.5)).sensitivity
+    table = windowed.table
+    assert windowed.vgs_range == (2.7, 3.5)
+    assert (table["vgs_lo"] >= 2.7).all() and (table["vgs_hi"] <= 3.5).all()
+    # Four steps: keep all, drop the lowest, or drop the highest.
+    assert set(table["n_points"]) == {3, 4}
+
+    default = extract_mosfet(mosfet).sensitivity
+    assert default.vgs_range is None
+    assert default.table["vgs_hi"].max() > 3.5
+    assert default.n_choices > windowed.n_choices
+
+
+def test_card_says_where_the_spread_came_from(sim_csv, capsys):
+    card = _model(capsys, sim_csv, "--vgs-range", "2.7", "3.5")
+    assert ("choices drawn only from the gate steps in the V_GS range "
+            "2.700..3.500 V") in card
+    assert "choices drawn only" not in _model(capsys, sim_csv)
+
+
+def test_capture_names_the_row_that_tripped(tmp_path, capsys):
+    out = tmp_path / "trip.csv"
+    capsys.readouterr()
+    assert main(["capture", "--sim", "mosfet", "--vgs", "2.6,3.0,3.6",
+                 "--n", "40", "--i-limit", "40", "-o", str(out)]) == 0
+    err = capsys.readouterr().err
+    assert "sweep ended 'ilimit'" in err
+    m = re.search(r"flagged: V_GS ([\d.]+) V, V_DS ([\d.]+) V, ([\d.]+) mA", err)
+    assert m, err
+    assert float(m[3]) > 40.0
+
+
 def test_card_says_v_gs_is_commanded(sim_csv, capsys):
     card = _model(capsys, sim_csv)
     assert "V_GS       : commanded (vgs_set_v), not read back" in card
@@ -178,5 +212,8 @@ def test_model_reproduces_extract_on_the_11_08_capture(capsys):
     assert _value(card, "LAMBDA") == pytest.approx(0.02867, abs=5e-6)
     assert "from 3 gate steps, V_GS 2.499..2.700 V" in card
     assert "from V_GS = 2.801 V, outside the fit window" in card
+    # Three steps leave no step to drop, so only the slice varies: 5 choices.
+    assert "V_th spread over 5 fit-range choices: 1.04 mV" in card
+    assert "choices drawn only from the gate steps" in card
     assert "WARNING: the V_th fit has 1 degree of freedom" in card
     assert "* R_p        : R_p = 201.31" in card
