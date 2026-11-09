@@ -184,3 +184,51 @@ def test_model_card_and_plot_record_the_zero_and_its_source(tmp_path, capsys):
     ax = plt.gcf().axes[0]
     assert "zero subtracted" in ax.get_ylabel()
     assert any("auto: this capture" in t.get_text() for t in ax.texts)
+
+
+# --------------------------------------------------------------------------
+# overlay and simulate
+# --------------------------------------------------------------------------
+
+def _overlay(tmp_path, *extra):
+    """Draw the 11-08 overlay; return its plotted data and its texts."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    plt.close("all")
+    assert main(["overlay", str(DIODE_11_08), str(H4 / "mvp_17_diode_sim.csv"),
+                 "--save", str(tmp_path / "o.png"), *extra]) == 0
+    fig = plt.gcf()
+    data = []
+    for ax in fig.axes:
+        data += [np.asarray(ln.get_xydata()) for ln in ax.lines]
+        data += [np.asarray(c.get_offsets()) for c in ax.collections]
+    texts = [t.get_text() for t in fig.findobj(lambda a: hasattr(a, "get_text"))]
+    return data, texts
+
+
+def test_the_11_08_overlay_reproduces_the_published_figure(tmp_path):
+    """media/overlay_diode_1n4148.png was drawn with the calibration's own
+    zero; a given zero of -0.0873765 mA draws the same points and residuals."""
+    import numpy as np
+
+    published, _ = _overlay(tmp_path)
+    data, texts = _overlay(tmp_path, "--zero", str(ZERO_11_08))
+    assert len(data) == len(published)
+    for a, b in zip(data, published):
+        np.testing.assert_allclose(a, b, atol=1e-9)
+    assert any("rms 0.51 mV over the 60 fitted points" in t for t in texts)
+    assert any("zero -0.0874 mA subtracted (given: command line)" in t for t in texts)
+
+
+@pytest.mark.skipif(__import__("shutil").which("ngspice") is None,
+                    reason="ngspice not installed")
+def test_simulate_records_the_capture_s_corrections(tmp_path):
+    out = tmp_path / "sim.csv"
+    assert main(["simulate", str(H4 / "mvp_17_diode.lib"), "--like", str(DIODE_11_08),
+                 "--zero", str(ZERO_11_08), "-o", str(out)]) == 0
+    head = out.read_text()
+    assert "# like_zero: zero -0.0874 mA subtracted (given: command line)" in head
+    assert "# like_r_parallel: R_p = 201.31" in head

@@ -224,6 +224,8 @@ def plot_overlay(sweep: Sweep, sim: SimCurves, *, title: str | None = None):
            f"{sim.meta.get('simulator', 'ngspice')}: {sim.meta.get('circuit', '')}."]
     if sweep.r_parallel is not None:
         sub.append(sweep.r_parallel.label + ".")
+    if sweep.zero is not None:
+        sub.append(sweep.zero.label + ".")
     fig.text(0.01, 0.945, "\n".join(_wrap(s, 150) for s in sub), fontsize=7.5,
              color=INK_2, va="top")
 

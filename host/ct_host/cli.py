@@ -402,13 +402,19 @@ def cmd_simulate(args: argparse.Namespace) -> int:
     from .overlay import read_card, simulate, write_sim
 
     like = _with_rp(_checked(_load(args.like), strict=False), args.r_parallel,
-                    report=False)
+                    zero=args.zero, report=False)
     try:
         card = read_card(args.card)
         sim = simulate(card, like, step=args.step)
     except (ValueError, FileNotFoundError, RuntimeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+    # The curves depend only on the capture's voltage range; the header
+    # records what the capture's current was corrected with, for overlay.
+    if like.r_parallel is not None:
+        sim.meta["like_r_parallel"] = like.r_parallel.label
+    if like.zero is not None:
+        sim.meta["like_zero"] = like.zero.label
     out = write_sim(sim, args.output, like=args.like)
     print(f"{sim.meta['simulator']}: {sim.meta['model']}, "
           f"{len(sim.curves)} curve(s)\nwrote {out}", file=sys.stderr)
@@ -421,7 +427,8 @@ def cmd_overlay(args: argparse.Namespace) -> int:
 
     from .overlay import plot_overlay, read_sim
 
-    sweep = _with_rp(_checked(_load(args.csv), strict=False), args.r_parallel)
+    sweep = _with_rp(_checked(_load(args.csv), strict=False), args.r_parallel,
+                     zero=args.zero)
     fig = plot_overlay(sweep, read_sim(args.sim), title=args.title)
     fig.savefig(args.save, dpi=150, facecolor=fig.get_facecolor(),
                 bbox_inches="tight")
@@ -592,6 +599,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--step", type=float, default=0.002, metavar="V")
     p.add_argument("-o", "--output", required=True)
     _rp_arg(p)
+    _zero_arg(p)
     p.set_defaults(func=cmd_simulate)
 
     p = sub.add_parser("overlay",
@@ -601,6 +609,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--save", required=True, metavar="PNG")
     p.add_argument("--title", help="device name for the title")
     _rp_arg(p)
+    _zero_arg(p)
     p.set_defaults(func=cmd_overlay)
 
     p = sub.add_parser("annotate",

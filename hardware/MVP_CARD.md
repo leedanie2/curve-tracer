@@ -469,8 +469,8 @@ The zero, the model card, the overlay and the README figure are desk work.
 
 **If the cap alone passes (a): what changes at the desk.** Nothing here
 needs the bench.
-- **Host.** `extract`, `model` and `plot` take `--zero MA|CSV|auto`
-  (2026-11-09), recorded in the card and the plot. With the cap alone, give
+- **Host.** `extract`, `model`, `plot`, `simulate` and `overlay` take
+  `--zero MA|CSV|auto` (2026-11-09), recorded in each output. With the cap alone, give
   (c)'s b as `--zero MA`, and no `--r-parallel`. `auto` and hold CSVs refuse
   rows on the channel's floor, so neither works with the cap alone; both
   work with a resistor lifting the channel, as on 11-08. Without a zero,

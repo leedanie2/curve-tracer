@@ -223,8 +223,8 @@ same capture reads n = 7.4 (`tests/test_parallel.py`).
 
 An R_p calibration carries the instrument's current zero as its offset
 (−0.087 mA on board 2). A stabiliser that draws no DC, such as 100 nF alone
-(MVP card section E), leaves no line to fit, so `extract`, `model` and
-`plot` take the zero directly:
+(MVP card section E), leaves no line to fit, so `extract`, `model`,
+`plot`, `simulate` and `overlay` take the zero directly:
 
 ```sh
 python -m ct_host extract h4/d.csv --zero -0.0874                          # a value, mA
@@ -247,7 +247,12 @@ python -m ct_host extract h4/d.csv --zero auto                             # own
   5 counts and a hold there is refused. With nothing drawing current,
   only a value works.
 
-The zero and its source go into the model card and the plot, as R_p does.
+The zero and its source go into the model card, the plot, the overlay's
+subtitle and the `simulate` output's header (`like_zero`, with
+`like_r_parallel`), as R_p does. `simulate`'s curves depend only on the
+capture's voltage range, so the zero changes its header, not its numbers.
+The 11-08 overlay drawn with `--zero -0.0873765` matches the published
+figure point for point (`tests/test_zero.py`).
 On the 11-08 diode, `--r-parallel 201.311 --zero -0.0873765` reproduces the
 published n 1.7885, I_S 2.6795 nA and R_s 1.1353 Ω (`tests/test_zero.py`).
 `--zero auto` there gives −0.0923 mA and n 1.799, inside the published
