@@ -68,6 +68,7 @@ def mosfet_model_card(params: MosfetParams, *, name: str = "EXTRACTED",
     detail.append(f"* V_DS slice : {params.vds_slice:.4f} V (measured, "
                   f"Kelvin-sensed)")
     detail.append(f"* fit range  : {params.vth_fit.range.rule}")
+    detail += _valid_for(params)
     if params.sensitivity is not None and params.sensitivity.spread is not None:
         detail.append(
             f"* V_th spread over {params.sensitivity.n_choices} fit-range "
@@ -92,6 +93,33 @@ def mosfet_model_card(params: MosfetParams, *, name: str = "EXTRACTED",
     body.append("+ )")
 
     return "\n".join(_header("NMOS", params, source, detail) + body) + "\n"
+
+
+def _valid_for(params: MosfetParams) -> list[str]:
+    """The window the V_th fit covered, read from the points it used.
+
+    Taken from the fit rather than from ``--vgs-range``: a requested range
+    is a bound, and the I_D floor or the slice can leave fewer steps inside
+    it than asked for. A Level-1 square law fitted over a few top steps says
+    nothing about the part outside them (2026-11-08, section (e)).
+    """
+    fit = params.vth_fit
+    vgs = fit.x
+    i_ma = fit.y ** 2 * 1000.0              # the fit is sqrt(I_D in A)
+    lines = [
+        f"* valid for  : V_GS {vgs.min():.3f}..{vgs.max():.3f} V, "
+        f"I_D {i_ma.min():.3g}..{i_ma.max():.3g} mA "
+        f"({vgs.size} points fitted, at V_DS = {params.vds_slice:.3f} V)"
+    ]
+    dof = vgs.size - 2
+    if dof <= 1:
+        lines += [
+            f"* WARNING: the V_th fit has {dof} degree"
+            f"{'' if dof == 1 else 's'} of freedom ({vgs.size} points, "
+            f"2 parameters):",
+            "*          too few to test the square law over this window.",
+        ]
+    return lines
 
 
 def diode_model_card(params: DiodeParams, *, name: str = "EXTRACTED",

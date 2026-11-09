@@ -306,12 +306,7 @@ def cmd_extract(args: argparse.Namespace) -> int:
     sweep = _with_rp(sweep, args.r_parallel, zero=args.zero)
     try:
         if kind == "mosfet":
-            params = extract_mosfet(
-                sweep,
-                vds_slice=args.vds_slice,
-                vgs_range=(tuple(args.vgs_range) if args.vgs_range else None),
-                saturation_margin_v=args.saturation_margin,
-            )
+            params = _extract_mosfet(sweep, args)
         else:
             params = extract_diode(sweep)
     except FitError as exc:
@@ -339,6 +334,16 @@ def cmd_extract(args: argparse.Namespace) -> int:
     return 0
 
 
+def _extract_mosfet(sweep: Sweep, args: argparse.Namespace):
+    """extract_mosfet() with the fit window from ``_mosfet_fit_args``."""
+    return extract_mosfet(
+        sweep,
+        vds_slice=args.vds_slice,
+        vgs_range=(tuple(args.vgs_range) if args.vgs_range else None),
+        saturation_margin_v=args.saturation_margin,
+    )
+
+
 def cmd_model(args: argparse.Namespace) -> int:
     sweep = _checked(_load(args.csv), strict=not args.allow_mismatch)
     kind = args.type or _guess_kind(sweep)
@@ -357,8 +362,9 @@ def cmd_model(args: argparse.Namespace) -> int:
         return 2
     try:
         if kind == "mosfet":
-            card = mosfet_model_card(extract_mosfet(sweep), name=args.name,
-                                     source=args.csv, notes=notes)
+            card = mosfet_model_card(_extract_mosfet(sweep, args),
+                                     name=args.name, source=args.csv,
+                                     notes=notes)
         else:
             card = diode_model_card(extract_diode(sweep), name=args.name,
                                     source=args.csv, notes=notes)
@@ -473,6 +479,14 @@ def _rp_arg(parser: argparse.ArgumentParser) -> None:
              "in the CSV header, if any")
 
 
+def _mosfet_fit_args(parser: argparse.ArgumentParser) -> None:
+    """The MOSFET fit window, shared by ``extract`` and ``model``."""
+    parser.add_argument("--vds-slice", type=float,
+                        help="measured drain voltage for the threshold fit")
+    parser.add_argument("--vgs-range", type=float, nargs=2, metavar=("LO", "HI"))
+    parser.add_argument("--saturation-margin", type=float, default=0.5)
+
+
 def _zero_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--zero", metavar="MA|CSV[,CSV...]|auto",
@@ -539,10 +553,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--type", choices=["mosfet", "diode", "resistor"],
                    help="resistor: fit I = V/R + offset, e.g. R_p alone")
     _rp_arg(p)
-    p.add_argument("--vds-slice", type=float,
-                   help="measured drain voltage for the threshold fit")
-    p.add_argument("--vgs-range", type=float, nargs=2, metavar=("LO", "HI"))
-    p.add_argument("--saturation-margin", type=float, default=0.5)
+    _mosfet_fit_args(p)
     p.add_argument("--sensitivity", action="store_true",
                    help="print the full V_th fit-range table")
     p.add_argument("--diagnostics", action="store_true")
@@ -567,6 +578,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--name", default="EXTRACTED")
     p.add_argument("-o", "--output")
     _rp_arg(p)
+    _mosfet_fit_args(p)
     p.add_argument("--allow-mismatch", action="store_true")
     _zero_arg(p)
     _zero_bracket_arg(p)

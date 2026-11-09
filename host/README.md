@@ -276,6 +276,15 @@ The MOSFET path is the same three commands with `--type mosfet`.
   `--zero-bracket MA MA` refits with the instrument's zero at each value
   and adds the spread in n, I_S and R_s: the systematic, beside the
   statistical errors. `extract` takes the same option.
+  For a MOSFET, `--vds-slice V`, `--vgs-range LO HI` and
+  `--saturation-margin V` choose the fit window, as on `extract` and with
+  the same defaults (the highest V_DS every curve reached; two-pass
+  saturation filter; 0.5 V). A Level-1 square law holds only above
+  moderate inversion, so on a real part restrict it to the top steps. The
+  card's `valid for` line gives the V_GS and I_D span of the points
+  actually fitted, read from the fit rather than the arguments, and a
+  `WARNING` follows when the V_th fit has one degree of freedom or fewer
+  (three steps).
 - **`simulate`** runs the card in **ngspice** (batch, `brew install
   ngspice`). A voltage source sits directly across the device, swept over
   the capture's Kelvin-measured range, with the gate at each step's
