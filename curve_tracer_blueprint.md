@@ -685,6 +685,7 @@ The "what I'd do differently" section is the one interviewers respond to. Write 
 | Blown parts stall progress | Duplicates of every active component on hand from day one |
 | A model parameter is documented but never applied | Check that changing a parameter changes the output before trusting a result that depends on it — see below |
 | A check passes against a stand-in for the real thing | Before trusting a check, state what real thing it exercised — see below |
+| A simulation model says the loop is stable and the bench disagrees | Read a model's "stable" as optimistic. Use it to rank options, not to set a margin, and confirm on the bench at the weakest operating point — see below |
 
 **A recurring failure mode: the parameter that is accepted but not applied.** Twice now a model has carried a parameter that was documented, accepted, and silently ignored, and both times the simulation output looked correct. In Phase 0 a MODPEX-generated BD139 model had `CJE = CJC = 1e-11` exactly — placeholders standing in for real junction capacitances — and with it the composite amplifier appeared unconditionally stable, hiding the `C_comp` error that the ST model exposed immediately (§12.2). In September 2026 the host simulator's `--rs` flag was parsed, stored, listed in `firmware/README.md`, and never read by the diode current function; the diode nevertheless showed a convincing high-current roll-off from the ideal line, so nothing looked wrong.
 
@@ -704,6 +705,16 @@ The tell is the same each time: **the check never touched the real artifact.** I
 This is not the failure mode above. There, a real parameter was carried, accepted and silently ignored, and sweeping it exposes that. Here the check itself may be sound, but it is aimed at a substitute; sweeping a parameter of the stub proves nothing about the chip. The MODPEX model is an instance of both: a placeholder (a stand-in) and a value no one checked was doing anything (accepted but unapplied).
 
 **Countermeasure: before trusting a check, state what real thing it exercised.** "ERC passes" exercises the schematic against its own symbols. "It compiles" exercises the code against whatever headers it was given. "The preview looks right" exercises the fab's renderer. If the honest answer names a stand-in, the check has not yet verified the real thing. Name what would (the vendor's model, the mating part's drawing, the vendor's device header, the assembled board itself) and run that before writing "verified".
+
+**A third recurring failure mode: the model that said stable.** Three models have now called this loop stable where the bench, or a better model, was not. Each case taught something different:
+
+- **The BD139 (Phase 0, §12.2).** A generic 2N2222 and a MODPEX BD139 with placeholder junction capacitances both had the loop unconditionally stable. ST's model oscillated at once. *Lesson: a stability answer lives in the parasitics the model carries. A model without the right poles cannot fail.*
+- **Sim 13's fitted macro-model (2026-11-03).** The generic op-amp had 20–30 pF of input capacitance added until it oscillated at open load as board 2 did. It then predicted 470 Ω across D–S quiet. On the bench, 470 Ω oscillated at 781 kHz at the DAC floor (2026-11-08, `docs/characterization.md`). *Lesson: a parameter fitted to reproduce one operating point stands in for what is missing only at that point. Fitting it is not validating it.*
+- **TI's OPAx197 model, twice.** At open load (sim 14) it rang at 0.83× per half-cycle and decayed; board 2 sustained 0.8–1.15 MHz. At the floor with 470 Ω (sim 15) it decayed at 0.66×; the bench sustained. *Lesson: even the vendor's model is optimistic here. Its ordering held both times (C1 damps; 100 nF beats bias), its margin did not.*
+
+**The tell: the model and the bench disagree, and always in the same direction.** A lag the model leaves out can only add phase margin. So an incomplete model errs toward "stable", never the other way, and a fitted fudge carries that error to every other operating point.
+
+**Countermeasure.** Read a model's "stable" as an upper bound on the margin. Ask it comparative questions: does C1 help, does 100 nF matter more than bias. Before predicting from a fit, check it at a second operating point. Close the question on the bench, at the weakest point: the lowest bias, which on this board is idle at the DAC floor, not 0 V. This applies now: rev 2's C1 = 4.7 pF (`hardware/DECISIONS.md` R2-4) rests on TI's model alone; the check that would close it is rev 2 at open load, at idle and at 0.1 V.
 
 ---
 

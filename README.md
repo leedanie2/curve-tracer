@@ -35,7 +35,7 @@ its row.
 | Voltage and current accuracy against a DMM | Measured, 3 points: agrees within the DMM's own accuracy (V ±0.8%, I ±3%). Blueprint §7's targets need a better reference | [Accuracy](#accuracy-against-a-dmm) |
 | Instrument's current zero | Measured: −0.087 mA on range 1, subtracted by the host since 2026-11-08 | [Session 2](#session-2-board-2-2026-11-08) |
 | R_p subtraction, extraction, `.model` card, ngspice overlay | Done; run on bench data 2026-11-08 | `host/`, 162 tests |
-| Diode parameters from a real diode | **Measured**: 1N4148, n 1.789, I_S 2.68 nA, R_s 1.14 Ω | [Headline figure](#headline-one-real-diode-measured-and-simulated) |
+| Diode parameters from a real diode | **Measured**: 1N4148, n 1.789, I_S 2.68 nA, R_s 1.14 Ω. Systematic from the instrument's zero: n 1.788–1.831, I_S 2.66–3.69 nA, R_s 1.01–1.14 Ω | [Headline figure](#headline-one-real-diode-measured-and-simulated) |
 | Measured vs simulated overlay, real diode | **Measured**, against ngspice running the extracted card: 0.51 mV rms over 0.2–20 mA | [Headline figure](#headline-one-real-diode-measured-and-simulated) |
 | Diode against published 1N4148 models | Analysis: between LTspice's and Nexperia's, 8–24 mV from each | [Session 2](#session-2-board-2-2026-11-08) |
 | MOSFET parameters from a real part | **Measured**: 2N7000, V_GS(th) 2.147 V at 1 mA, g_m and λ per step. **No `.model` card**: a Level-1 fit is not sound over this range | [Session 2](#session-2-board-2-2026-11-08) |
@@ -54,8 +54,12 @@ are the measurement, with L1's current and the instrument's zero subtracted
 (`host/h4/mvp_17_diode_rp.csv`). The line is ngspice-47 running the
 `.model` card the host fitted from those dots
 (`host/h4/mvp_17_diode.lib`: n 1.789 ± 0.003, I_S 2.68 ± 0.06 nA,
-R_s 1.135 ± 0.016 Ω). Residual 0.51 mV rms over the 60 points above
-0.2 mA. Of that, −0.38 mV is a constant: ngspice's default 27 °C against
+R_s 1.135 ± 0.016 Ω, statistical). **The larger uncertainty is
+systematic.** The instrument's current zero measured −0.087 mA on the
+calibration and −0.099 mA on the diode's own off rows. Refitted at each,
+the values span **n 1.788–1.831, I_S 2.66–3.69 nA, R_s 1.01–1.14 Ω**.
+n and I_S trade off against each other, so the curve itself moves at most
+3 mV. Residual 0.51 mV rms over the 60 points above 0.2 mA. Of that, −0.38 mV is a constant: ngspice's default 27 °C against
 the fit's 300 K. Hollow points sit below 5 current LSB and are not fitted.
 The curve lies between the two published 1N4148 models compared, 8–24 mV
 above LTspice's and 10–14 mV below Nexperia's (diode temperature not
@@ -88,6 +92,34 @@ SPICE model from it. **What it isn't:** a general-purpose commercial curve
 tracer or source-measure unit. Those cover high voltage and current, both
 polarities, pulsed measurement, BJTs and picoamp leakage. This covers none of
 them.
+
+## Limitations
+
+What the results above do not cover, as of 2026-11-08:
+
+- **A ~750 kHz component with a MOSFET in J6 is unexplained.** In a hold at
+  V_GS 2.4 V the scope counter locked at 748.5 kHz, ~20 mV p-p over the
+  noise at TP3, and waves showed during the family sweep. It doesn't reach
+  the DC readings (≤ 5 µA rms per point). Whether it is a small sustained
+  oscillation or a noise-driven mode, and which loop it comes from, is
+  open.
+- **The gate voltage is commanded, not read back.** The read-back step
+  (H4 P1b) was skipped, so every V_GS, including the 2N7000's threshold,
+  carries the gate DAC's unmeasured gain error.
+- **No MOSFET `.model` card.** The 2N7000 is in moderate inversion over all
+  the current range 1 resolves, and a Level-1 fit isn't sound there. The
+  threshold is measured directly instead: V_GS at 1 mA with V_DS = V_GS,
+  2.147 V.
+- **Blueprint §6's closed loop is not done.** The diode's model is checked
+  against its own measurement. No circuit has been built around it and
+  compared with the bench.
+- **Hold and sweep disagree by 0.6%.** For the 2N7000 at the same V_GS and
+  V_DS, a 20 s hold read 11.839 mA and the sweep 11.909 mA. Unexplained;
+  thermal is the obvious candidate.
+- **Current accuracy is bounded, not measured.** The reference was
+  V_DMM / R_DMM, with R_DMM read to ±3%, so ±3% is the DMM's limit. The
+  instrument's own error is somewhere inside it. Voltage is bounded the
+  same way, at ±0.8%.
 
 ## A measured finding: the open-load oscillation
 
@@ -346,7 +378,7 @@ empty, L1 across D–S throughout.
 | Sweep floor | 0.18–0.19 V at the device (DAC code 0) |
 | L1 calibration sweep | R = 201.31 ± 0.06 Ω, zero −0.087 mA, max residual 0.016 mA |
 | Accuracy, 3 points | See below |
-| 1N4148 ‖ L1 | n 1.789, I_S 2.68 nA, R_s 1.14 Ω; the [headline figure](#headline-one-real-diode-measured-and-simulated) |
+| 1N4148 ‖ L1 | n 1.789, I_S 2.68 nA, R_s 1.14 Ω; zero systematic n 1.788–1.831, I_S 2.66–3.69 nA, R_s 1.01–1.14 Ω. The [headline figure](#headline-one-real-diode-measured-and-simulated) |
 | 2N7000 ‖ L1, 14 gate steps 1.5–2.8 V | V_GS(th) 2.147 V; family below. Stopped at the 40 mA limit on 2.8 V, so 2.9 and 3.0 V didn't run |
 
 **The instrument's current zero.** With L1's current removed, an off
@@ -414,19 +446,14 @@ path is the new element.
 
 ### What's still open
 
-- **C1** (rev 2, 4.7 pF), the fix for the bare loop, rests on simulation
-  with a vendor model that has now been optimistic twice.
-- **The 748 kHz component** with a MOSFET in J6: sustained or not, and
-  from which loop. Telling them apart is a scope step: single-shot
-  envelopes, or the FFT.
-- **Accuracy to blueprint §7's targets** needs a better reference.
-- **The gate voltage is commanded, not read back** (H4 P1b was skipped).
-- **A MOSFET model card.** The data is in `host/h4/`; the model isn't.
-- **Blueprint §6's closed loop**: a circuit built around the extracted
-  diode model and compared with the bench. The overlay above closes
-  device → model → simulation for the device alone.
+Beyond the [limitations](#limitations):
+
+- **C1** (rev 2, 4.7 pF), the fix for the bare loop, rests on TI's model,
+  which has been optimistic twice (blueprint §11).
 - **Rails, VHF check, step response, short circuit and thermal** (H4
   steps 2b, 4, 5; Blocks 3–4): not run.
+- **Accuracy to blueprint §7's targets** needs a 5½-digit meter and 0.1%
+  resistors.
 
 ## Repository
 

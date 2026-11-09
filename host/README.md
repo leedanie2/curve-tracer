@@ -233,7 +233,10 @@ python -m ct_host overlay  h4/mvp_17_diode_rp.csv h4/mvp_17_diode_sim.csv --save
 The MOSFET path is the same three commands with `--type mosfet`.
 
 - **`model`** extracts and writes the `.model` card. Its comments carry the
-  uncertainties, the fit range, R_p and the source capture.
+  uncertainties, the fit range, R_p and the source capture. For a diode,
+  `--zero-bracket MA MA` refits with the instrument's zero at each value
+  and adds the spread in n, I_S and R_s: the systematic, beside the
+  statistical errors. `extract` takes the same option.
 - **`simulate`** runs the card in **ngspice** (batch, `brew install
   ngspice`). A voltage source sits directly across the device, swept over
   the capture's Kelvin-measured range, with the gate at each step's
@@ -262,7 +265,10 @@ They show that the pipeline works. They say nothing about the hardware.
 
 **On the bench (2026-11-08, board 2, measured).** A 1N4148 beside L1:
 `h4/mvp_17_diode.lib` gives n 1.789, I_S 2.68 nA, R_s 1.14 Ω, and the
-card run back through ngspice overlays the measurement to 0.51 mV rms
+card run back through ngspice overlays the measurement to 0.51 mV rms.
+The instrument's zero is uncertain between −0.087 and −0.099 mA, and
+`model --zero-bracket -0.087 -0.099` refits at both and writes the spread
+into the card's header: n 1.788–1.831, I_S 2.66–3.69 nA, R_s 1.01–1.14 Ω
 ([`media/overlay_diode_1n4148.png`](../media/overlay_diode_1n4148.png)).
 The 2N7000 family is in moderate inversion over range 1's span and a
 Level-1 card does not fit it, so none was written

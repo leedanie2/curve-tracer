@@ -125,9 +125,13 @@ Supply output OFF before every change at J6.
 **Parts.**
 - **R_p = L1**, 200 Ω 1 W ‖ 100 nF ceramic, legs ≤ 3 cm. Quiet at idle,
   0.1, 0.3, 2, 4 and 6 V (2026-11-03 and 2026-11-08).
-- **No tested fallback.** 470 Ω oscillated at idle on 2026-11-08. A plain
-  330 Ω rested on the same simulation (sim 13) and is untested. A plain
-  resistor without the 100 nF is not to be used as R_p while C1 is empty.
+- **Fallback: L1 rebuilt, or any resistor with ~100 nF across it.** The
+  100 nF is what keeps the loop quiet: it moves the load's lag far below
+  crossover (analysis), and in sim 15 both 470 Ω ‖ 100 nF and
+  200 Ω ‖ 100 nF show no ring (`docs/characterization.md`, 2026-11-08 (a)).
+  On the bench only L1 itself is tested. A resistor without the capacitor
+  is not an R_p while C1 is empty: 470 Ω alone oscillated at idle on
+  2026-11-08.
 - **L1** was rebuilt for 2026-11-08 with the same part values: DMM
   200 Ω. On 2026-11-02 it read 95.2 nF ‖ 202 Ω.
 - One 1N4148 or 1N400x.
@@ -176,7 +180,7 @@ The expected readings come from R_p's share of the series string:
 |---|---|---|---|---|
 | 13a | Output OFF. Clamp R_p (L1) in J6 D–S, with the Kelvin wires. Output ON. Idle reading first, then `HOLD --vds 0.1 --seconds 20 -o h4/mvp_13a_hold_rp_0v1.csv` | No periodic wave | idle Pk-Pk ____ mV ; Pk-Pk ____ mV ; ____ V, ____ mA | Read Frequency: f = ____ MHz. Go to 13c |
 | 13b | `HOLD --vds 0.3 --seconds 20 -o h4/mvp_13b_hold_rp_0v3.csv` | No periodic wave | Pk-Pk ____ mV ; ____ V, ____ mA | As 13a |
-| 13c | **Only if 13a or 13b failed.** There is no tested fallback (Parts). Output OFF and **STOP**: the fix is C1 (rev 2). *2026-11-08 ran this step with L1 after 470 Ω failed: idle 22.4 mV, 0.1 V hold 0.189 V, 0.852 mA, 20.0 mV; 0.3 V hold 0.265 V, 1.228 mA, 20.4 mV. Files `mvp_13c_hold_l1_0v1.csv`, `mvp_13c_hold_l1_0v3.csv`* | — | f ____ MHz, Pk-Pk ____ mV | — |
+| 13c | **Only if 13a or 13b failed.** Output OFF. Rebuild L1, or clamp in another resistor with ~100 nF across it (Parts); DMM its resistance for the header. Output ON and redo 13a and 13b once. Still failing: output OFF and **STOP**, the fix is C1 (rev 2). *2026-11-08 ran this step with L1 after 470 Ω failed: idle 22.4 mV, 0.1 V hold 0.189 V, 0.852 mA, 20.0 mV; 0.3 V hold 0.265 V, 1.228 mA, 20.4 mV. Files `mvp_13c_hold_l1_0v1.csv`, `mvp_13c_hold_l1_0v3.csv`* | — | f ____ MHz, Pk-Pk ____ mV | — |
 | 13d | **DAC floor.** Look at vds_meas from 13a, on the R_p you ended on | vds_meas ≤ 0.20 V | floor: vds_meas ____ V | Above 0.20 V: record it as the floor. Do 14 and 15, then **STOP before the diode**: skip 16, 17 and 18 |
 
 **The readings at 13a also measure the DAC floor.** With L1, 13a would
@@ -266,16 +270,15 @@ The model, the simulation and the overlay are desk work
 - **The expected readings** use the series string R_iso 22 Ω + PTC 8.4 Ω
   (implied by Block 1) + shunt 1 Ω, and the measured L1.
 - **The 40 mA limit** is the total current, and R_p takes its share:
-  3 mA at 1.5 V and 6 mA at 3 V with 470 Ω, 7 and 15 mA with L1.
+  7 mA at 1.5 V and 15 mA at 3 V with L1.
 - **R_p's cost.** The host subtracts V / R_p from every reading. Gain
   error in the instrument's current reading cancels, because step 14
   fits R_p with the same current reading. What does not cancel is drift in
   R_p and the fit's own error. At 0.5% of 470 Ω that is ~6 µA at 0.6 V:
   3% of a 0.2 mA diode current, which is where the diode fit's floor sits
-  (5 LSB). It scales as 1/R_p: ~9 µA (5%) with 330 Ω and ~15 µA (7%)
-  with L1. *Measured 2026-11-08:* step 14 fitted L1 to 0.03%, not 0.5%,
+  (5 LSB). It scales as 1/R_p: ~15 µA (7%) with L1. *Measured 2026-11-08:* step 14 fitted L1 to 0.03%, not 0.5%,
   so the subtraction's error was ~1.5 µA at 0.755 V, R and zero together.
   Since that session the host also subtracts the fit's offset, the
   instrument's current zero (−0.087 mA that night).
-- **The fallbacks' expected readings** use the same string: 202 / 233.4 =
-  0.865 of the command for L1, 330 / 361.4 = 0.913 for 330 Ω.
+- **L1's expected readings** use the same string: 200 / 231.4 = 0.864 of
+  the command (0.865 with the 202 Ω read on 2026-11-02).

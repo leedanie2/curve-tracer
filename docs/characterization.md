@@ -679,6 +679,24 @@ The fit's own uncertainties shrink 2.7× and its residual 2.4× with the
 zero out. That is what a real offset looks like. The 40 rows below 0.2 mA
 are dropped as unresolved on range 1.
 
+**Systematic from the zero** (added 2026-11-08, Daniel's decision; `extract`
+and `model --zero-bracket -0.087 -0.099`, in the card's header). The zero
+itself is known only to the spread of its estimates in (b): −0.087 mA from
+the calibration, −0.099 mA from the diode's own off rows. Refitted at each
+end:
+
+| Zero | n | I_S | R_s | Fit residual, relative | Points |
+|---|---|---|---|---|---|
+| −0.087 mA | 1.7877 | 2.663 nA | 1.1374 Ω | 1 | 60 |
+| −0.099 mA | 1.8309 | 3.691 nA | 1.0058 Ω | 2.1× | 61 |
+| **Spread** | **0.043** | **1.03 nA (39%)** | **0.13 Ω** | | |
+
+The spread is 14× n's statistical error and 17× I_S's, so it is the
+uncertainty to quote. It barely moves the curve: V at 0.2, 1, 10 and 20 mA
+changes by 2.9, 1.2, 0.1 and 0.4 mV. So the comparison with published
+models below stands. The −0.087 mA end fits 2.1× tighter, which weakly
+favours it; the headline keeps the calibration's −0.0874 mA.
+
 *Simulated (ngspice-47), the card run back over the measured range*
 (`h4/mvp_17_diode_sim.csv`, figure `media/overlay_diode_1n4148.png`):
 residual **0.51 mV rms** over the 60 fitted points, **−0.38 mV mean**. The
@@ -811,7 +829,11 @@ it negligible on DC readings.
 - The "loop is off at idle" premise is wrong: corrected in (c) of the
   2026-11-02/03 entry, in `hardware/CONTINGENCY.md` §2B, and on the card's
   step 7.
-- The MVP card's R_p is L1 from now on.
+- The MVP card's R_p is L1 from now on. Its fallback is L1 rebuilt, or
+  any resistor with ~100 nF across it (analysis and sim 15); the 330 Ω
+  fallback is removed (Daniel, 2026-11-08).
+- Blueprint §11 records sim 13 and TI's model, with Phase 0's BD139, as one
+  pattern: the model that said stable.
 
 **Still open after this session**
 
