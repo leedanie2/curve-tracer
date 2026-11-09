@@ -19,12 +19,22 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 from .csvio import Row, Sweep
 from .dataset import VDS_SET_MAX_V, family_of, vds_delta_report
 
 __all__ = ["LivePlot", "plot_family", "plot_vds_delta"]
+
+
+def is_two_terminal(vgs_values: Iterable[float]) -> bool:
+    """One gate step, at 0 V: a diode, LED or resistor capture.
+
+    V_GS means nothing there, so its plots carry no V_GS legend or label and
+    are titled with the device name alone.
+    """
+    steps = set(vgs_values)
+    return len(steps) == 1 and abs(next(iter(steps))) < 5e-4
 
 
 @dataclass
@@ -51,6 +61,8 @@ class LivePlot:
     _fig: Any = field(default=None, init=False, repr=False)
     _ax: Any = field(default=None, init=False, repr=False)
     _flag_artist: Any = field(default=None, init=False, repr=False)
+    _device: str | None = field(default=None, init=False, repr=False)
+    _two_terminal: bool = field(default=False, init=False, repr=False)
     n_rows: int = field(default=0, init=False)
 
     # -- lifecycle ---------------------------------------------------------
@@ -90,9 +102,18 @@ class LivePlot:
     # -- callbacks ---------------------------------------------------------
 
     def on_meta(self, key: str, value: str) -> None:
-        if key == "device" and self._ax is not None:
-            self._ax.set_title(f"{self.title} — {value}")
-        elif key == "i_limit_ma" and self.i_limit_ma is None:
+        if key == "device":
+            self._device = value
+        elif key == "vgs_list":
+            try:
+                self._two_terminal = is_two_terminal(
+                    float(v) for v in value.split(",") if v.strip())
+            except ValueError:
+                pass
+        if key in ("device", "vgs_list") and self._ax is not None and self._device:
+            self._ax.set_title(self._device if self._two_terminal
+                               else f"{self.title} — {self._device}")
+        if key == "i_limit_ma" and self.i_limit_ma is None:
             try:
                 self.i_limit_ma = float(value)
             except ValueError:
@@ -123,10 +144,12 @@ class LivePlot:
         for vgs, (xs, ys) in self._series.items():
             line = self._lines.get(vgs)
             if line is None:
-                (line,) = self._ax.plot(xs, ys, marker="", linewidth=1.4,
-                                        label=f"V_GS = {vgs:.3f} V")
+                (line,) = self._ax.plot(
+                    xs, ys, marker="", linewidth=1.4,
+                    label=None if self._two_terminal else f"V_GS = {vgs:.3f} V")
                 self._lines[vgs] = line
-                self._ax.legend(fontsize=8, loc="upper left")
+                if not self._two_terminal:
+                    self._ax.legend(fontsize=8, loc="upper left")
             else:
                 line.set_data(xs, ys)
 
@@ -186,6 +209,7 @@ def plot_family(sweep: Sweep, *, ax: Any = None, show_flagged: bool = True,
         _, ax = plt.subplots(figsize=(7.5, 5.0))
 
     family = family_of(sweep)
+    two_terminal = is_two_terminal(c.vgs for c in family)
     # V_GS is an ordered magnitude: one hue, light to dark, so no two steps
     # share a colour (the default cycle repeats after ten). Curves that rise
     # clear of zero are labelled at their end as well as in the legend.
@@ -195,7 +219,7 @@ def plot_family(sweep: Sweep, *, ax: Any = None, show_flagged: bool = True,
         color = (ramp(0.35 + 0.6 * k / (len(family) - 1)) if len(family) > 1
                  else None)
         ax.plot(curve.v, curve.i_ma, linewidth=1.4, color=color,
-                label=f"V_GS = {curve.vgs:.3f} V")
+                label=None if two_terminal else f"V_GS = {curve.vgs:.3f} V")
         if len(family) > 1 and len(curve.v) and curve.i_ma.max() > 0.04 * span:
             ax.annotate(f"{curve.vgs:.2f} V", (curve.v[-1], curve.i_ma[-1]),
                         xytext=(4, 0), textcoords="offset points",
@@ -219,7 +243,11 @@ def plot_family(sweep: Sweep, *, ax: Any = None, show_flagged: bool = True,
                   else "I_D, R_p current subtracted  (mA)")
     ax.set_title(label)
     ax.grid(True, alpha=0.3)
-    if len(family) > 8:
+    if two_terminal:
+        # No V_GS entry; a legend only if flagged points need one.
+        if show_flagged and sweep.flagged_rows:
+            ax.legend(fontsize=8, loc="upper left")
+    elif len(family) > 8:
         # A long family's legend would cover the top curves: put it outside,
         # and leave room on the right for the end labels.
         ax.legend(fontsize=7, loc="upper left", bbox_to_anchor=(1.01, 1.0))

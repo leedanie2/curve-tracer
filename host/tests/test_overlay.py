@@ -98,3 +98,16 @@ def test_mosfet_path_simulates_every_gate_step(tmp_path):
     curves = read_sim(sim).curves
     assert [round(g, 2) for g, _, _ in curves] == [1.8, 2.4, 2.7, 3.0]
     assert main(["overlay", str(cap), str(sim), "--save", str(png)]) == 0
+
+
+def test_a_two_terminal_overlay_is_titled_by_the_device_alone(diode_files):
+    """One gate step at 0 V: no V_GS anywhere, the device name as the title."""
+    from ct_host.csvio import parse
+    from ct_host.overlay import plot_overlay
+    from ct_host.parallel import from_meta, subtract
+
+    sweep = parse(diode_files["cap"].read_text(), require_end=True)
+    fig = plot_overlay(subtract(sweep, from_meta(sweep)), read_sim(diode_files["sim"]))
+    assert fig._suptitle.get_text() == "1N4148 [SIMULATED]"
+    assert not any("V_GS" in a.get_text()
+                   for a in fig.findobj(lambda a: hasattr(a, "get_text")))

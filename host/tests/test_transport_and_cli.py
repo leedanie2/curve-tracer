@@ -271,3 +271,23 @@ def test_truncated_file_is_refused(tmp_path):
 
     with pytest.raises(TruncatedTranscript):
         main(["extract", str(out), "--type", "mosfet"])
+
+
+
+def test_a_two_terminal_plot_has_no_v_gs_legend():
+    """A diode is one gate step at 0 V: no V_GS legend, the device as title."""
+    from ct_host.plot import is_two_terminal
+
+    live = LivePlot(show=False).open()
+    with SimTransport(dut="diode") as transport:
+        sweep = run_sweep(transport, SweepRequest(device="1N4148", n=40,
+                                                  vds_max=1.0, vgs_list=[0]),
+                          on_row=live.on_row, on_meta=live.on_meta)
+    live.finish(sweep)
+    assert live.axes.get_legend() is None
+    assert live.axes.get_title() == "1N4148"
+
+    ax = plot_family(sweep)
+    assert ax.get_legend() is None
+    assert ax.get_title() == "1N4148" + ("   [SIMULATED]" if sweep.meta.is_simulated else "")
+    assert is_two_terminal([0.0]) and not is_two_terminal([0.0, 2.0])
