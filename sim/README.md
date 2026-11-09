@@ -463,6 +463,16 @@ of sustained oscillation from 0.1 V up.
 100 nF-alone row shows that a large capacitance quiets the loop with almost
 no bias current, so the mechanism is not bias alone.
 
+**Refuted on the bench, 2026-11-08.** 470 Ω (469 Ω by DMM) across D–S
+oscillated at idle, with the node at the DAC floor (~0.19 V): **781.1 kHz,
+> 205 mV p-p** at TP3, clipped. L1 was quiet at idle, 0.1 V and 0.3 V. So
+the 470/330/200 Ω rows above are not evidence that a plain resistor is
+safe. The 20–30 pF fit made the macro-model oscillate at open load as the
+bench did. That did not make it a faithful stand-in for the op-amp's excess
+phase at other loads. The 100 nF-alone row is the one the bench bears out;
+see sim 15 and `docs/characterization.md` (2026-11-08 (a)). The table is
+kept as the record of the prediction.
+
 ```
 python3 host/parse_osc.py sim/13_parallel_load.raw
 ```
@@ -597,4 +607,49 @@ first peak rounds to 0.0 mV.
 python3 host/parse_osc.py sim/14e_l1_4p7_opa197.raw --residual 10e-6 14e-6
 python3 host/parse_osc.py sim/14f_low_level_4p7_opa197.raw --residual 40e-6 60e-6
 python3 host/parse_osc.py sim/14f_low_level_4p7_opa197.raw --residual 60e-6 80e-6
+```
+
+## 15_floor_rp_opa197.cir — 470 Ω against L1 at the DAC floor: is it the 100 nF?
+
+Written 2026-11-08. On the bench that night, 470 Ω across D–S oscillated at
+idle (781.1 kHz, > 205 mV p-p at TP3) and L1 (200 Ω ‖ 100 nF) did not.
+Sim 13 had predicted 470 Ω quiet. 470 Ω and L1 differ in two ways, Q1's
+bias and the 100 nF. This sim separates them.
+
+**Circuit:** sim 14b's deck (TI's OPAx197 model, `uic`, D3 1.2 nF, C1
+empty), held at the sweep DAC's floor instead of 6 V. The bench read
+0.18 V at J6 with L1 at idle; referred to FB_SENSE that is
+0.18 V + 0.9 mA × 31.4 Ω = 0.208 V, the `vds` used. The DAC steps 0 → floor
+at 2 µs, and that step is the only excitation.
+
+**Sweeps:** load: 470 Ω; 470 Ω ‖ 100 nF (470's bias, L1's capacitance);
+200 Ω alone (L1's bias, no capacitance); L1. Runs end at 12 µs. A first
+30 µs run stalled in the timestep collapse described under sim 14, at
+~15 µs, once the 470 Ω ring had decayed. All four take ~3 min.
+
+**Results (simulated, LTspice, TI's OPAx197 model), V(e) at TP3:**
+
+| Load | Q1 bias | Ring f | Half-cycle ratio, 3–12 µs | Residual p-p, 8–12 µs |
+|---|---|---|---|---|
+| 470 Ω | 0.415 mA | 1.69 MHz | 0.66 | 0.77 mV |
+| 470 Ω ‖ 100 nF | (charging) | none | — | 0.01 mV |
+| 200 Ω alone | 0.900 mA | 2.13 MHz | 0.57 | 0.01 mV |
+| L1 | (charging) | none | — | 0.01 mV |
+
+The `--ring` parse reports a "first peak" of 165–198 mV for every load. For
+the two 100 nF loads that is the charging step, not a ring: no crossings
+follow it.
+
+**What it says.** With 100 nF the loop doesn't ring at either bias; without
+it, it rings at either bias, and the extra bias only moves the ratio from
+0.66 to 0.57. So the 100 nF is what quiets it, by moving the load's
+pole-zero pair from ~1.6–4.9 MHz to ~20–60 kHz, far below crossover
+(`docs/characterization.md`, 2026-11-08 (a)). The model is optimistic, as
+in sims 14 and 14d: its 470 Ω ring decays where the bench sustained, and
+at 1.7 MHz where the bench oscillated at 781 kHz. Read it for the
+ordering, not the margin.
+
+```
+python3 host/parse_osc.py sim/15_floor_rp_opa197.raw --ring 3e-6 12e-6
+python3 host/parse_osc.py sim/15_floor_rp_opa197.raw --residual 8e-6 12e-6
 ```

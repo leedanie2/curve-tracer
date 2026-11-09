@@ -12,14 +12,14 @@ below but do not count toward §7.
 
 | Test | Method | Target | Status |
 |---|---|---|---|
-| Voltage accuracy | Compare ADC2 reading vs. 5.5-digit DMM across range | <0.5% error | Not started |
-| Current accuracy | Sweep into 0.1% precision resistors of known value | <1% error, all 3 ranges | Not started |
+| Voltage accuracy | Compare ADC2 reading vs. 5.5-digit DMM across range | <0.5% error | **Partial, 2026-11-08**: 3 points, 1.7–5.2 V, against a 3½-digit DMM. Agrees within 7 mV; the DMM's own ±0.8% sets the limit, so <0.5% is not yet shown |
+| Current accuracy | Sweep into 0.1% precision resistors of known value | <1% error, all 3 ranges | **Partial, 2026-11-08**: range 1 only, 8.5–26 mA into L1 (5% part, DMM ±3%). −0.17 to −0.22 mA against V_DMM / R_DMM, inside the DMM's band; current zero −0.087 mA from the R_p calibration |
 | Noise floor | 1000 samples at fixed bias, compute σ | Report per range | Not started |
 | CMRR | Common-mode step, measure output shift; repeat with 1% resistors | ~74 dB (0.1%) vs ~54 dB (1%) | Not started |
 | Settling time | Step drain DAC, scope the buffer output | Sets minimum `settle_us` | Not started |
 | Linearity | Sweep across a precision resistor, fit residuals | Report INL | Not started |
 | Self-heating | DC vs. pulsed sweep, same device | Visible droop difference | Not started |
-| Known-device check | 2N7000, 2N3904, 1N4148 vs. datasheet curves | Qualitative match | Not started |
+| Known-device check | 2N7000, 2N3904, 1N4148 vs. datasheet curves | Qualitative match | **Partial, 2026-11-08**: 1N4148 within 8–24 mV of two published models; 2N7000 V_GS(th) 2.15 V against the datasheet's 0.8/2.1/3.0 V. No 2N3904 (no BJT mode) |
 
 ---
 
@@ -396,6 +396,13 @@ covers it: every sim has its noise sources set to zero.*
 - **B is not the loop's noise floor.** At idle both DACs are at 0, the
   follower is off and the loop has no gain. B (12.0 mV) is the scope, the
   probe and pickup at TP3, with the loop open.
+  *Corrected 2026-11-08: the loop is not off at idle.* The buffered sweep
+  DAC does not reach 0 V: at code 0 the node sits at **0.18 V** (DMM at
+  J6 with L1, idle; the sweep's first row reads 0.177 V). So at idle Q1
+  carries ~0.9 mA into L1 and the loop has its full gain. B was taken with
+  L1 in J6, so it is the loop's noise at that floor, not the scope's alone.
+  The bullets below still hold for the *excess* over B. Session 2 showed
+  the consequence: 470 Ω across D–S oscillated at idle.
 - **During a hold the loop passes its input to TP3 at gain 3.32**, up to
   about 1 MHz. That includes DAC noise and the Nucleo's digital activity, and
   the ADCs oversample continuously during a hold. One DAC LSB
@@ -419,6 +426,12 @@ below ~0.4 V: 18 µA at 0.4 V and 0.65 µA at 0.25 V, against a 40.3 µA LSB
 question is which resistor R_p, clamped in J6 alongside the diode (no
 solder), keeps the loop free of sustained oscillation from 0.1 V up.
 
+*Superseded on the bench, 2026-11-08: 470 Ω oscillated at idle (781 kHz,
+> 205 mV p-p). L1 (200 Ω ‖ 100 nF) was quiet and is the R_p from then on.
+See [the session 2 entry](#2026-11-08--board-2-session-2-r_p-accuracy-diode-mosfet-hardwaremvp_cardmd-d)
+for why, and for what sim 13 got wrong. The paragraph below is the record
+of the prediction as made.*
+
 **Answer: 470 Ω.** *Simulation, sim 13.* It is the largest value quiet in
 all 28 cases: 7 levels from 0.1 to 6 V, at C_in 20 and 30 pF (the sim 12
 fit and margin), with D3 at 0.5 and 1.2 nF. The next value up, 680 Ω,
@@ -437,6 +450,9 @@ been seen on the bench. R_p also shares the sweep's 40 mA limit: 3.2 mA at
 1.5 V.
 
 **Proposed host option, not implemented: `--r-parallel OHM|auto`.**
+*Implemented 2026-11-03 (`host/`, `--r-parallel OHM|auto|CSV`). Since
+2026-11-08 a fitted R_p also subtracts the fit's offset, the instrument's
+current zero; see session 2.*
 
 - **Where.** On `capture`, it records `cal_r_parallel_ohm` in the header. On
   `extract`, `plot` and `model`, it overrides that value.
@@ -482,3 +498,327 @@ that n and I_S are fitted from.
    is ~3.3–3.9 pF (3.3 pF damps the open-load ring to 0.40× in sim 14), not
    the 8.6–12.9 pF that sim 12's fit gives. Either value is 0603, so it goes
    on a rev 2 (R2-2) or to someone with fine-pitch experience, not the bench.
+
+---
+
+### 2026-11-08 — Board 2, session 2: R_p, accuracy, diode, MOSFET (`hardware/MVP_CARD.md` §D)
+
+**Intended parts, on the PCB, C1 still empty.** Everything under *Setup*
+and *Results* is measured unless marked. Analysis and simulation are
+labelled where they appear. V and I figures are the CSV means (22 rows per
+20 s hold); the terminal lines read at the bench agree with them to within
+one row's noise.
+
+**Setup**
+
+- **R_p** 470 Ω from the drawers, DMM **469 Ω**. **L1** rebuilt with the
+  same part values (200 Ω 1 W ‖ 100 nF ceramic): DMM **200 Ω**, capacitor
+  not remeasured. BK 2704A; "200 Ω" can only be the 2 kΩ range (the 200 Ω
+  range over-ranges at 199.9), so ±(1% + 4 dgt) = **±6 Ω** on the 2704C's
+  published spec. The 2704A's own sheet was not found; the 2704C's
+  figures stand in for it throughout.
+- Scope TDS3034C, Recall Factory Setup, AC, 20 MHz BW, 20 mV/div,
+  1 µs/div, 10×. Probe on TP3, ground on TP9.
+- Power-up 3 mA, CV. Port `/dev/cu.usbmodem1103`. MCU die 32.2–32.6 °C
+  over the session (CSV headers); ambient not recorded.
+
+**Results**
+
+| Step | Result | Card pass band | |
+|---|---|---|---|
+| 13, 470 Ω in J6, **idle** (no command) | **Oscillates: 781.1 kHz, > 205 mV p-p** (clipped) | no periodic wave | **fail**; 13a/13b not run |
+| 13c, L1, idle | 22.4 mV p-p, noise only | — | — |
+| 13c, L1, hold 0.1 V | 0.1890 V, 0.8517 mA; 20.0 mV p-p, noise | no periodic wave | pass. Card expected 0.087 V: the DAC floor holds the node at 0.19 V |
+| 13c, L1, hold 0.3 V | 0.2648 V, 1.2280 mA; 20.4 mV p-p, noise | no periodic wave | pass (card: 0.260 V, 1.29 mA) |
+| 13d, DAC floor | 0.18–0.19 V at the device; DMM at J6 at idle 0.18 V | ≤ 0.20 V | pass |
+| 14, L1 calibration (`mvp_14_rp.csv`) | R = **201.31 ± 0.056 Ω**, offset **−0.0874 ± 0.0010 mA**, max residual 0.0156 mA, R² 0.999993; 100 points over 0.1766–1.300 V. Scope quiet | R ±3% of R_DMM; \|offset\| ≤ 0.10 mA; residual ≤ 0.05 mA | pass (+0.66% from 200 Ω) |
+| 15a–c | skipped: R_p is L1 | | |
+| 15d–f | table below | 2% + 10 mV; 3% + 0.10 mA | pass, all three |
+| 15g, TP8 (+3V3) to TP27 (GNDPWR) | 3.30 V | 3.20–3.40 V | pass. The card says TP9 (GND); the two grounds join at the star tie NT2, mV apart |
+| 17, 1N4148 ‖ L1 (`mvp_17_diode_rp.csv`) | 100 valid rows, `end: ok`. Scope quiet, one brief bump mid-sweep. R_p auto 200.25 Ω (−0.52%) | ok/ilimit; n 1.0–2.5 | pass |
+| 18, 2N7000 ‖ L1 (`mvp_18_mosfet_rp.csv`) | 545 rows (544 valid, 1 flagged), `end: ilimit`. Scope: "a bunch of waves" during the sweep. R_p auto 201.01 Ω (−0.15%) | ≥ 3 curves above zero | pass: 9 curves above 0.2 mA |
+| 18c, hold V_GS 2.4 V, V_DS 1.5 V (`mvp_18c_hold_2n7000.csv`) | 1.1314 V, 11.839 mA total; 28.0 mV p-p, counter locked at **748.5 kHz**, faint slow ripple in the noise | — | see (f) |
+
+The 18 header lists 16 gate steps, 1.5–3.0 V. **14 ran**: the sweep hit
+40 mA total at V_GS = 2.80 V (row 544, 40.70 mA, flagged) and stopped, so
+2.9 and 3.0 V were never applied.
+
+#### (a) Why 470 Ω oscillates and L1 does not
+
+**Is it the 100 nF? Yes.** L1 also biases Q1 harder than 470 Ω does, but
+that is the smaller effect.
+
+*Measured.* With nothing running, the loop holds the node at the DAC floor
+(0.18–0.19 V), where L1 carries 0.85–0.88 mA. 470 Ω would carry ~0.4 mA
+there (analysis; its own idle reading wasn't logged). 470 Ω oscillated at
+781 kHz; L1 was quiet at idle, 0.1 V and 0.3 V, and at
+2–6 V (15d–f, and Block 1).
+
+*Analysis* (the load as the loop sees it from FB_SENSE, C1 empty). Q1's
+emitter resistance r_e = 26 mV / I, plus R_sense, drives R_iso + PTC +
+shunt (31.4 Ω) into the node, where R_p sits beside D3 (~1.2 nF near zero
+bias). That gives the loop one extra pole and zero:
+
+| Load | Q1 bias | r_e | Pole | Zero | Phase lag, at most |
+|---|---|---|---|---|---|
+| 470 Ω | 0.42 mA | 62 Ω | 1.56 MHz | 4.5 MHz | 29° near 2.7 MHz |
+| 200 Ω alone | 0.90 mA | 29 Ω | 2.55 MHz | 4.9 MHz | 18° near 3.5 MHz |
+| 470 Ω ‖ 100 nF | 0.42 mA | 62 Ω | 18.5 kHz | 53 kHz | 29° near 32 kHz |
+| L1, 200 Ω ‖ 100 nF | 0.90 mA | 29 Ω | 30 kHz | 58 kHz | 18° near 42 kHz |
+
+- **Without the 100 nF**, the lag lands at 1.5–5 MHz, around the loop's
+  crossover (~1–3 MHz), on top of the op-amp's own excess phase. That is the
+  load-side mode the 2026-11-03 entry found at open load, with R_p's current
+  lowering r_e somewhat.
+- **With the 100 nF**, the same-sized lag moves two decades down, to
+  20–60 kHz, where the loop has phase to spare. By crossover the load looks
+  like 31 Ω plus a capacitor of ~2 Ω: resistive, R_iso's design regime
+  (sim 03).
+- **Bias** changes the size of the lag (29° → 18° from 0.42 to 0.90 mA), not
+  where it lands.
+
+*Simulation, sim 15* (`sim/15_floor_rp_opa197.cir`, TI's OPAx197 model,
+C1 empty, held at the floor, D3 1.2 nF). The four loads above:
+
+| Load | Start-up ring | Half-cycle ratio | Residual p-p, 8–12 µs |
+|---|---|---|---|
+| 470 Ω | 1.69 MHz | 0.66 | 0.77 mV |
+| 470 Ω ‖ 100 nF | none | — | 0.01 mV |
+| 200 Ω alone | 2.13 MHz | 0.57 | 0.01 mV |
+| L1 | none | — | 0.01 mV |
+
+Both loads with 100 nF show no ring at all, at either bias. Both without
+it ring, and L1's bias only takes the ratio from 0.66 to 0.57. So the
+model agrees with the analysis on the mechanism. **It is optimistic in
+absolute terms**, as in sims 14 and 14d: its 470 Ω ring decays where the
+bench's was sustained, and at 1.7 MHz rather than the bench's 781 kHz (a
+large-signal oscillation runs below the small-signal ring; 2026-11-03 (a)).
+So read sim 15 for the ordering, not for margins. One consequence, not
+tested: **a plain 200 Ω**, L1 without its capacitor, rings in the same
+model only a little less than 470 Ω, so it would likely oscillate on the
+bench too.
+
+**What sim 13 got wrong.** Sim 13 used the generic macro-model with 20–30 pF
+of C_in, fitted so that the open-load loop oscillated as the bench did. That
+fit stood in for excess phase the macro-model lacks (sim 14). It reproduced
+one operating point. It did not carry over to a resistive R_p at the floor,
+so its 470/330/200 Ω rows were optimistic. Its 100 nF-alone row is the
+one the bench and sim 15 support. **Corrected conclusion: with C1 empty,
+it is ≥ 100 nF across D–S that keeps the loop quiet at low levels. A
+resistor alone (470 Ω, and by sim 15 probably 200 Ω) does not.** The
+diode-demo paragraph of the 2026-11-02/03 entry and `sim/README.md`
+sim 13 carry the correction.
+
+#### (b) The instrument's current zero, and a host change
+
+*Measured.* With R_p's current removed, a device that is off should read
+zero. It reads about **−0.09 mA** in every capture of the session:
+
+| Where | Fitted offset |
+|---|---|
+| Step 14, L1 alone, 0.18–1.30 V | −0.0874 ± 0.0010 mA |
+| Step 17, the diode capture's own rows below 0.25 V (diode off) | −0.099 ± 0.008 mA |
+| Step 18, each off gate step (1.5–1.8 V), 0.18–2.6 V | −0.077 to −0.098 mA |
+
+That is ~2 current LSB, consistent with ~90 µV of offset referred to the
+1 Ω shunt (buffers and difference amp), or a few ADC counts. Until this
+session the host subtracted `V / R_p` only and left the zero in, by
+design (`host/ct_host/parallel.py`). Here that matters: the diode fit's
+floor is 0.2 mA, so the zero is 43% of the smallest current fitted.
+
+*Analysis.* Subtracting the whole calibration line, `V / R_p + offset`,
+gives the device current whether the zero is a current offset or a voltage
+offset: an off device reads zero either way. **Since 2026-11-08 the host
+does that** for a calibration or `auto` R_p (Daniel's decision, this
+session). The offset is recorded in the capture header as
+`host_r_parallel_offset_ma`; `mvp_17` and `mvp_18` were re-annotated with
+`ct_host annotate --force` (header lines only; rows untouched).
+
+#### (c) Accuracy against the DMM (15d–f)
+
+| Hold | vds_meas | V_DMM | ΔV | DMM ±(0.8% + 1 dgt) | i_meas | V_DMM / 200 Ω | ΔI |
+|---|---|---|---|---|---|---|---|
+| 15d, 2 V | 1.7337 V | 1.74 V | −6.3 mV | ±24 mV | 8.5261 mA | 8.700 mA | −0.174 mA (−2.0%) |
+| 15e, 4 V | 3.4631 V | 3.47 V | −6.9 mV | ±38 mV | 17.1485 mA | 17.350 mA | −0.202 mA (−1.2%) |
+| 15f, 6 V | 5.1930 V | 5.20 V | −7.0 mV | ±52 mV | 25.7786 mA | 26.000 mA | −0.221 mA (−0.85%) |
+
+*Analysis.*
+
+- **Voltage.** A line through the three points gives gain **−0.02%** and
+  offset **−6 mV**. The DMM's ±0.8% and its 10 mV digit are far larger, so
+  the result is: voltage agrees with the DMM to within the DMM. That
+  bounds the voltage error at about ±0.8% ± 10 mV. It does not reach
+  blueprint §7's <0.5%, which needs the 5½-digit meter §7 names.
+- **Current.** Against V_DMM / R_DMM: gain **−0.28%**, offset
+  **−0.15 mA**. The reference is the weak part. R_DMM is ±3% (2 kΩ range)
+  and V_DMM ±0.8%, so the current gain is known only to about **±3%**, and
+  all three errors sit inside that. Each DMM digit in V is 0.05 mA in the
+  reference, so the intercept is ±0.05 mA. It agrees with the instrument's
+  self-referenced zero from step 14 (−0.087 ± 0.001 mA) to about one
+  DMM count.
+- **Linearity, self-referenced.** Step 14's line (0.9–6.4 mA) extrapolated
+  to these holds predicts the current within +0.001, +0.033 and +0.070 mA
+  (+0.27% at 26 mA). L1 dissipates 134 mW at 15f and warms, so this does
+  not separate ADC non-linearity from L1's tempco.
+- **Reference (15g).** 3.30 V on the 20 V range, ±36 mV: the ADC reference
+  is 3.300 V to ±1.1%. Nothing in the rows asks for a rescale.
+
+#### (d) The diode: model card, overlay, and published models
+
+*Measured (extraction), zero subtracted.* `h4/mvp_17_diode.lib`:
+
+| | Zero left in (as first extracted) | **Zero subtracted (adopted)** |
+|---|---|---|
+| n | 1.6513 ± 0.0085 | **1.7885 ± 0.0031** |
+| I_S | 0.826 ± 0.061 nA | **2.680 ± 0.062 nA** |
+| R_s | 1.479 ± 0.040 Ω | **1.135 ± 0.016 Ω** |
+| Points (≥ 0.2 mA) | 58, 0.547–0.755 V | 60, 0.525–0.755 V |
+| Fit residual, rms | 0.80 mV | 0.33 mV |
+
+The fit's own uncertainties shrink 2.7× and its residual 2.4× with the
+zero out. That is what a real offset looks like. The 40 rows below 0.2 mA
+are dropped as unresolved on range 1.
+
+*Simulated (ngspice-47), the card run back over the measured range*
+(`h4/mvp_17_diode_sim.csv`, figure `media/overlay_diode_1n4148.png`):
+residual **0.51 mV rms** over the 60 fitted points, **−0.38 mV mean**. The
+mean is ngspice's default 27 °C against the fit's 300 K (26.85 °C):
+n · ΔV_T · ln(I / I_S) predicts −0.39 mV. Without it the scatter is
+0.34 mV, the fit's own.
+
+**Against published 1N4148 models** (analysis; V at fixed current from
+`n·V_T·ln(I/I_S) + I·R_s`, V_T at 300 K):
+
+| Model | n | I_S | R_s | V at 0.2 mA | 1 mA | 10 mA | 20 mA |
+|---|---|---|---|---|---|---|---|
+| **This 1N4148, measured** | 1.789 | 2.68 nA | 1.14 Ω | 519.0 mV | 594.3 | 711.0 | 754.4 |
+| LTspice `standard.dio` (`1N4148`, mfg=OnSemi) | 1.752 | 2.52 nA | 0.568 Ω | 511.1 | 584.4 | 693.8 | 730.9 |
+| Nexperia `1N4148.txt` | 1.906 | 4.352 nA | 0.6458 Ω | 529.1 | 608.9 | 728.1 | 768.7 |
+
+Sources: LTspice's `lib/cmp/standard.dio`, read from the installed library:
+`.model 1N4148 D(Is=2.52n Rs=.568 N=1.752 Cjo=4p M=.4 tt=20n ...)`.
+Nexperia's model, `https://assets.nexperia.com/documents/spice-model/1N4148.txt`;
+its server refuses scripted downloads, so the three values are as indexed by
+a web search on 2026-11-08 and not read first-hand. **Check them against the
+file before relying on that row.**
+
+- **The measured curve lies between the two models**: 8–24 mV above
+  LTspice's and 10–14 mV below Nexperia's. n is 2% above LTspice's and 6%
+  below Nexperia's; I_S is within 6% of LTspice's. n and I_S trade off
+  against each other, so V at fixed current is the fairer comparison.
+- **What limits it.** One diode of unknown maker, from the drawers. Its
+  temperature was not measured, and a silicon junction moves about
+  −2 mV/°C, so 5–10 °C is the size of the disagreement with either model.
+- **R_s is 2× the models'.** Here R_s is fitted where I·R_s is at most
+  23 mV (20 mA), so it also absorbs curvature in the exponential
+  (high-level injection) and the leads and J6 clamp between the Kelvin
+  point and the junction. The published values are fitted to higher
+  currents. Read 1.14 Ω as this fixture's R_s up to 20 mA, not the die's.
+
+#### (e) The 2N7000: extraction, and why there is no `.model` card
+
+*Measured, zero subtracted.* Plot: `media/family_2n7000.png` (the bench's
+own render is `h4/mvp_18_mosfet_rp.png`). Curves are smooth: on every gate
+step the saturation region fits a quadratic to 3.5–5.7 µA rms, the same as
+the off steps, where only L1 conducts.
+
+| Quantity | Value | How |
+|---|---|---|
+| **V_GS(th)**, I_D = 1 mA, V_DS = V_GS | **2.147 V** | Model-free: log-interpolated between 2.100 V (0.656 mA) and 2.199 V (1.584 mA). The datasheet's definition. onsemi 2N7000/D (onsemi.com/download/data-sheet/pdf/2n7000-d.pdf), same conditions: 0.8 / 2.1 / 3.0 V min/typ/max |
+| g_m at V_DS = 1.5 V | 2.8 mS at 0.24 mA; 13.6 mS at 1.5 mA; 39.9 mS at 6.4 mA; 82.7 mS at 18.4 mA | Central difference between gate steps |
+| g_m / I_D | 11.8 /V at 0.24 mA, falling to 4.5 /V at 18.4 mA | The same |
+| λ, apparent | 0.027–0.029 /V on the 2.4–2.7 V steps (R² ≥ 0.991); 0.04–0.09 /V on the 2.0–2.2 V steps (R² 0.89–0.97) | Per-step line in saturation |
+| R_DS(on) at V_GS = 2.80 V | 7.7 ± 0.2 Ω | Not the datasheet's condition (10 V); for reference only |
+
+**The Level-1 fit is not sound over this range**, so no card is written.
+The square law needs √I_D linear in V_GS. Here its slope climbs from 0.11
+to 0.31 √A/V between 2.0 and 2.7 V, and g_m / I_D falls steadily instead
+of following 2 / V_ov. The part is in moderate inversion over almost the
+whole range that range 1 can resolve. So the fitted V_th and KP depend on
+the window:
+
+| Window | V_th | KP·W/L | R² (√I_D vs V_GS) |
+|---|---|---|---|
+| Default (slice at 0.527 V, the 2.80 V curve's end) | 2.006 V | 0.101 A/V² | 0.975 |
+| Saturation, slice 1.5 V, 2.1–2.7 V | 2.033 V | 0.108 A/V² | 0.984 |
+| Top three steps only, 2.5–2.7 V (11–28 mA) | 2.150 V | 0.175 A/V² | 0.9994, one degree of freedom |
+
+V_th moves 0.14 V and KP 1.7× with the window. Any one of them would
+misfit the rest of the family by tens of percent. A card that fits needs
+either currents well above threshold (V_GS ≥ 3 V, beyond range 1's 50 mA
+at these V_DS), or a model with a moderate-inversion region (EKV, or
+Level 3 with its subthreshold terms), which `ct_host model` doesn't fit.
+
+**Caveats on the figures above.**
+
+- **V_GS is commanded, not measured.** The gate channel's read-back (H4
+  P1b) was skipped. V_GS(th) carries the gate DAC's gain error, which is
+  not measured (reference ±1.1% from 15g, gain resistors 0.1%).
+- **λ is apparent.** DC sweeps heat the die (up to ~50 mW on the 2.7 V
+  step), and the sign of the 2N7000's current tempco at these V_GS is not
+  measured here. The output slope mixes channel-length modulation with
+  self-heating. The larger λ at low currents is also where the fits are
+  poorest.
+- **The hold and the sweep differ by 0.6%.** At V_GS 2.4 V and
+  V_DS 1.131 V the sweep read 11.909 mA total, the 20 s hold 11.839 mA.
+  Not explained; a thermal difference is the obvious candidate.
+
+#### (f) The 748 kHz component during the MOSFET runs
+
+Daniel's read: near-marginal ringing, not oscillation; ADC averaging makes
+it negligible on DC readings.
+
+- **Negligible on DC readings: supported by the data** (measured). The 18c
+  hold's I has σ = 6.4 µA, against 3.4–4.5 µA on the L1 holds at similar
+  currents. So the component adds at most ~5 µA rms per row (0.12 LSB).
+  Every gate step of the sweep is as smooth as an L1-only curve, and the
+  off steps reproduce the step 14 calibration to −0.15% in R and 0.01 mA
+  in zero.
+- **Why it stays off the DC** (analysis). The excess over the 20 mV
+  noise is about √(28² − 20²) ≈ 20 mV p-p at TP3. Between TP3 and the DUT
+  sit ~41 Ω (R_sense, R_iso, PTC, shunt), and at 748 kHz L1's 100 nF is
+  2.1 Ω. So the DUT node moves ~1 mV p-p, and ~0.45 mA p-p flows in the
+  shunt. That is 9 mV p-p at the difference amp's output, slewing at
+  ~0.02 V/µs against its 20 V/µs. The chain stays linear, and a linear
+  chain averages a periodic signal to zero rather than rectifying it. That
+  is the opposite of Block 1's open-load case, where the node itself swung
+  volts. So the mechanism is linearity, and the 64× averaging only trims
+  the random part.
+- **"Not oscillation" is not established.** A counter that locks at
+  748.5 kHz through a 20 s DC hold, with nothing exciting the loop, sees a
+  persistent component. That is either a small sustained oscillation or a
+  lightly damped mode driven continuously by noise. The Pk-Pk and
+  Frequency readings can't separate them. *Near-marginal* fits both;
+  *ringing* implies a decay that wasn't seen. A few single-shot
+  acquisitions would separate them (constant envelope: sustained; random
+  envelope: noise-driven), or the scope's FFT linewidth. That is a bench
+  step, so it is left open.
+- **Where it comes from: open.** 748 kHz is in the same family as 781 kHz
+  (470 Ω, idle) and 0.79 MHz (open load, 11-03). But L1's 100 nF should
+  push the sweep loop's load-side mode far below crossover (see (a)), and
+  L1 alone was quiet at every level. The new element is the MOSFET and its
+  gate path (1 kΩ from the gate buffer into C_iss, with C_gd from the
+  drain). It may be a different loop.
+- **Caveat for the extraction.** The family was captured while this
+  component was present for at least part of the sweep. The data show no
+  sign of it at the 5 µA level, and the MOSFET figures above carry that
+  caveat.
+
+#### What this changes elsewhere
+
+- Sim 13's conclusion (470 Ω quiet) is refuted on the bench; `sim/README.md`
+  sim 13 carries the correction.
+- The "loop is off at idle" premise is wrong: corrected in (c) of the
+  2026-11-02/03 entry, in `hardware/CONTINGENCY.md` §2B, and on the card's
+  step 7.
+- The MVP card's R_p is L1 from now on.
+
+**Still open after this session**
+
+1. The 748 kHz component: sustained or noise-driven, and which loop.
+2. Voltage and current accuracy to §7's targets need a better reference
+   (5½-digit DMM, 0.1% resistors). This session bounds them at the DMM's
+   ±0.8% (V) and ±3% (I).
+3. The gate DAC: V_GS is commanded, not measured.
+4. A MOSFET model card: needs higher V_GS or a moderate-inversion model.
+5. The diode's temperature; the Nexperia figures to be read first-hand.

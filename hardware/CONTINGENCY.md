@@ -126,7 +126,12 @@ two reasons:
 
 - **Nothing is at risk.** These are hand estimates, not simulation. At idle
   the firmware holds both DACs at 0, so the follower is off and the loop has
-  no gain: nothing can oscillate until a sweep runs. During one, the
+  no gain: nothing can oscillate until a sweep runs.
+  *Corrected 2026-11-08: wrong premise.* The buffered sweep DAC does not
+  reach 0 V. At code 0 the node sits at ~0.18 V, so the loop runs at idle,
+  and with 470 Ω across D–S it oscillated with nothing running (781 kHz,
+  > 205 mV p-p; `docs/characterization.md`). The risk argument below still
+  holds: idle is the lowest-current state the loop has. During one, the
   OPA2197's 20 V/µs slew limits a ~3 MHz swing to about 1 V peak, about
   46 mA peak into L1 through R_iso on ~27 mA DC: normal sweep currents. The
   limiter (~75 mA, sim 11) and the 100 mA supply limit (1.5 W for the whole

@@ -1,0 +1,16 @@
+* Diode -- extracted from a curve-tracer measurement
+* generated  : 2026-11-09 05:32:52Z by ct_host
+* device     : 1N4148
+* capture    : h4/mvp_17_diode_rp.csv
+*
+* n          : 1.7885 ± 0.0031435
+* I_S        : 2.6795e-09 ± 6.1547e-11 A
+* R_s        : 1.1353 ± 0.01556 ohm
+* fit range  : every point carrying resolvable current (I >= 5 current LSB = 0.2015 mA); n, I_S and R_s solved jointly as V = a*ln(I) + b + c*I
+* R_p        : R_p = 201.31 ± 0.056 Ω and zero -0.0874 mA subtracted (calibration: h4/mvp_14_rp.csv, 100 rows over 0.177..1.3 V)
+*
+.model D1N4148_CT D (
++   IS = 2.67954e-09
++   N  = 1.78846
++   RS = 1.1353
++ )

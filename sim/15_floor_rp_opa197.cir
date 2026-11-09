@@ -1,0 +1,62 @@
+* 15_floor_rp_opa197.cir -- why 470 ohm across D-S oscillated on the bench
+* (2026-11-08, idle, 781 kHz) and L1 (200 ohm || 100 nF) did not. TI's model,
+* C1 empty, held at the sweep DAC's floor: the bench read 0.18 V at J6 with L1
+* at idle, so the loop runs there whenever nothing else is commanded.
+* vds is the command referred to FB_SENSE: 0.18 V + 0.9 mA * 31.4 ohm = 0.208 V.
+*
+* Four loads separate the two things 470 ohm and L1 differ in:
+*   1  470 ohm            (bench: oscillates, 781 kHz)
+*   2  470 ohm || 100 nF  (470's bias, L1's capacitance)
+*   3  200 ohm alone      (L1's bias, no capacitance)
+*   4  200 ohm || 100 nF  (L1; bench: quiet)
+*
+* Otherwise sim 14b's deck: uic, because LTspice finds no operating point
+* with TI's model under L1; the DAC steps 0 -> floor at 2 us and that step is
+* the only excitation. Metrics: start-up ring frequency and half-cycle ratio,
+* and residual p-p after a cubic fit (the 100 nF cases are still charging).
+* Runs end at 12 us: a first 30 us run stalled in the timestep collapse
+* sim/README.md describes once the 470 ohm ring had decayed (~15 us).
+* Parse: python3 host/parse_osc.py sim/15_floor_rp_opa197.raw --ring 3e-6 12e-6
+*        python3 host/parse_osc.py sim/15_floor_rp_opa197.raw --residual 8e-6 12e-6
+* The model is not committed (TI copyright); fetch it as sim/README.md says.
+
+XU1 inp inm vcc 0 oa OPAx197
+V2 inp 0 PWL(0 0 2u 0 2.1u {vds/3.32})
+RG inm 0 10k
+Rf fb inm 23.2k
+Cin inm 0 {cin}
+C1 fb inm {cf}
+V1 vcc 0 15
+Rbase base oa 330
+XQ1 vcc base e BD139
+D1 e base 1N4148
+Q2 base e fb 0 2N3904
+Rsense e fb 10
+Cprobe e 0 12p
+Rprobe e 0 10Meg
+Riso fb load 22
+Rptc load ptcout 8.4
+Rsh ptcout dut 1
+Cd3 dut 0 {cd3}
+Rkel dut 0 400k
+RL dut 0 {RLv}
+CL dut 0 {CLv}
+
+.model D D
+.lib C:\users\crossover\AppData\Local\LTspice\lib\cmp\standard.dio
+.model NPN NPN
+.model PNP PNP
+.lib C:\users\crossover\AppData\Local\LTspice\lib\cmp\standard.bjt
+.include models/BD139.LIB
+.include models/OPAx197.LIB
+
+.param vds=0.208
+.param cin=0
+.param cf=0
+.param cd3=1.2n
+.step param lcase list 1 2 3 4
+.param RLv=table(lcase,1,470,2,470,3,200,4,200)
+.param CLv=table(lcase,1,1f,2,100n,3,1f,4,100n)
+.tran 0 12u 0 5n uic
+.save V(e) V(dut) V(oa) I(Rsh)
+.end

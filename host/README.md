@@ -165,11 +165,14 @@ Pass a fresh measurement after a trip with `--r-ptc OHM` (`extract
 
 Board 2's sweep loop oscillates at open load with C1 empty (Block 1,
 2026-11-03; `docs/characterization.md`). A diode or MOSFET is an open load
-at the bottom of its sweep. By simulation (sim 13), 470 Ω or less clamped
-across D–S in J6 keeps the loop quiet from 0.1 V up. The firmware can't tell
-that resistor, R_p, from the device. The host subtracts `V / R_p` from every
-row, using the Kelvin-sensed voltage, as the firmware already does for the
-Kelvin divider's `V / 400k`.
+at the bottom of its sweep. Sim 13 predicted that 470 Ω or less clamped
+across D–S would keep the loop quiet; on the bench (2026-11-08) 470 Ω
+oscillated, and **L1, 200 Ω ‖ 100 nF, is the R_p that works**: the 100 nF
+is what quiets it (`docs/characterization.md`). The firmware can't tell
+R_p from the device. The host subtracts `V / R_p` from every row, using the
+Kelvin-sensed voltage, as the firmware already does for the Kelvin
+divider's `V / 400k`. When R_p was fitted, the fit's offset, the
+instrument's current zero, is subtracted with it.
 
 ```sh
 python -m ct_host capture  ... --device R_p -o h4/rp.csv            # R_p alone
@@ -182,7 +185,10 @@ python -m ct_host extract  h4/d.csv                                 # R_p applie
 
 - **A calibration capture of R_p alone** (the primary). The fit uses the
   instrument's own readings, so gain errors in current and voltage cancel:
-  what is subtracted is what the instrument reads through R_p.
+  what is subtracted is what the instrument reads through R_p. The fit is
+  `I = V / R + offset`, and the whole line is subtracted. On board 2 the
+  offset was −0.087 mA, 43% of the diode fit's 0.2 mA floor. Left in, it
+  read the 1N4148's n as 1.651 instead of 1.789 and I_S 3.2× low.
 - **A value in ohms**, for example from a DMM. Gain error in the instrument
   does not cancel against it.
 - **`auto`**: R_p fitted from the capture itself, where the device carries
@@ -190,8 +196,11 @@ python -m ct_host extract  h4/d.csv                                 # R_p applie
   step for a MOSFET family. It needs rows down there. A sweep DAC with a
   floor above 0.25 V leaves none, and the fit then says so.
 
-`capture --r-parallel` records the value, its standard error, the method
-and the source in the header (`host_r_parallel_*`). `annotate` adds the
+`capture --r-parallel` records the value, its standard error, the offset,
+the method and the source in the header (`host_r_parallel_*`). Captures
+recorded before 2026-11-08 have no `host_r_parallel_offset_ma`, and only
+`V / R_p` is subtracted from them; `annotate --force` with the calibration
+file brings them up to date. `annotate` adds the
 same record to a capture taken without it. `extract`, `model` and `plot`
 apply the recorded R_p by default; `--r-parallel` on them overrides it, and
 `none` turns it off. Whenever one is applied, the auto-fit is printed beside
@@ -250,6 +259,14 @@ They show that the pipeline works. They say nothing about the hardware.
 |---|---|---|
 | Diode | n 1.75, I_S 2.5 nA, R_s 0.6 Ω | n 1.751, I_S 2.52 nA, R_s 0.601 Ω; residual 0.63 mV rms |
 | MOSFET | V_th 2.1 V, KP 0.05, λ 0.01 | V_th 2.099 V, KP 0.0499, λ 0.0101; residual ≤ 0.058 mA (1.4 LSB) |
+
+**On the bench (2026-11-08, board 2, measured).** A 1N4148 beside L1:
+`h4/mvp_17_diode.lib` gives n 1.789, I_S 2.68 nA, R_s 1.14 Ω, and the
+card run back through ngspice overlays the measurement to 0.51 mV rms
+([`media/overlay_diode_1n4148.png`](../media/overlay_diode_1n4148.png)).
+The 2N7000 family is in moderate inversion over range 1's span and a
+Level-1 card does not fit it, so none was written
+(`docs/characterization.md`).
 
 ---
 

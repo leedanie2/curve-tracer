@@ -5,7 +5,9 @@ oscillation check, and one diode I-V plot. Print it and fill in every
 `____`. Every step has a pass and a fail. This is a cut-down form of
 `H4_CARD.md`, and where the two differ this card applies. CSVs go in
 `host/h4/`. Sections A–C ran on 2026-11-02/03, and Block 1 failed at open
-load. **Section D is the next session.**
+load. Section D ran on 2026-11-08: **470 Ω across D–S failed** (it
+oscillated), and **L1 is the R_p** from then on. Results are in
+`docs/characterization.md`.
 
 | Board | Date | Ambient °C | Diode part no. | Port (`P=`) |
 |---|---|---|---|---|
@@ -56,7 +58,7 @@ In Auto mode the trace is drawn even when nothing triggers it.
 | # | Do | Pass | Record | Fail → |
 |---|---|---|---|---|
 | 6 | Push a **female jumper wire** onto each J2 pin, then clip the supply's red lead to the jumper on J2 **"+15V"** and the black lead to the jumper on J2 **"GND"**. Never clip straight onto J2: an alligator clip there can bridge both pins. Output ON. Read the supply's A display (actual current) after 5 s | 3–25 mA, and the supply is not in CC (current limit) | ____ mA | **STOP** |
-| 7 | **Baseline, board powered.** Supply output ON from step 6; no `HOLD` running. Nothing is running, so the loop can't oscillate (CONTINGENCY §2B). Read Pk-Pk. A reading taken with the output OFF is not B | Flat, fuzzy line; Pk-Pk < 10 mV | B = ____ mV | Check the probe tip, the ground clip and 10× in both places. Then record B and go on |
+| 7 | **Baseline, board powered.** Supply output ON from step 6; no `HOLD` running. *Corrected 2026-11-08: the loop is **not** off here. The sweep DAC's floor holds the node at ~0.18 V, so the loop runs at idle, and 470 Ω across D–S oscillated with nothing running.* B is the loop's noise at that floor into L1. Read Pk-Pk. A reading taken with the output OFF is not B | Flat, fuzzy line; Pk-Pk < 10 mV | B = ____ mV | Check the probe tip, the ground clip and 10× in both places. Then record B and go on |
 | 8 | **L1 load.** `HOLD --vds 6 --seconds 60 -o h4/mvp_08_hold_L1.csv`. Between t = 20 and 40 s: **(a)** scope Pk-Pk; **(b)** one terminal line | (a) ≤ B + 5 mV, trace looks like step 7's. (b) vds_meas 4.8–5.5 V, i_meas 23–29 mA | (a) ____ mV ; (b) ____ V, ____ mA | (a) Read Frequency, f = ____ MHz. (b) Record it. Either way, go to 9 and stop after it |
 | 9 | Output OFF. Take L1 off J6; the Kelvin pair stays. Output ON. `HOLD --vds 6 --seconds 60 -o h4/mvp_09_hold_open.csv`. Read as step 8 | (a) ≤ B + 5 mV. (b) vds_meas 5.7–6.2 V, \|i_meas\| ≤ 0.5 mA | (a) ____ mV ; (b) ____ V, ____ mA | As step 8 |
 
@@ -104,21 +106,30 @@ the step-test overshoot (5), the rail voltages (4), and Blocks 3–4.
 
 Board 2, C1 still empty. Block 1 failed at open load on 2026-11-03, so
 nothing goes in J6 on its own again. In this section every device shares
-J6 with **R_p**, a resistor clamped across D–S, except L1 in step 15. The
+J6 with **R_p**, clamped across D–S. **R_p is L1** (200 Ω ‖ 100 nF).
+
+**Ran 2026-11-08.** The first R_p, 470 Ω, oscillated at idle (781 kHz,
+> 205 mV p-p) at step 13. L1 was quiet at idle, 0.1 V and 0.3 V and was
+used for the rest of the session: 14, 15d–g, 17 and 18 all passed. The
+100 nF is what keeps the loop quiet, not L1's bias
+(`docs/characterization.md`, 2026-11-08 (a)). The card below is written
+for L1 as R_p. The
 scope stays on **TP3** for the whole session, with its **ground lead on
 TP9** (GND). No soldering. The rules at the top of the card still apply.
 Supply output OFF before every change at J6.
 
 | Date | Ambient °C | R_p marked | R_p by DMM (R_DMM) | Diode part no. | MOSFET part no. | Port (`P=`) |
 |---|---|---|---|---|---|---|
-| ____ | ____ | ____ Ω | ____ Ω | ____ | ____ | ____ |
+| 2026-11-08 | not recorded | L1, 200 Ω ‖ 100 nF | 200 Ω (cap not remeasured) | 1N4148 | 2N7000 | /dev/cu.usbmodem1103 |
 
 **Parts.**
-- **R_p**: 470 Ω, any wattage, from the drawers. Fallbacks, in this
-  order: **L1** (measured quiet at 6 V on 2026-11-03), then **330 Ω**, any
-  lab resistor of 1/4 W or more. The most the card puts in it is ~40 mW
-  (3.65 V in 15c).
-- **L1**: as measured on 2026-11-02, 95.2 nF ‖ 202 Ω.
+- **R_p = L1**, 200 Ω 1 W ‖ 100 nF ceramic, legs ≤ 3 cm. Quiet at idle,
+  0.1, 0.3, 2, 4 and 6 V (2026-11-03 and 2026-11-08).
+- **No tested fallback.** 470 Ω oscillated at idle on 2026-11-08. A plain
+  330 Ω rested on the same simulation (sim 13) and is untested. A plain
+  resistor without the 100 nF is not to be used as R_p while C1 is empty.
+- **L1** was rebuilt for 2026-11-08 with the same part values: DMM
+  200 Ω. On 2026-11-02 it read 95.2 nF ‖ 202 Ω.
 - One 1N4148 or 1N400x.
 - Optional, for step 18: a 2N7000 or BS170.
 
@@ -149,27 +160,29 @@ clipped on and fill in R_DMM in the header. A 5% part reads 446–494 Ω, a
 
 ### 13 (a). R_p alone: is the loop quiet at the bottom of the range?
 
-This tests the sim 13 prediction that a 470 Ω resistor across D–S keeps the
-loop quiet from 0.1 V up. That prediction rests on the generic op-amp model
-with 20–30 pF of fitted input capacitance. **Pass for every hold: no
-periodic wave on the scope.** A periodic wave is a repeating shape: at
+*2026-11-08:* this step first tested 470 Ω, sim 13's prediction. It
+oscillated at idle, before 13a ran, so the session went to 13c (L1). As
+written below, R_p is L1. **Pass for every hold: no periodic wave on the
+scope.** Read the scope at idle first, with R_p clamped in and nothing
+running: the loop runs at the DAC floor even then. A periodic wave is a repeating shape: at
 1 µs/div, ~1 MHz is about one cycle per division. The broadband fuzz of
 step 7 is a pass. Each hold runs 20 s; read the scope and the terminal at
 t = 10–15 s.
 
 The expected readings come from R_p's share of the series string:
-470 / (470 + 22 + 8.4 + 1) = 0.937 of the command.
+200 / (200 + 22 + 8.4 + 1) = 0.864 of the command, above the DAC floor.
 
 | # | Do | Pass | Record | Fail → |
 |---|---|---|---|---|
-| 13a | Output OFF. Clamp R_p in J6 D–S, with the Kelvin wires. Output ON. `HOLD --vds 0.1 --seconds 20 -o h4/mvp_13a_hold_rp_0v1.csv` | No periodic wave | Pk-Pk ____ mV ; ____ V, ____ mA | Read Frequency: f = ____ MHz. Go to 13c |
+| 13a | Output OFF. Clamp R_p (L1) in J6 D–S, with the Kelvin wires. Output ON. Idle reading first, then `HOLD --vds 0.1 --seconds 20 -o h4/mvp_13a_hold_rp_0v1.csv` | No periodic wave | idle Pk-Pk ____ mV ; Pk-Pk ____ mV ; ____ V, ____ mA | Read Frequency: f = ____ MHz. Go to 13c |
 | 13b | `HOLD --vds 0.3 --seconds 20 -o h4/mvp_13b_hold_rp_0v3.csv` | No periodic wave | Pk-Pk ____ mV ; ____ V, ____ mA | As 13a |
-| 13c | **Only if 13a or 13b failed.** Output OFF. Swap R_p for **L1**. Redo 13a and 13b (expect 0.087 V, 0.43 mA and 0.260 V, 1.29 mA). If either fails again, swap L1 for the **330 Ω** and redo them once more (expect 0.091 V, 0.28 mA and 0.274 V, 0.83 mA). Record the R_p you end on in the header, with 202 Ω as R_DMM for L1, and use it from here on | Both holds pass | R_p used: ____ ; Pk-Pk ____ / ____ mV | 330 Ω also oscillates: skip 14, 15a–c, 16, 17 and 18. Do 15d–15f (L1), then **STOP** |
+| 13c | **Only if 13a or 13b failed.** There is no tested fallback (Parts). Output OFF and **STOP**: the fix is C1 (rev 2). *2026-11-08 ran this step with L1 after 470 Ω failed: idle 22.4 mV, 0.1 V hold 0.189 V, 0.852 mA, 20.0 mV; 0.3 V hold 0.265 V, 1.228 mA, 20.4 mV. Files `mvp_13c_hold_l1_0v1.csv`, `mvp_13c_hold_l1_0v3.csv`* | — | f ____ MHz, Pk-Pk ____ mV | — |
 | 13d | **DAC floor.** Look at vds_meas from 13a, on the R_p you ended on | vds_meas ≤ 0.20 V | floor: vds_meas ____ V | Above 0.20 V: record it as the floor. Do 14 and 15, then **STOP before the diode**: skip 16, 17 and 18 |
 
-**The readings at 13a also measure the DAC floor.** With 470 Ω, 13a should
-read about **0.094 V and 0.20 mA**, and 13b about **0.281 V and 0.60 mA**.
-If 13a reads well above 0.094 V, the sweep DAC is holding a floor: its
+**The readings at 13a also measure the DAC floor.** With L1, 13a would
+read about **0.087 V and 0.43 mA** with no floor, and 13b about
+**0.260 V and 1.29 mA**. On 2026-11-08 13a read 0.189 V: the floor, at the
+node 0.18–0.19 V. If 13a reads well above 0.087 V, the sweep DAC is holding a floor: its
 buffered output is guaranteed only down to 0.2 V, 0.66 V at the node
 (blueprint §3.5). The loop then never runs lower than that floor, so the
 hold still tests the lowest point the diode sweep can reach. Up to 0.20 V
@@ -192,8 +205,8 @@ where the sweep starts, which is the DAC floor again.
 During each hold, at t = 10–15 s, read the terminal line, then put the DMM
 (DC V) across **J6 D and S**. D is the middle screw and S is the end away
 from ▲. The instrument's current is compared with V_DMM / R, where R is
-R_DMM for R_p and 202 Ω for L1. **If R_p is L1 (13c), skip 15a–15c**:
-15d–15f are the same load.
+R_DMM for R_p and the L1 resistor's DMM reading for L1. **With R_p = L1,
+skip 15a–15c**: 15d–15f are the same load.
 
 **Pass, per row:** |vds_meas − V_DMM| ≤ 2% of V_DMM + 10 mV, and
 |i_meas − V_DMM / R| ≤ 3% + 0.10 mA. The bands allow for the firmware's
@@ -208,7 +221,7 @@ band is still a measurement: record it and carry on.
 | 15d | Output OFF. Take R_p out; clamp L1 in D–S. Output ON. `HOLD --vds 2 --seconds 20 -o h4/mvp_15d_hold_l1_2v.csv` | 1.731 V, 8.57 mA | ____ ; ____ ; ____ |
 | 15e | `HOLD --vds 4 --seconds 20 -o h4/mvp_15e_hold_l1_4v.csv` | 3.462 V, 17.14 mA | ____ ; ____ ; ____ |
 | 15f | `HOLD --vds 6 --seconds 20 -o h4/mvp_15f_hold_l1_6v.csv` | 5.19 V, 25.7 mA (step 8) | ____ ; ____ ; ____ |
-| 15g | Hold off. DMM across **TP8 to TP9**. This is the Nucleo's 3.3 V, which is the ADC reference | 3.20–3.40 V | ____ V |
+| 15g | Hold off. DMM across **TP8 to TP9** (2026-11-08 used TP27, GNDPWR: the same within mV). This is the Nucleo's 3.3 V, which is the ADC reference | 3.20–3.40 V | ____ V |
 
 **15g fail branch, and how to read the rows.** If voltage and current are
 off by the same percentage, and the sign and size match V_TP8 / 3.300 − 1,
@@ -224,7 +237,7 @@ measured only up to ~26 mA.
 
 | # | Do | Pass | Record | Fail → |
 |---|---|---|---|---|
-| 16 | Output OFF. If R_p is L1, leave it in. Otherwise take L1 out and clamp R_p back in D–S. Then the diode: **anode to D (middle), banded end to S**. Twist the leads and tug each wire. Output ON | All wires tight | ☐ | Retighten |
+| 16 | Output OFF. Leave L1 in as R_p. Then the diode: **anode to D (middle), banded end to S**. Twist the leads and tug each wire. Output ON | All wires tight | ☐ | Retighten |
 | 17 | `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100 --i-limit 40 --device <part> --r-parallel h4/mvp_14_rp.csv -o h4/mvp_17_diode_rp.csv`. **Output OFF.** Then `python -m ct_host extract h4/mvp_17_diode_rp.csv --type diode`. The R_p current is subtracted using the step 14 fit, and the header records it | `end : ok` or `ilimit`; no periodic wave during the capture; n is 1.0–2.5 | end ____ ; n ____ ; I_S ____ ; R_s ____ ; R_p auto ____ Ω | n is near 0 or negative: the diode is backwards. Flip it and redo once. A periodic wave: record f and Pk-Pk, keep the file, go on |
 
 `R_p auto` is the host's cross-check: R_p fitted from this capture's own
@@ -260,6 +273,9 @@ The model, the simulation and the overlay are desk work
   R_p and the fit's own error. At 0.5% of 470 Ω that is ~6 µA at 0.6 V:
   3% of a 0.2 mA diode current, which is where the diode fit's floor sits
   (5 LSB). It scales as 1/R_p: ~9 µA (5%) with 330 Ω and ~15 µA (7%)
-  with L1.
+  with L1. *Measured 2026-11-08:* step 14 fitted L1 to 0.03%, not 0.5%,
+  so the subtraction's error was ~1.5 µA at 0.755 V, R and zero together.
+  Since that session the host also subtracts the fit's offset, the
+  instrument's current zero (−0.087 mA that night).
 - **The fallbacks' expected readings** use the same string: 202 / 233.4 =
   0.865 of the command for L1, 330 / 361.4 = 0.913 for 330 Ω.
