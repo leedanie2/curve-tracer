@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 from .csvio import ContractError, Sweep, add_host_meta, parse, save
@@ -152,6 +153,37 @@ def rp_report(sweep: Sweep, rp: ParallelR) -> str:
     return "\n".join(lines) + "\n"
 
 
+def zero_bracket(sweep: Sweep, lo_ma: float, hi_ma: float) -> list[str]:
+    """Refit a diode with the instrument's zero at each end of a range.
+
+    The zero is subtracted with R_p (``parallel``). Its value differs from
+    one estimate to the next (board 2, 2026-11-08: -0.087 mA from the R_p
+    calibration, -0.099 mA from the diode's own off rows), and n, I_S and
+    R_s follow it. This is that systematic, quoted beside the statistical
+    errors. The headline values stay those of the zero actually applied.
+    """
+    rp = sweep.r_parallel
+    if rp is None:
+        raise ValueError("--zero-bracket needs an R_p (and its zero) to vary")
+    fits = [(z, extract_diode(subtract(sweep, replace(rp, offset_ma=z))))
+            for z in (lo_ma, hi_ma)]
+    (z0, a), (z1, b) = fits
+
+    def row(label, va, vb, fmt, unit=""):
+        return (f"  {label:<4}: {va:{fmt}}{unit} at {z0:+.3f} mA, "
+                f"{vb:{fmt}}{unit} at {z1:+.3f} mA; spread {abs(vb - va):{fmt}}{unit}")
+
+    lines = [f"zero range : n, I_S and R_s refitted with the instrument's zero "
+             f"at {z0:+.4f} and {z1:+.4f} mA",
+             row("n", a.n.value, b.n.value, ".4f"),
+             row("I_S", a.i_s.value, b.i_s.value, ".4g", " A")]
+    if a.rs is not None and b.rs is not None:
+        lines.append(row("R_s", a.rs.value, b.rs.value, ".4f", " ohm"))
+    lines.append(f"  fit residual rms {a.fit.residual_rms:.3g} / "
+                 f"{b.fit.residual_rms:.3g}; points {a.rs_points} / {b.rs_points}")
+    return lines
+
+
 # --------------------------------------------------------------------------
 # Commands
 # --------------------------------------------------------------------------
@@ -257,6 +289,15 @@ def cmd_extract(args: argparse.Namespace) -> int:
         return 2
 
     print(params.describe())
+    if args.zero_bracket:
+        if kind != "diode":
+            print("error: --zero-bracket is for diodes", file=sys.stderr)
+            return 2
+        try:
+            print("\n  " + "\n  ".join(zero_bracket(sweep, *args.zero_bracket)))
+        except ValueError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
     if args.diagnostics:
         print()
         print(vds_delta_report(sweep, r_ptc_ohm=args.r_ptc,
@@ -274,6 +315,14 @@ def cmd_model(args: argparse.Namespace) -> int:
     sweep = _with_rp(sweep, args.r_parallel)
     notes = ([f"R_p        : {sweep.r_parallel.label}"]
              if sweep.r_parallel is not None else [])
+    try:
+        if args.zero_bracket:
+            if kind != "diode":
+                raise ValueError("--zero-bracket is for diodes")
+            notes += zero_bracket(sweep, *args.zero_bracket)
+    except (ValueError, FitError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
     try:
         if kind == "mosfet":
             card = mosfet_model_card(extract_mosfet(sweep), name=args.name,
@@ -378,10 +427,18 @@ def _vds_set_max(text: str) -> float | None:
 def _rp_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--r-parallel", metavar="OHM|auto|CSV|none",
-        help="subtract V/R_p for a resistor across D-S: a calibration "
+        help="subtract V/R_p, and a fitted R_p's zero, for a resistor across D-S: a calibration "
              "capture of R_p alone (primary), a value in ohms, auto (fit "
              "this capture's low end), or none. Default: the R_p recorded "
              "in the CSV header, if any")
+
+
+def _zero_bracket_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--zero-bracket", type=float, nargs=2, metavar=("MA", "MA"),
+        help="diode: refit with the instrument's zero at each of two values "
+             "and report the spread in n, I_S and R_s (on `model`, in the "
+             "card's header)")
 
 
 def _guess_kind(sweep: Sweep) -> str:
@@ -451,6 +508,7 @@ def build_parser() -> argparse.ArgumentParser:
                         "'none' fits every row")
     p.add_argument("--allow-mismatch", action="store_true",
                    help="warn instead of failing on calibration disagreement")
+    _zero_bracket_arg(p)
     p.set_defaults(func=cmd_extract)
 
     p = sub.add_parser("model", help="generate a SPICE .model card")
@@ -460,6 +518,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-o", "--output")
     _rp_arg(p)
     p.add_argument("--allow-mismatch", action="store_true")
+    _zero_bracket_arg(p)
     p.set_defaults(func=cmd_model)
 
     p = sub.add_parser("plot", help="plot a saved CSV")

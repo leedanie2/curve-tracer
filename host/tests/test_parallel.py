@@ -248,3 +248,24 @@ def test_annotate_adds_the_record_once(tmp_path, cal_csv, capsys):
     assert text.count("# host_r_parallel_ohm:") == 1
     assert from_meta(parse(text)).ohm == 471.0
     assert [ln for ln in text.splitlines() if not ln.startswith("#")] == rows_before
+
+
+def test_zero_bracket_refits_at_each_end(rp_alone, diode_rp):
+    """The bracket's ends are the fits a direct refit at that zero gives."""
+    from ct_host.cli import zero_bracket
+    rp = from_fit(fit_sweep_resistor(_with_zero(rp_alone)), "calibration", "test")
+    sweep = subtract(_with_zero(diode_rp), rp)
+    lines = zero_bracket(sweep, ZERO_MA, ZERO_MA - 0.012)
+    direct = extract_diode(subtract(sweep, replace(rp, offset_ma=ZERO_MA - 0.012)))
+    n_line = next(ln for ln in lines if ln.strip().startswith("n "))
+    assert f"{direct.n.value:.4f} at {ZERO_MA - 0.012:+.3f} mA" in n_line
+
+
+def test_model_card_carries_the_zero_bracket(diode_csv, capsys):
+    capsys.readouterr()
+    assert main(["model", str(diode_csv), "--type", "diode",
+                 "--zero-bracket", "0", "-0.01"]) == 0
+    card = capsys.readouterr().out
+    assert "* zero range :" in card and "spread" in card
+    assert main(["model", str(diode_csv), "--type", "mosfet",
+                 "--zero-bracket", "0", "-0.01"]) == 2
