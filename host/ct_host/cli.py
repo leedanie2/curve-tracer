@@ -29,6 +29,7 @@ from .extract import FitError, extract_diode, extract_mosfet
 from .parallel import ParallelR, auto_fit, fit_sweep_resistor, from_meta, resolve, subtract
 from .protocol import SweepRequest, run_hold, run_sweep
 from .recompute import CalibrationMismatch, recompute
+from .zero import Zero, apply_zero, resolve_zero
 from .spice import diode_model_card, mosfet_model_card
 from .transport import SimTransport, TransportError, list_serial_ports
 
@@ -115,20 +116,43 @@ def _resolve_rp(spec: str, sweep: Sweep | None = None) -> ParallelR:
         raise SystemExit(2) from None
 
 
-def _with_rp(sweep: Sweep, spec: str | None, *, report: bool = True) -> Sweep:
-    """Subtract R_p: from ``--r-parallel`` if given, else the CSV's record.
+def _with_rp(sweep: Sweep, spec: str | None, *, zero: str | None = None,
+             report: bool = True) -> Sweep:
+    """Subtract R_p, then the zero if ``--zero`` names one.
 
+    R_p comes from ``--r-parallel`` if given, else the CSV's record;
     ``--r-parallel none`` turns a recorded R_p off. Whenever one is applied,
-    the auto-fit is reported beside it as a cross-check.
+    the auto-fit is reported beside it as a cross-check. A ``--zero``
+    replaces the offset an R_p calibration carries: the two are never both
+    subtracted.
     """
-    if spec == "none":
-        return sweep
-    rp = _resolve_rp(spec, sweep) if spec else from_meta(sweep)
-    if rp is None:
-        return sweep
-    if report:
-        print(rp_report(sweep, rp), file=sys.stderr)
-    return subtract(sweep, rp)
+    rp = None
+    if spec != "none":
+        rp = _resolve_rp(spec, sweep) if spec else from_meta(sweep)
+    if rp is not None:
+        if zero is not None and rp.offset_ma is not None:
+            if report:
+                print(f"--zero given: R_p's own offset ({rp.offset_ma:+.4f} mA) "
+                      f"is not subtracted; the zero below replaces it", file=sys.stderr)
+            rp = replace(rp, offset_ma=None, offset_stderr_ma=None)
+        if report:
+            print(rp_report(sweep, rp), file=sys.stderr)
+        sweep = subtract(sweep, rp)
+    if zero is not None:
+        z = _resolve_zero(zero, sweep)
+        if report:
+            print(f"Instrument zero, subtracted from every row\n{z.describe()}\n",
+                  file=sys.stderr)
+        sweep = apply_zero(sweep, z)
+    return sweep
+
+
+def _resolve_zero(spec: str, sweep: Sweep) -> Zero:
+    try:
+        return resolve_zero(spec, sweep)
+    except (ValueError, FitError, ContractError) as exc:
+        print(f"error: --zero: {exc}", file=sys.stderr)
+        raise SystemExit(2) from None
 
 
 def rp_report(sweep: Sweep, rp: ParallelR) -> str:
@@ -156,17 +180,23 @@ def rp_report(sweep: Sweep, rp: ParallelR) -> str:
 def zero_bracket(sweep: Sweep, lo_ma: float, hi_ma: float) -> list[str]:
     """Refit a diode with the instrument's zero at each end of a range.
 
-    The zero is subtracted with R_p (``parallel``). Its value differs from
-    one estimate to the next (board 2, 2026-11-08: -0.087 mA from the R_p
-    calibration, -0.099 mA from the diode's own off rows), and n, I_S and
-    R_s follow it. This is that systematic, quoted beside the statistical
-    errors. The headline values stay those of the zero actually applied.
+    The zero is the one applied: a ``--zero`` if given, else the offset an
+    R_p calibration carries. Its value differs from one estimate to the next
+    (board 2, 2026-11-08: -0.087 mA from the R_p calibration, -0.099 mA from
+    the diode's own off rows), and n, I_S and R_s follow it. This is that
+    systematic, quoted beside the statistical errors. The headline values
+    stay those of the zero actually applied.
     """
-    rp = sweep.r_parallel
-    if rp is None:
-        raise ValueError("--zero-bracket needs an R_p (and its zero) to vary")
-    fits = [(z, extract_diode(subtract(sweep, replace(rp, offset_ma=z))))
-            for z in (lo_ma, hi_ma)]
+    if sweep.zero is not None:
+        def refit(z):
+            return extract_diode(apply_zero(sweep, replace(sweep.zero, ma=z)))
+    elif sweep.r_parallel is not None:
+        def refit(z):
+            return extract_diode(subtract(sweep, replace(sweep.r_parallel, offset_ma=z)))
+    else:
+        raise ValueError("--zero-bracket needs a zero to vary: --zero, or an R_p "
+                         "calibration")
+    fits = [(z, refit(z)) for z in (lo_ma, hi_ma)]
     (z0, a), (z1, b) = fits
 
     def row(label, va, vb, fmt, unit=""):
@@ -273,7 +303,7 @@ def cmd_extract(args: argparse.Namespace) -> int:
         print(f"  lowest V reached: {fit.v_lo:.4f} V (the sweep's floor)")
         return 0
 
-    sweep = _with_rp(sweep, args.r_parallel)
+    sweep = _with_rp(sweep, args.r_parallel, zero=args.zero)
     try:
         if kind == "mosfet":
             params = extract_mosfet(
@@ -312,9 +342,11 @@ def cmd_extract(args: argparse.Namespace) -> int:
 def cmd_model(args: argparse.Namespace) -> int:
     sweep = _checked(_load(args.csv), strict=not args.allow_mismatch)
     kind = args.type or _guess_kind(sweep)
-    sweep = _with_rp(sweep, args.r_parallel)
+    sweep = _with_rp(sweep, args.r_parallel, zero=args.zero)
     notes = ([f"R_p        : {sweep.r_parallel.label}"]
              if sweep.r_parallel is not None else [])
+    if sweep.zero is not None:
+        notes.append(f"zero       : {sweep.zero.label}")
     try:
         if args.zero_bracket:
             if kind != "diode":
@@ -350,7 +382,8 @@ def cmd_plot(args: argparse.Namespace) -> int:
 
     from .plot import plot_family, plot_vds_delta
 
-    sweep = _with_rp(_checked(_load(args.csv), strict=False), args.r_parallel)
+    sweep = _with_rp(_checked(_load(args.csv), strict=False), args.r_parallel,
+                     zero=args.zero)
     if args.diagnostic:
         plot_vds_delta(sweep, r_ptc_ohm=args.r_ptc,
                        vds_set_max_v=args.vds_set_max)
@@ -433,6 +466,15 @@ def _rp_arg(parser: argparse.ArgumentParser) -> None:
              "in the CSV header, if any")
 
 
+def _zero_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--zero", metavar="MA|CSV[,CSV...]|auto",
+        help="subtract the instrument's current zero on its own: a value in "
+             "mA, the mean of hold files with nothing drawing DC (MVP card "
+             "22b-d), or auto (a diode capture's own rows below 0.3 V). "
+             "Replaces any offset an R_p calibration carries")
+
+
 def _zero_bracket_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--zero-bracket", type=float, nargs=2, metavar=("MA", "MA"),
@@ -508,6 +550,7 @@ def build_parser() -> argparse.ArgumentParser:
                         "'none' fits every row")
     p.add_argument("--allow-mismatch", action="store_true",
                    help="warn instead of failing on calibration disagreement")
+    _zero_arg(p)
     _zero_bracket_arg(p)
     p.set_defaults(func=cmd_extract)
 
@@ -518,12 +561,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-o", "--output")
     _rp_arg(p)
     p.add_argument("--allow-mismatch", action="store_true")
+    _zero_arg(p)
     _zero_bracket_arg(p)
     p.set_defaults(func=cmd_model)
 
     p = sub.add_parser("plot", help="plot a saved CSV")
     p.add_argument("csv")
     _rp_arg(p)
+    _zero_arg(p)
     p.add_argument("--save", metavar="PNG")
     p.add_argument("--show", action="store_true")
     p.add_argument("--diagnostic", action="store_true",

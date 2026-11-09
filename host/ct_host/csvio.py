@@ -227,6 +227,9 @@ class Row:
     #: Current through a resistor clamped across D-S with the device, filled
     #: by :func:`ct_host.parallel.subtract`. ``None`` when there is none.
     i_parallel_ma: float | None = None
+    #: The instrument's current zero, filled by :func:`ct_host.zero.apply_zero`
+    #: when it is subtracted on its own. ``None`` when it isn't.
+    i_zero_ma: float | None = None
 
     @property
     def valid(self) -> bool:
@@ -250,8 +253,8 @@ class Row:
     @property
     def i_ma(self) -> float:
         """Device current for analysis: recomputed if available, else as
-        reported, less any R_p current."""
-        return self.i_total_ma - (self.i_parallel_ma or 0.0)
+        reported, less any R_p current and any separately applied zero."""
+        return self.i_total_ma - (self.i_parallel_ma or 0.0) - (self.i_zero_ma or 0.0)
 
     @property
     def v_dut(self) -> float:
@@ -385,6 +388,9 @@ class Sweep:
     #: The resistor across D-S whose current has been subtracted, a
     #: :class:`ct_host.parallel.ParallelR`; ``None`` when nothing was.
     r_parallel: object | None = None
+    #: The current zero subtracted on its own, a :class:`ct_host.zero.Zero`;
+    #: ``None`` when none was (an R_p calibration may still carry one).
+    zero: object | None = None
     _sources: dict[str, str] = field(default_factory=dict, repr=False)
 
     @property

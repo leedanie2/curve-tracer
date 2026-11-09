@@ -219,6 +219,40 @@ same capture reads n = 7.4 (`tests/test_parallel.py`).
 
 ---
 
+## The zero on its own: `--zero`
+
+An R_p calibration carries the instrument's current zero as its offset
+(−0.087 mA on board 2). A stabiliser that draws no DC, such as 100 nF alone
+(MVP card section E), leaves no line to fit, so `extract`, `model` and
+`plot` take the zero directly:
+
+```sh
+python -m ct_host extract h4/d.csv --zero -0.0874                          # a value, mA
+python -m ct_host extract h4/d.csv --zero h4/z_0v2.csv,h4/z_1v.csv,h4/z_6v.csv  # holds' mean
+python -m ct_host extract h4/d.csv --zero auto                             # own off rows
+```
+
+- **A value**: from an earlier session, or the intercept of holds into
+  known resistors (card section E (c)).
+- **Hold CSVs**: their mean, each file's mean listed, so a shift with node
+  voltage shows. A hold drawing more than 1.5 mA is refused, as is one
+  taken with an R_p.
+- **`auto`**: the capture's own rows at or below 0.3 V, where a 1N4148
+  carries ~0.6 µA. One gate step only.
+- A `--zero` **replaces** an R_p calibration's offset; the two are never
+  both subtracted. `--zero-bracket` varies whichever zero was applied.
+- **The channel's floor.** The current channel is single-supply and the
+  ADC unipolar. Board 2's zero is negative (−2.2 counts), so at true zero
+  current it reads 0 counts, not the zero. `auto` skips rows under
+  5 counts and a hold there is refused. With nothing drawing current,
+  only a value works.
+
+The zero and its source go into the model card and the plot, as R_p does.
+On the 11-08 diode, `--r-parallel 201.311 --zero -0.0873765` reproduces the
+published n 1.7885, I_S 2.6795 nA and R_s 1.1353 Ω (`tests/test_zero.py`).
+`--zero auto` there gives −0.0923 mA and n 1.799, inside the published
+bracket.
+
 ## From a capture to the overlay
 
 Blueprint §5 item 5 and the end of `device → measurement → model →

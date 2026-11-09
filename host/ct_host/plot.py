@@ -234,13 +234,17 @@ def plot_family(sweep: Sweep, *, ax: Any = None, show_flagged: bool = True,
     label = title or sweep.meta.device
     if sweep.meta.is_simulated:
         label += "   [SIMULATED]"
-    if sweep.r_parallel is not None:
+    notes = [c.label for c in (sweep.r_parallel, sweep.zero) if c is not None]
+    if notes:
         # Below the axes, where it cannot sit on a curve near zero.
-        ax.text(1.0, -0.13, _wrap(sweep.r_parallel.label, 100), transform=ax.transAxes,
-                ha="right", va="top", fontsize=7, color="0.3")
+        ax.text(1.0, -0.13, "\n".join(_wrap(n, 100) for n in notes),
+                transform=ax.transAxes, ha="right", va="top", fontsize=7,
+                color="0.3")
     ax.set_xlabel("V_DS measured at the DUT  (V)")
-    ax.set_ylabel("I_D  (mA)" if sweep.r_parallel is None
-                  else "I_D, R_p current subtracted  (mA)")
+    taken = [w for w, c in (("R_p current", sweep.r_parallel), ("zero", sweep.zero))
+             if c is not None]
+    ax.set_ylabel(f"I_D, {' and '.join(taken)} subtracted  (mA)" if taken
+                  else "I_D  (mA)")
     ax.set_title(label)
     ax.grid(True, alpha=0.3)
     if two_terminal:
