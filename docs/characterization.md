@@ -1150,8 +1150,9 @@ equal current, tonight's reads higher by 23 mV at 1 mA, 31 mV at 5 mA,
 1 mA by ≤ 2 mV (the zero's 1-LSB spread), and δ applies to both captures
 alike. So the gap is the device or its conditions:
 
-- **Same part?** The record doesn't say whether this was the 11-08 diode;
-  the card's "same as 11-08?" field is blank.
+- **Same part?** ~~The record doesn't say whether this was the 11-08 diode;
+  the card's "same as 11-08?" field is blank.~~ **Yes** (Daniel, 2026-11-13):
+  the same 1N4148 and the same 2N7000 as on 11-08.
 - **Temperature?** About 11 K colder would give 23 mV at 1 mA
   (−2 mV/K), but not the slope. A colder junction has a smaller n·V_T, and
   tonight's is larger (n 1.95 against 1.79). The 2N7000 shifts the same
@@ -1213,8 +1214,9 @@ part needs ~90 mV more gate for the same current**: 6.4 mA at 2.40 V on
 at V_DS 1.1 V). At V_GS ≈ 2.6 V it drew 12.3 mA against 18.2 mA. Gate
 voltages are commanded on both days, through the same board and gate DAC,
 so a gate-DAC error is common to both and cancels. As with the diode, it is
-the part or its temperature, and whether it was the 11-08 2N7000 isn't
-recorded. The two fits therefore describe two measurements, not one device
+the part's conditions or the fixture: it is the 11-08 2N7000 (Daniel,
+2026-11-13). The analysis below splits the shift into a fixture resistance
+and a constant. The two fits therefore describe two measurements, not one device
 fitted twice. The card describes tonight's. (The card's current budget,
 from 11-08's curves, expected 32.8 mA at the 2.75 V step; it drew 22.9 mA,
 which is why nothing tripped.)
@@ -1287,3 +1289,105 @@ Three runs had the bench supply off and produced plausible numbers.
    were transients.
 4. The gate DAC: V_GS is commanded.
 5. Blueprint §7's accuracy targets: the voltage reference.
+
+---
+
+### 2026-11-13, later — Off-bench: does one fixture resistance explain session 3?
+
+**Daniel's hypothesis.** The parts are the 11-08 ones. On 11-13 the Kelvin
+jumpers were in the breadboard's upper half and the devices in the lower
+half, linked across the centre channel. So the links and their contacts sat
+between the Kelvin points and the device. Can one resistance R_x, split
+between the drain and source paths, explain all three of these?
+
+- the diode's higher R_s and its 23–44 mV shift;
+- the 2N7000's +90 mV of gate and its lower KP. The gate is referenced to
+  board ground, so resistance in the source path degenerates it;
+- the 0.1% resistor holds.
+
+**Everything below is analysis** of the recorded captures. No new
+measurement.
+
+**Two figures in the question, re-derived first.**
+
+- **The diode's R_s rose 0.5 Ω, not 1.5.** Through the channel model, R_s
+  was 1.14 Ω on 11-08 and 1.64–1.67 Ω on 11-13. The +1.5 Ω compared 11-08
+  with tonight's withdrawn `--zero auto` fit (R_s 2.62 Ω).
+- **KP's −20% is mostly the fit window.** 11-08's figure came from its top
+  three steps (11–28 mA), where moderate inversion makes √I_D steepest.
+  Compare like with like instead: the slope of √I_D against V_GS at the
+  same currents (5–23 mA, V_DS 1.1 V, 11-08 interpolated by spline). That
+  gives KP **−4.7%**.
+
+**What R_x would do to each.**
+
+- **Diode and L1:** the Kelvin voltage includes I · R_x, so R_x adds to R_s
+  and to L1's fitted R. It adds nothing at zero current.
+- **2N7000:** the part of R_x in the source path, all the way to the gate's
+  ground reference, takes I · R from V_GS. Extra gate then grows in
+  proportion to I_D, and the √I_D slope falls by 1/(1 + g_m · R).
+- **The resistor holds,** if they sat behind the same links: R adds to each
+  resistance. The fitted g then reads low by R/100 Ω on the 100 Ω and by
+  R/1 kΩ on the 1 kΩ.
+
+**Results.**
+
+| Test | What the data give | One R_x? |
+|---|---|---|
+| Diode: ΔV (11-13 − 11-08) at equal current, 0.6–19 mA (channel model, δ = 0) | 20.0, 22.5, 27.7, 36.6, 43.6 mV at 0.6, 1, 3, 10, 19 mA. **R · I alone:** best R 3.4 Ω, residual 11.2 mV rms, 21.8 mV max: **fails**. Constant + R · I: 22.2 mV + 1.27 Ω, 1.6 mV rms. Constant + slope + R · I: 21.4 mV + 3.65 mV per e-fold + **0.60 Ω**, 0.45 mV rms (δ fitted: 21.0 mV, 3.86 mV, **0.58 Ω**) | Only as the series part. The 21 mV at 1 mA would need ~21 Ω, and the slope term (Δn ≈ +0.14) isn't a resistance |
+| Diode refit with R_x taken off the voltage | R_x 0.5 / 1.0 / 1.5 Ω: n stays 1.941, R_s falls to 1.17 / 0.67 / 0.17 Ω, and ΔV at 1 mA stays 22.0 / 21.5 / 21.0 mV | R_x is interchangeable with R_s and touches nothing else |
+| 2N7000: extra gate needed at equal current, V_DS 1.1 V | 87.7, 90.6, 93.2, 96.1 mV at 5.1, 9.0, 14.8, 22.9 mA. **R · I alone** (pure degeneration): 6.2 Ω, residual 31.7 mV rms, 56 mV max: **fails**. Constant + R · I: **86.4 mV + 0.42 Ω**, 0.54 mV rms. Same at V_DS 0.8 V (86.3 mV + 0.43 Ω) | Only as the degeneration part, 0.42 Ω. The 86 mV is a constant |
+| 2N7000: KP like for like | −4.7%. 0.42 Ω of degeneration at g_m ≈ 0.058 S predicts −4.8% | **Yes**: 0.42 Ω accounts for all of it |
+| L1's fitted R | 201.31 Ω (11-08, in J6) → 201.76 Ω (11-13, breadboard): **+0.45 Ω** | Yes, if L1 itself didn't drift (it dissipates ≤ 8 mW in a calibration) |
+| 0.1% resistor holds | Where they sat relative to the Kelvin columns isn't recorded; the card says only "the D and S rows". If behind the links: g = 1.0080 (R_x 0), 1.0127 (0.42 Ω), 1.0147 (0.6 Ω), 1.0247 (1.5 Ω). The zero b doesn't move (−0.131 mA); c moves −0.023 → −0.029 mA/V | Allowed up to ~0.6 Ω (g inside the ±1.5% band), not tested. 1.5 Ω would put g out of band |
+
+**R_x ≈ 0.4–0.6 Ω** (analysis), from four independent indicators:
+
+- the diode's series term, 0.58–0.60 Ω;
+- the gate's degeneration, 0.42 Ω;
+- its KP change, which 0.42 Ω predicts to 0.1%;
+- L1's +0.45 Ω.
+
+That is a plausible size for two links across the channel and four
+breadboard contacts. The diode's figure covers the drain and source paths
+inside the Kelvin loop. The gate's covers the source path out to board
+ground. So they need not agree exactly.
+
+**One R_x fits the resistive part of all three. It does not fit the
+shifts.** Two constants remain once R_x is accounted for, and a resistance
+can't produce either:
+
+- the diode's **+21 mV at equal current** (~+0.6 mV of it at 1 mA is
+  R_x), plus a steeper slope, Δn ≈ +0.14;
+- the 2N7000's **+86 mV of gate** at equal current.
+
+**Candidates for the constants (unmeasured).**
+
+- **Temperature.** Both shifts point the same way: the parts behaved as if
+  colder on 11-13, or warmer on 11-08. On 11-08 they sat in J6's clamps,
+  beside L1 (134 mW at hold 15f, just before the diode) and near Q1, which
+  has no heatsink. A junction moves about −2 mV/K, so 21 mV is ~10 K. The
+  2N7000's threshold tempco isn't on hand: at −3 to −5 mV/K, 86 mV is
+  17–29 K.
+- **What temperature doesn't explain:** the two parts would need different
+  temperature differences, and a colder diode has a smaller n · V_T, where
+  11-13's slope is larger. So temperature is the leading candidate for the
+  constants, not an explanation.
+
+**Consequences, until section F runs.**
+
+- **The 11-13 2N7000 card is fixture-dependent.** About 0.4 Ω degenerates
+  it, and an unexplained 86 mV separates it from 11-08. The README marks it
+  "under investigation". 11-08's V_GS(th) 2.147 V at 1 mA stays the
+  measured threshold.
+- **The diode headline doesn't move.** 11-08 was already chosen, and R_x
+  touches only 11-13's R_s.
+- **The current-accuracy statement widens** if the 0.1% resistors sat
+  behind the links: current reads 0.1–1.5% high against voltage, not
+  0.1–0.8%. Absolute current is then ±2.3% uncorrected, not ±1.6%. The
+  README states both.
+
+**The test** is `hardware/MVP_CARD.md` section F. Put the device, the
+Kelvin pair and J6's force jumpers in the same 5-hole columns, then rerun
+the diode, the 2N7000 family, L1's calibration and the resistor holds.
+What R_x predicts, and what would refute it, is written there.

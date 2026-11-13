@@ -10,6 +10,8 @@ oscillated), and **L1 is the R_p** from then on. Results are in
 `docs/characterization.md`. **Section E ran on 2026-11-13** (session 3):
 the 100 nF alone kept the loop quiet for two-terminal parts, and the
 2N7000 got a model card. Its results and corrections are in the same file.
+**Section F** (≤ 15 min) repeats the session-3 runs with the Kelvin pair
+sensing at the device, to test the fixture-resistance hypothesis.
 
 | Board | Date | Ambient °C | Diode part no. | Port (`P=`) |
 |---|---|---|---|---|
@@ -571,3 +573,104 @@ needs the bench.
   measured quiet, L1 the MOSFET stabiliser); the headline figure and its
   numbers from (d), with the zero bracket redone; the accuracy rows and the
   *Limitations* entry from (c).
+
+## F. Session 4: sensing at the device (≤ 15 min)
+
+**What it's for.** Session 3's fixture put the Kelvin jumpers in the
+breadboard's upper half and the parts in the lower half, linked across the
+centre channel. So the links sat between the Kelvin points and the device.
+The analysis (`docs/characterization.md`, *2026-11-13, later*) puts
+**R_x ≈ 0.4–0.6 Ω** there, from four indicators: the diode's R_s, the
+2N7000's degeneration, its KP, and L1's fitted R. But R_x can't produce the
+diode's +21 mV or the 2N7000's +86 mV of gate against 11-08. This section
+removes R_x and reruns everything it touched.
+
+**Parts.** The breadboard; the same 1N4148 and 2N7000 (the 11-08 ones);
+the 0.1% 100 Ω and 1 kΩ; the 100 nF stabiliser; L1 as a separate 200 Ω 1 W
+and 100 nF. No DMM. Board 2, C1 empty, no soldering. The rules at the top
+apply, including the supply check after every swap.
+
+| Date | Ambient °C | Columns used (D, S, G) | Port (`P=`) |
+|---|---|---|---|
+| ____ | ____ | ____ | ____ |
+
+**The change from section E: one set of columns, nothing across the
+channel.** Pick three 5-hole columns on the same side of the centre
+channel, D, S and G. Each one takes J6's force jumper for that terminal,
+the device's leg and the stabiliser's leg; D and S also take the Kelvin
+pin. With L1 in, D and S are full: J6 jumper, Kelvin pin, device leg, L1's
+resistor leg and L1's capacitor leg. Count the holes before plugging.
+
+**Why the force jumpers move too, not only the Kelvin pair.** The 2N7000's
+gate is referenced to board ground. A link left in the source's force path
+would still degenerate it, with the Kelvin pair at the device.
+
+**Time plan.** 26: 4 min · 27: 2 · 28: 2.5 · 29: 2 · 30: 2 · 31: 2.5.
+
+| # | Do | Expected | Pass | Record | Fail → |
+|---|---|---|---|---|---|
+| 26 | Board unpowered. Rewire as above, the 100 nF in D–S. Output ON; **check CV, 2–5 mA**. Read the scope idle for 10 s | — | No periodic wave | Pk-Pk ____ mV | Output OFF, recheck every leg's column, redo once; then **STOP** |
+| 27 | Output OFF. **0.1% 100 Ω** into D–S beside the cap. Output ON; **check CV, 2–5 mA**. `HOLD --vds 0.5 --seconds 20 -o h4/s4_27a_hold_100r_0v5.csv`, then `HOLD --vds 2 --seconds 20 -o h4/s4_27b_hold_100r_2v.csv` | 0.381 V, 3.70 mA; 1.522 V, 15.18 mA | No periodic wave; V and I each within ±3% of expected | ____ V ; ____ mA / ____ V ; ____ mA | Out of band: supply, part or column. Fix, redo once |
+| 28 | Output OFF. Swap for the **0.1% 1 kΩ**. Output ON; **check CV, 2–5 mA**. Three holds, 20 s each: `--vds 0.5` → `h4/s4_28a_hold_1k_0v5.csv`, `--vds 1` → `s4_28b_hold_1k_1v.csv`, `--vds 2` → `s4_28c_hold_1k_2v.csv` | 0.485 V, 0.35 mA; 0.970 V, 0.82 mA; 1.939 V, 1.78 mA | No wave; V within ±3%, I within ±3% + 0.03 mA | ____ / ____ / ____ | As 27 |
+| 29 | Output OFF. Resistor out; **1N4148** in, anode in D, band in S; the cap stays. Output ON; **check CV, 2–5 mA**. `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100 --i-limit 40 --device 1N4148 -o h4/s4_29_diode.csv`. **Output OFF.** `python -m ct_host extract h4/s4_29_diode.csv --type diode --zero h4/s3_channel_nodelta.txt` | ~39 rows on the floor | `end : ok` or `ilimit`; no wave; n 1.0–2.5 | end ____ ; n ____ ; R_s ____ | n near 0: diode backwards. Flip, redo once |
+| 30 | Diode and cap out; **L1** in (both parts). Output ON; **check CV, 2–5 mA**. Idle scope 10 s. `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100 --i-limit 40 --device L1_Rp -o h4/s4_30_rp.csv` | R 201.2–201.8 Ω | No wave; section D step 14's bands | R ____ Ω ; offset ____ mA | A periodic wave: record f and Pk-Pk, skip 31 |
+| 31 | Output OFF. **2N7000** in, S, G and D each in its column, beside L1. Output ON; **check CV, 2–5 mA**. 25c's command with `--r-parallel h4/s4_30_rp.csv -o h4/s4_31_mosfet.csv` (same 16 gate steps, `--vds-max 2.5`). **Output OFF.** `python -m ct_host extract h4/s4_31_mosfet.csv --type mosfet --vds-slice 1.1 --vgs-range 2.44 2.76` | No trip: on 11-13 the top step drew 22.9 mA at 1.1 V, and without R_x it should draw ~3% more (~23.7 mA) | `end : ok` or `ilimit`; ≥ 10 of 16 steps in the fit | end ____ ; range ____ of 16 ; V_th ____ | A flat family: the gate isn't in its column |
+
+28's 0.5 V hold reads only 0.4 counts above the floor's 2-count margin
+(0.35 against 0.33 mA). So it checks where the floor ends, and doesn't
+enter g or δ. The 1 V and 2 V holds do. 27b repeats 23a with the links
+gone, and that tells whether 11-13's resistor holds sat behind them.
+
+■ **Done.** Output OFF, USB out. Hand back `host/h4/s4_*`.
+
+**At the desk: what confirms or refutes R_x.** Each row compares section F
+with 11-13. "R_x" is the analysis's 0.4–0.6 Ω.
+
+| Quantity | 11-13 (links) | R_x predicts, removed | Confirms | Refutes |
+|---|---|---|---|---|
+| L1's fitted R (`s4_30` against `s3_22f`) | 201.76 Ω | 201.2–201.4 Ω | drops 0.3–0.7 Ω | within ±0.15 Ω |
+| Diode R_s through the channel model (`s4_29` against `s3_24`, δ = 0 file) | 1.67 Ω | 1.0–1.3 Ω | drops 0.3–0.7 Ω | within ±0.15 Ω |
+| 2N7000 extra gate against 11-08, fitted as constant + R · I_D | 86 mV + 0.42 Ω | 86 mV + ≤ 0.15 Ω | R term ≤ 0.15 Ω | R term ≥ 0.3 Ω |
+| 2N7000 KP against 11-08, like for like | −4.7% | within ±1.5% | within ±1.5% | still ≤ −3.5% |
+| 100 Ω at 2 V, (I − b − c·V) / V, `s4_27b` against `s3_23a` | — | +0.4 to +0.6% if 23a sat behind the links, 0 if not | either answer is a result: it decides whether 11-13's g needs R_x's correction (1.0080 → ~1.013) | |
+
+- **R_x confirmed:** L1 and the diode's R_s both drop 0.3–0.7 Ω, and the
+  gate's R term falls under 0.15 Ω.
+- **R_x refuted:** none of those three moves by more than 0.15 Ω.
+- **Anything else:** record it as found. If only the 2N7000 moves, for
+  example, the link was in the source's force path alone.
+
+**The constants.** R_x predicts the diode's +21 mV against 11-08 (V at
+1 mA, +20 to +25 mV) and the 2N7000's +86 mV of gate (80–92 mV) **stay**.
+If either falls below a quarter of its 11-13 value, the fixture caused it
+after all and the analysis is wrong. If they stay, F shows they don't come
+from this fixture, and temperature is still the leading candidate. F doesn't
+test that.
+
+**δ, from the same holds.** The 100 Ω line (27a–b) and the 1 kΩ line
+(28b–c) each give an intercept. A voltage offset of −10 mV puts the 100 Ω's
+**0.09 mA above** the 1 kΩ's; a curved common-mode term puts them within
+0.005 mA. Read **+0.07 to +0.11 mA** as δ, and **−0.02 to +0.02 mA** as the
+curve. `python -m ct_host channel --resistor h4/s4_27a_hold_100r_0v5.csv=100
+--resistor h4/s4_27b_hold_100r_2v.csv=100 --resistor
+h4/s4_28b_hold_1k_1v.csv=1000 --resistor h4/s4_28c_hold_1k_2v.csv=1000
+--floor h4/s3_22b_hold_0v2.csv,h4/s3_22c_hold_1v.csv,h4/s3_22d_hold_6v.csv
+--calibration h4/s4_30_rp.csv -o h4/s4_channel.txt` refits the model on
+section F's holds. The floor doesn't depend on the fixture, so session 3's
+holds stand.
+
+**Where these numbers come from.**
+
+- **Expected V and I:** the command times R / (R + 31.4 Ω). Expected I is
+  that, read through session 3's channel model (g 1.0080, b −0.131 mA,
+  c −0.0225 mA/V).
+- **The δ discriminator:** the intercepts differ by −g · δ · (1/100 Ω −
+  1/1 kΩ) = 0.092 mA at δ = −10.1 mV. A curved term of 0.0035 mA/V² moves
+  each secant's intercept by −d · V₁ · V₂, about 0.002 mA apart.
+- **The ±0.15 Ω refute band** is about three times the indicators'
+  scatter: 0.42–0.60 Ω between them.
+- **The 2N7000's extra ~3%:** removing 0.42 Ω of degeneration gives
+  ΔI ≈ g_m · I · R. At the top step that is 0.080 S × 23 mA × 0.42 Ω =
+  0.78 mA (3.4%), and at 12 mA it is 2.4%. 11-13's peak total, L1 included,
+  was 30.7 mA, so ~31.5 mA leaves ~8 mA under the 40 mA limit.
+

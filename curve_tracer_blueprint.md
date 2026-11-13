@@ -686,6 +686,7 @@ The "what I'd do differently" section is the one interviewers respond to. Write 
 | A model parameter is documented but never applied | Check that changing a parameter changes the output before trusting a result that depends on it — see below |
 | A check passes against a stand-in for the real thing | Before trusting a check, state what real thing it exercised — see below |
 | A simulation model says the loop is stable and the bench disagrees | Read a model's "stable" as optimistic. Use it to rank options, not to set a margin, and confirm on the bench at the weakest operating point — see below |
+| The instrument produces plausible readings while not measuring | Before attributing a reading to a cause, compare it with what the instrument reads with nothing there, or with no supply — see below |
 
 **A recurring failure mode: the parameter that is accepted but not applied.** Twice now a model has carried a parameter that was documented, accepted, and silently ignored, and both times the simulation output looked correct. In Phase 0 a MODPEX-generated BD139 model had `CJE = CJC = 1e-11` exactly — placeholders standing in for real junction capacitances — and with it the composite amplifier appeared unconditionally stable, hiding the `C_comp` error that the ST model exposed immediately (§12.2). In September 2026 the host simulator's `--rs` flag was parsed, stored, listed in `firmware/README.md`, and never read by the diode current function; the diode nevertheless showed a convincing high-current roll-off from the ideal line, so nothing looked wrong.
 
@@ -715,6 +716,18 @@ This is not the failure mode above. There, a real parameter was carried, accepte
 **The tell: the model and the bench disagree, and always in the same direction.** A lag the model leaves out can only add phase margin. So an incomplete model errs toward "stable", never the other way, and a fitted fudge carries that error to every other operating point.
 
 **Countermeasure.** Read a model's "stable" as an upper bound on the margin. Ask it comparative questions: does C1 help, does 100 nF matter more than bias. Before predicting from a fit, check it at a second operating point. Close the question on the bench, at the weakest point: the lowest bias, which on this board is idle at the DAC floor, not 0 V. This applies now: rev 2's C1 = 4.7 pF (`hardware/DECISIONS.md` R2-4) rests on TI's model alone; the check that would close it is rev 2 at open load, at idle and at 0.1 V.
+
+**A fourth recurring failure mode: plausible readings from an instrument that isn't measuring.** Three times on board 2 the instrument returned numbers that looked like data while it wasn't measuring what they were read as. Each time the numbers were given a cause.
+
+- **The floor read as oscillation error (2026-11-03).** At open load the current read 0.830 and 0.832 mA at 6 V. They were written up as DC error from the oscillation, because the run with the largest oscillation read 3.0 mA. On 2026-11-13, with the loop quiet, the same hold read 0.824 mA. The current channel cannot read below a floor, 0.198 + 0.104 · V mA on board 2. That floor is the difference amp's op-amp at the bottom of its swing on a single supply (`docs/characterization.md`, session 3 (b)). The 0.83 mA was that floor. Only the 3.0 mA was oscillation.
+- **The floor read as the zero (2026-11-13).** A cap-only diode capture's off rows sat on the same floor. `--zero auto` took them for the instrument's zero (+0.217 mA): its guard was a fixed 5 counts, set below the floor by assumption. The diode then fitted n = 1.495 at R² 0.9975. The real zero is −0.09 to −0.14 mA.
+- **Runs with the bench supply off (2026-11-13).** Three captures and holds were taken with the +15 V output off. They returned numbers such as 1.475 V and 16.354 mA on a 1 kΩ, which even pass a check that the node follows its command (11 mV off, inside the DAC's tolerance). Nothing on the board reads the rail.
+
+**The tell: the reading doesn't change when the thing it is attributed to changes.** The open-load current was the same with the loop oscillating (11-03) and quiet (11-13), and with the diode in the breadboard (22d) and out (22d3). The diode's off rows matched the no-load holds to 0.3 counts. In each case the number belonged to the instrument's state, not to what it was read as.
+
+This differs from the second failure mode. There a check is aimed at a stand-in. Here the measurement is aimed at the real thing, but the instrument is at a limit (the floor) or not running (no supply), and its output keeps the form of a measurement.
+
+**Countermeasure.** Before attributing a reading to a cause, compare it with what the instrument reads with nothing there at the same operating point: the floor line at that voltage, or a no-load hold. If they match, the reading is the instrument's, not the device's. The host now does this for zeros: rows within 2 counts of the measured floor are refused or flagged (`host/ct_host/channel.py`). For the supply, nothing on rev 1 can sense it, so the bench card makes it a step: after every part swap, the supply's display reads CV and 2–5 mA (`hardware/MVP_CARD.md`). A +15 V sense on a spare ADC pin would let the firmware refuse to run without the rail. It is a rev-2 option, not adopted.
 
 ---
 
