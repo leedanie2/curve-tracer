@@ -225,9 +225,16 @@ def plot_family(sweep: Sweep, *, ax: Any = None, show_flagged: bool = True,
                         xytext=(4, 0), textcoords="offset points",
                         va="center", fontsize=7, color="0.25")
 
-    if show_flagged and sweep.flagged_rows:
-        ax.plot([r.v_dut for r in sweep.flagged_rows],
-                [r.i_ma for r in sweep.flagged_rows],
+    floor = [r for r in sweep.flagged_rows if r.flags == "floor"]
+    flagged = [r for r in sweep.flagged_rows if r.flags != "floor"]
+    if show_flagged and floor:
+        # A reading on the floor bounds the device's current from above; it
+        # isn't a measurement of it. Drawn as such, apart from the curve.
+        ax.plot([r.v_dut for r in floor], [r.i_ma for r in floor],
+                linestyle="none", marker=".", markersize=3, color="0.6",
+                label="on the channel's floor (excluded from fits)")
+    if show_flagged and flagged:
+        ax.plot([r.v_dut for r in flagged], [r.i_ma for r in flagged],
                 linestyle="none", marker="x", markersize=9, color="crimson",
                 label="flagged (excluded from fits)")
 

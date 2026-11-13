@@ -9,6 +9,7 @@
     python -m ct_host annotate data/run.csv --r-parallel data/rp.csv
     python -m ct_host simulate data/d.lib --like data/d.csv -o data/d_sim.csv
     python -m ct_host overlay  data/d.csv data/d_sim.csv --save overlay.png
+    python -m ct_host channel --resistor h.csv=100 --resistor k.csv=1000 ... --floor a.csv,b.csv
 
 Every command accepts either a saved CSV or a live source, and ``--sim``
 stands in for an instrument everywhere ``--port`` would go. That is what makes
@@ -29,6 +30,7 @@ from .extract import FitError, extract_diode, extract_mosfet
 from .parallel import ParallelR, auto_fit, fit_sweep_resistor, from_meta, resolve, subtract
 from .protocol import SweepRequest, run_hold, run_sweep
 from .recompute import CalibrationMismatch, recompute
+from .channel import is_model_file
 from .zero import Zero, apply_zero, resolve_zero
 from .spice import diode_model_card, mosfet_model_card
 from .transport import SimTransport, TransportError, list_serial_ports
@@ -124,13 +126,22 @@ def _with_rp(sweep: Sweep, spec: str | None, *, zero: str | None = None,
     ``--r-parallel none`` turns a recorded R_p off. Whenever one is applied,
     the auto-fit is reported beside it as a cross-check. A ``--zero``
     replaces the offset an R_p calibration carries: the two are never both
-    subtracted.
+    subtracted. A channel model is the exception: beside a calibration line
+    it keeps the line, zero included, and adds only its gain and voltage
+    offset.
     """
     rp = None
     if spec != "none":
         rp = _resolve_rp(spec, sweep) if spec else from_meta(sweep)
+    channel = zero is not None and "," not in zero and is_model_file(Path(zero))
+    in_line = channel and rp is not None and rp.offset_ma is not None
+    if in_line:
+        if report:
+            print("--zero is a channel model and R_p is a calibration line: the "
+                  "line keeps its own zero and common-mode term, measured in "
+                  "place; the model adds its gain and voltage offset", file=sys.stderr)
     if rp is not None:
-        if zero is not None and rp.offset_ma is not None:
+        if zero is not None and not in_line and rp.offset_ma is not None:
             if report:
                 print(f"--zero given: R_p's own offset ({rp.offset_ma:+.4f} mA) "
                       f"is not subtracted; the zero below replaces it", file=sys.stderr)
@@ -139,11 +150,16 @@ def _with_rp(sweep: Sweep, spec: str | None, *, zero: str | None = None,
             print(rp_report(sweep, rp), file=sys.stderr)
         sweep = subtract(sweep, rp)
     if zero is not None:
-        z = _resolve_zero(zero, sweep)
-        if report:
-            print(f"Instrument zero, subtracted from every row\n{z.describe()}\n",
-                  file=sys.stderr)
+        # After R_p: ``auto`` reads the capture's off rows with R_p taken out.
+        z = replace(_resolve_zero(zero, sweep), in_line=in_line)
         sweep = apply_zero(sweep, z)
+        if report:
+            what = ("Channel model, applied to every row" if z.method == "channel"
+                    else "Instrument zero, subtracted from every row")
+            floor = sum(r.flags == "floor" for r in sweep.rows)
+            more = (f"\n  {floor} rows on the channel's floor, flagged and left "
+                    f"out of fits" if z.floor is not None else "")
+            print(f"{what}\n{z.describe()}{more}\n", file=sys.stderr)
     return sweep
 
 
@@ -187,7 +203,7 @@ def zero_bracket(sweep: Sweep, lo_ma: float, hi_ma: float) -> list[str]:
     systematic, quoted beside the statistical errors. The headline values
     stay those of the zero actually applied.
     """
-    if sweep.zero is not None:
+    if sweep.zero is not None and not sweep.zero.in_line:
         def refit(z):
             return extract_diode(apply_zero(sweep, replace(sweep.zero, ma=z)))
     elif sweep.r_parallel is not None:
@@ -356,6 +372,7 @@ def cmd_model(args: argparse.Namespace) -> int:
              if sweep.r_parallel is not None else [])
     if sweep.zero is not None:
         notes.append(f"zero       : {sweep.zero.label}")
+    notes += [f"note       : {n}" for n in args.note or ()]
     try:
         if args.zero_bracket:
             if kind != "diode":
@@ -459,6 +476,25 @@ def cmd_annotate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_channel(args: argparse.Namespace) -> int:
+    from .channel import fit_channel, parse_resistor_arg
+
+    try:
+        resistors = [parse_resistor_arg(t) for t in args.resistor]
+        fit = fit_channel(
+            resistors, [Path(p) for p in args.floor.split(",") if p],
+            calibration=Path(args.calibration) if args.calibration else None,
+            tolerance=args.tolerance)
+    except (ValueError, FitError, ContractError, FileNotFoundError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(fit.describe())
+    if args.output:
+        fit.model.write(args.output)
+        print(f"\nwrote {args.output}", file=sys.stderr)
+    return 0
+
+
 def cmd_ports(_: argparse.Namespace) -> int:
     ports = list_serial_ports()
     if not ports:
@@ -493,11 +529,14 @@ def _mosfet_fit_args(parser: argparse.ArgumentParser) -> None:
 
 def _zero_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
-        "--zero", metavar="MA|CSV[,CSV...]|auto",
+        "--zero", metavar="MA|CSV[,CSV...]|auto|MODEL",
         help="subtract the instrument's current zero on its own: a value in "
-             "mA, the mean of hold files with nothing drawing DC (MVP card "
-             "22b-d), or auto (a diode capture's own rows below 0.3 V). "
-             "Replaces any offset an R_p calibration carries")
+             "mA, the mean of hold files with nothing drawing DC, auto (a "
+             "diode capture's own rows below 0.3 V), or a channel model file "
+             "from `channel` (zero, common-mode term, gain, voltage offset; "
+             "rows on the channel's floor are left out). Replaces any offset "
+             "an R_p calibration carries, except a channel model, which "
+             "keeps the line and adds only its gain and voltage offset")
 
 
 def _zero_bracket_arg(parser: argparse.ArgumentParser) -> None:
@@ -581,6 +620,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--type", choices=["mosfet", "diode"])
     p.add_argument("--name", default="EXTRACTED")
     p.add_argument("-o", "--output")
+    p.add_argument("--note", action="append", metavar="TEXT",
+                   help="a caveat for the card's header, e.g. what the scope "
+                        "showed during the capture; repeatable")
     _rp_arg(p)
     _mosfet_fit_args(p)
     p.add_argument("--allow-mismatch", action="store_true")
@@ -635,6 +677,22 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--force", action="store_true",
                    help="replace an R_p record already in the file")
     p.set_defaults(func=cmd_annotate)
+
+    p = sub.add_parser("channel",
+                       help="fit the current channel's gain, zero, common-mode "
+                            "term and floor from holds")
+    p.add_argument("--resistor", action="append", required=True, metavar="CSV=OHM",
+                   help="a hold into a known resistor; three or more, two values")
+    p.add_argument("--floor", required=True, metavar="CSV[,CSV...]",
+                   help="holds with nothing drawing DC, at two or more voltages")
+    p.add_argument("--calibration", metavar="CSV",
+                   help="an R_p calibration capture: fit the voltage offset that "
+                        "makes its line's zero the resistors' zero")
+    p.add_argument("--tolerance", type=float, default=0.001,
+                   help="the resistors' tolerance, as a fraction (default 0.001)")
+    p.add_argument("-o", "--output", metavar="FILE",
+                   help="write the model for --zero FILE")
+    p.set_defaults(func=cmd_channel)
 
     p = sub.add_parser("ports", help="list serial ports")
     p.set_defaults(func=cmd_ports)

@@ -230,6 +230,12 @@ class Row:
     #: The instrument's current zero, filled by :func:`ct_host.zero.apply_zero`
     #: when it is subtracted on its own. ``None`` when it isn't.
     i_zero_ma: float | None = None
+    #: The current channel's gain against the voltage's, divided out by a
+    #: channel model (:mod:`ct_host.channel`). ``None``: taken as 1.
+    i_gain: float | None = None
+    #: The voltage channel's offset, taken out by a channel model. ``None``
+    #: when there is none.
+    v_zero_v: float | None = None
 
     @property
     def valid(self) -> bool:
@@ -253,13 +259,21 @@ class Row:
     @property
     def i_ma(self) -> float:
         """Device current for analysis: recomputed if available, else as
-        reported, less any R_p current and any separately applied zero."""
-        return self.i_total_ma - (self.i_parallel_ma or 0.0) - (self.i_zero_ma or 0.0)
+        reported, less any R_p current and any separately applied zero, over
+        any channel gain."""
+        return ((self.i_total_ma - (self.i_parallel_ma or 0.0) - (self.i_zero_ma or 0.0))
+                / (self.i_gain or 1.0))
+
+    @property
+    def v_meas(self) -> float:
+        """The voltage as the channel read it, before any channel model."""
+        return self.vds_meas_v if self.v_recomp_v is None else self.v_recomp_v
 
     @property
     def v_dut(self) -> float:
-        """Measured DUT voltage for analysis. Never ``vds_set_v``."""
-        return self.vds_meas_v if self.v_recomp_v is None else self.v_recomp_v
+        """Measured DUT voltage for analysis, less any voltage offset a
+        channel model takes out. Never ``vds_set_v``."""
+        return self.v_meas - (self.v_zero_v or 0.0)
 
     @property
     def vds_delta(self) -> float:

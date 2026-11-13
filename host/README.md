@@ -18,11 +18,16 @@ ct_host/
     diode.py     n, I_S, R_s
   parallel.py    R_p: a resistor across D-S with the device, and its current
                  taken back out
+  zero.py        the instrument's current zero, on its own (--zero)
+  channel.py     the current channel's gain, zero, common-mode term, voltage
+                 offset and floor, fitted from holds (channel, --zero FILE)
   spice.py       .model cards
   overlay.py     the card simulated in ngspice, and measured vs simulated
   plot.py        live family plot, static plots, series-drop diagnostic
-  cli.py         python -m ct_host capture | plot | extract | model | ports
-tests/           159 tests, every one against the simulator
+  cli.py         python -m ct_host capture | hold | plot | extract | model |
+                 simulate | overlay | annotate | channel | ports
+tests/           203 tests, against the simulator and the recorded captures
+                 in h4/
 ```
 
 `parse_cmrr_log.py`, `parse_current_limit.py` and `parse_tran_overshoot.py`
@@ -241,11 +246,15 @@ python -m ct_host extract h4/d.csv --zero auto                             # own
   carries ~0.6 µA. One gate step only.
 - A `--zero` **replaces** an R_p calibration's offset; the two are never
   both subtracted. `--zero-bracket` varies whichever zero was applied.
-- **The channel's floor.** The current channel is single-supply and the
-  ADC unipolar. Board 2's zero is negative (−2.2 counts), so at true zero
-  current it reads 0 counts, not the zero. `auto` skips rows under
-  5 counts and a hold there is refused. With nothing drawing current,
-  only a value works.
+- **The channel's floor.** The current channel is single-supply, and board
+  2's zero is negative (−0.09 to −0.14 mA). At true zero current it reads
+  neither the zero nor 0 counts, but the difference amp's lowest output:
+  **0.198 + 0.104 · V mA**, measured 2026-11-13 (`ct_host/channel.py` says
+  why). `auto` skips rows within 2 counts of that line, and a hold there is
+  refused. Until 2026-11-13 the guard was a fixed 5 counts, below the real
+  floor at every voltage. So `auto` took a cap-only diode's floor rows for
+  its zero (+0.217 mA) and read n as 1.495. With nothing drawing current,
+  use a channel model (below) or a value.
 
 The zero and its source go into the model card, the plot, the overlay's
 subtitle and the `simulate` output's header (`like_zero`, with
@@ -257,6 +266,46 @@ On the 11-08 diode, `--r-parallel 201.311 --zero -0.0873765` reproduces the
 published n 1.7885, I_S 2.6795 nA and R_s 1.1353 Ω (`tests/test_zero.py`).
 `--zero auto` there gives −0.0923 mA and n 1.799, inside the published
 bracket.
+
+## The channel model: `channel`, then `--zero FILE`
+
+Board 2's current reading, measured with 0.1% resistors on 2026-11-13, is
+`max(floor(V), g·I + b + c·V)`, on a voltage that may read δ low:
+
+```sh
+python -m ct_host channel \
+    --resistor h4/s3_23a_hold_100r_2v.csv=100 \
+    --resistor h4/s3_23b_hold_1k_2v.csv=1000 \
+    --resistor h4/s3_23c_hold_1k_6v.csv=1000 \
+    --floor h4/s3_22b_hold_0v2.csv,h4/s3_22c_hold_1v.csv,h4/s3_22d_hold_6v.csv \
+    --calibration h4/s3_22f_rp.csv -o h4/s3_channel.txt
+python -m ct_host extract h4/s3_24_diode.csv --type diode --zero h4/s3_channel.txt
+```
+
+- **g, b, c** come from three or more holds into known resistors, using
+  their medians. Uncertainties come from 4000 draws over the resistors'
+  tolerance (`--tolerance`, default 0.1%, one draw per part) and each
+  hold's standard error.
+- **The floor** is a line through holds with nothing drawing DC.
+- **δ**, a voltage-channel offset, is fitted only with `--calibration`. It
+  is chosen so that the R_p line's offset is the same zero as the
+  resistors'. On 2026-11-13 the two zeros were 1 LSB apart without it;
+  δ = −10.1 mV closes the gap, and so would a curved common-mode term. Both
+  solutions are printed. `h4/s3_channel.txt` has δ fitted, and
+  `h4/s3_channel_nodelta.txt` doesn't.
+- **`--zero FILE`** subtracts b + c·V (at the voltage as read), divides by
+  g, and takes δ off the voltage. It flags rows on the floor `floor`: they
+  are left out of every fit and drawn grey. Beside an R_p calibration line
+  it applies only g and δ, because the line already holds the zero and c,
+  measured in place. `--zero-bracket` then varies the line's offset.
+- `tests/test_channel.py` plants a channel on the simulator and recovers
+  the diode through it. It also checks that 2026-11-13's holds give the
+  recorded model, and that the floor matches 2026-11-03's open-load holds.
+
+**R_p's auto-fit on a MOSFET family** assumes the lowest gate step is off.
+When that step's line has an offset beyond ±0.5 mA, the step is conducting
+and the cross-check is refused, with the reason. On 2026-11-13, 2.45 V
+conducted, and the auto-fit had reported R_p −12% with a +4 mA offset.
 
 ## From a capture to the overlay
 

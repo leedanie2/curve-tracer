@@ -61,6 +61,12 @@ AUTO_V_MAX = 0.25
 #: Fewest points a resistor fit accepts.
 MIN_POINTS = 5
 
+#: Largest offset a MOSFET family's lowest-step line may have and still be
+#: taken as R_p alone. Board 2's zero is -0.09 to -0.14 mA (2026-11-08, -13);
+#: on 2026-11-13 the 2N7000's lowest step (2.45 V) conducted, and its line
+#: read R_p 12% low with an offset of +4.0 mA.
+AUTO_MAX_OFFSET_MA = 0.5
+
 
 @dataclass(frozen=True)
 class ResistorFit:
@@ -89,7 +95,7 @@ class ResistorFit:
 
 def fit_resistor(rows: list[Row], *, rule: str) -> ResistorFit:
     """Least squares ``I = g V + b`` on total current; ``R = 1/g``."""
-    v = np.array([r.v_dut for r in rows], dtype=float)
+    v = np.array([r.v_meas for r in rows], dtype=float)
     i = np.array([r.i_total_ma for r in rows], dtype=float)
     if v.size < MIN_POINTS or float(np.ptp(v)) <= 0.0:
         raise FitError(f"{v.size} points over {float(np.ptp(v)) if v.size else 0:.3g} V "
@@ -130,8 +136,9 @@ def auto_fit(sweep: Sweep, *, v_max: float = AUTO_V_MAX
 
     One gate step (a diode): the rows at or below ``v_max``. Several steps (a
     MOSFET family): every row of the lowest step, which is assumed to be off.
-    That assumption is stated in the rule, and a curve that does conduct
-    shows as a poor fit.
+    A lowest step that conducts can still fit a straight line well, so a line
+    whose offset is far from any zero the instrument has (over
+    ``AUTO_MAX_OFFSET_MA``) is refused rather than reported as R_p.
     """
     if not sweep.recomputed:
         sweep = recompute(sweep)
@@ -152,9 +159,16 @@ def auto_fit(sweep: Sweep, *, v_max: float = AUTO_V_MAX
                       f"{v_max:g} V (lowest measured V {lowest:.3f} V; a DAC "
                       f"floor above {v_max:g} V leaves none)")
     try:
-        return fit_resistor(rows, rule=rule), ""
+        fit = fit_resistor(rows, rule=rule)
     except FitError as exc:
         return None, f"unavailable: {exc}"
+    if len(steps) > 1 and abs(fit.offset_ma.value) > AUTO_MAX_OFFSET_MA:
+        return None, (f"not run: the lowest gate step (V_GS = {steps[0]:.3f} V) "
+                      f"conducts, so it is not R_p alone (its line: R = "
+                      f"{fit.r.value:.4g} ohm, offset {fit.offset_ma.value:+.3f} mA, "
+                      f"past the ±{AUTO_MAX_OFFSET_MA:g} mA any instrument zero "
+                      f"has been)")
+    return fit, ""
 
 
 @dataclass(frozen=True)
@@ -265,5 +279,7 @@ def subtract(sweep: Sweep, rp: ParallelR) -> Sweep:
     """Return a copy with ``V / R_p`` and the zero taken out of every row."""
     if not sweep.recomputed:
         sweep = recompute(sweep)
-    rows = [replace(r, i_parallel_ma=rp.current_ma(r.v_dut)) for r in sweep.rows]
+    # The line was fitted against the voltage as read, so it is evaluated there,
+    # not after a channel model's voltage offset.
+    rows = [replace(r, i_parallel_ma=rp.current_ma(r.v_meas)) for r in sweep.rows]
     return replace(sweep, rows=rows, r_parallel=rp)

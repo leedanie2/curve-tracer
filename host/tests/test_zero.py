@@ -73,22 +73,42 @@ def test_a_given_zero_is_taken_as_written():
 
 
 def test_holds_give_their_mean_and_name_each_file(tmp_path):
-    a = _hold(tmp_path, "z1.csv", 0.2, 1e9, counts=8)
-    b = _hold(tmp_path, "z6.csv", 6, 1e9, counts=8)
+    """16 counts (0.64 mA) is clear of board 2's floor at 0.2 and 1 V."""
+    a = _hold(tmp_path, "z1.csv", 0.2, 1e9, counts=16)
+    b = _hold(tmp_path, "z2.csv", 1, 1e9, counts=16)
     z = resolve_zero(f"{a},{b}")
     expected = [r.i_total_ma for f in (a, b)
                 for r in recompute(parse(f.read_text())).valid_rows]
     assert z.method == "holds"
     assert z.ma == pytest.approx(sum(expected) / len(expected), abs=1e-9)
-    assert z.ma == pytest.approx(8 * LSB_MA, abs=0.02)
-    assert "z1.csv" in z.source and "z6.csv" in z.source
+    assert z.ma == pytest.approx(16 * LSB_MA, abs=0.02)
+    assert "z1.csv" in z.source and "z2.csv" in z.source
 
 
 def test_a_hold_on_the_channel_s_floor_is_not_a_zero(tmp_path):
-    """Nothing drawing current and a negative zero: 0 counts, not the zero."""
+    """Nothing drawing current and a negative zero: the floor, not the zero."""
     floor = _hold(tmp_path, "f.csv", 1, 1e9)
     with pytest.raises(ContractError, match="on its floor"):
         resolve_zero(str(floor))
+
+
+def test_the_floor_rises_with_the_node_voltage(tmp_path):
+    """8 counts is clear of the floor at 0.2 V (5.4 counts) but not at 6 V
+    (20.4): board 2's 11-13 cap-only holds read 0.824 mA there."""
+    assert resolve_zero(str(_hold(tmp_path, "lo.csv", 0.2, 1e9, counts=8))).ma > 0
+    with pytest.raises(ContractError, match="on its floor"):
+        resolve_zero(str(_hold(tmp_path, "hi.csv", 6, 1e9, counts=8)))
+
+
+S3_24 = H4 / "s3_24_diode.csv"
+
+
+def test_auto_refuses_the_11_13_cap_only_diode():
+    """Its off rows read the floor, 5.4-5.9 counts; the old 5-count guard took
+    them for the zero (+0.217 mA) and read n as 1.495."""
+    sweep = recompute(parse(S3_24.read_text()))
+    with pytest.raises(FitError, match="sit on the floor"):
+        resolve_zero("auto", sweep)
 
 
 def test_a_hold_with_a_load_is_not_a_zero(tmp_path):
