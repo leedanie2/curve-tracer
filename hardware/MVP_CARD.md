@@ -7,7 +7,9 @@ oscillation check, and one diode I-V plot. Print it and fill in every
 `host/h4/`. Sections A–C ran on 2026-11-02/03, and Block 1 failed at open
 load. Section D ran on 2026-11-08: **470 Ω across D–S failed** (it
 oscillated), and **L1 is the R_p** from then on. Results are in
-`docs/characterization.md`. **Section E is session 3**, by 2026-11-15.
+`docs/characterization.md`. **Section E ran on 2026-11-13** (session 3):
+the 100 nF alone kept the loop quiet for two-terminal parts, and the
+2N7000 got a model card. Its results and corrections are in the same file.
 
 | Board | Date | Ambient °C | Diode part no. | Port (`P=`) |
 |---|---|---|---|---|
@@ -23,6 +25,10 @@ and is retired from measurements.
 - **Don't touch Q1's metal tab.** It sits at +15 V and has no heatsink.
 - Nothing goes on TP6. No soldering. No short-circuit test (Block 4).
 - On any **STOP**: supply output OFF, then unplug USB.
+- **After every part swap, before the next command: supply output ON, in
+  CV, its A display 2–5 mA.** On 2026-11-13 three runs were taken with the
+  output off. The board can't tell (nothing reads +15 V), and the readings
+  looked like data.
 
 Commands run in a terminal in `host/`. `HOLD` stands for
 `python -m ct_host hold --port $P`. It holds one level and prints a line every
@@ -351,8 +357,8 @@ so the sim chooses what to try first and the bench decides.
 
 | # | Do | Pass | Record | Fail → |
 |---|---|---|---|---|
-| 20 | Board unpowered. Pick three breadboard rows a few holes apart and call them **G, D, S**. Run one ~5 cm solid wire from each J6 terminal (G by the ▲ mark, D the middle, S the other end) to its row. Plug J5's Kelvin jumpers into the breadboard **at the device's holes**: HI into the **D row**, LO into the **S row**. Plug the stabiliser into D and S and leave it there all session. G row empty | Every wire tight in J6; each lead firm in its row | ☐ | Retighten. A loose breadboard contact reads as noise or a step in the data |
-| 21 | Steps 4–7 of sections A–B (port, supply 15.00 V, power-up, baseline). Power-up current after 5 s | 3–25 mA, not CC | ____ mA | **STOP** |
+| 20 | Board unpowered. Pick three breadboard rows a few holes apart, **all on the same side of the centre channel** (it splits each column in two), and call them **G, D, S**. Run one ~5 cm solid wire from each J6 terminal (G by the ▲ mark, D the middle, S the other end) to its row. Plug J5's Kelvin jumpers into the breadboard **at the device's holes**: HI into the **D row**, LO into the **S row**. Plug the stabiliser into D and S and leave it there all session. G row empty | Every wire tight in J6; each lead firm in its row | ☐ | Retighten. A loose breadboard contact reads as noise or a step in the data |
+| 21 | Steps 4–7 of sections A–B (port, supply 15.00 V, power-up, baseline). Power-up current after 5 s | 2–25 mA, not CC (was 3–25: 2026-11-13 read 2 mA, and the KORAD resolves 1 mA) | ____ mA | **STOP** |
 
 The Kelvin pair senses at the device's own breadboard row. So the 5 cm
 wires and J6's clamps are outside the measurement, and only the
@@ -362,14 +368,13 @@ row-to-lead contacts (~10–30 mΩ) are inside it.
 
 The stabiliser is the 100 nF alone, tested first; L1 is the fallback
 (22e). The cap draws no DC, so each hold reads the node at the command.
-**The current does not read the zero.** The channel is single-supply and
-11-08's zero is −2.2 counts, so with nothing drawing current it sits on
-its floor at 0 counts. The firmware then prints i_meas ≈ −V / 400 kΩ, its
-divider correction acting on nothing: −0.0005, −0.0025 and −0.015 mA at
-0.2, 1 and 6 V. That reading confirms the floor. A reading near −0.09 mA
-would mean the channel can go below zero after all, and the holds then
-give the zero (`--zero` with these files). Either way, record it. (c)
-measures the zero with the channel lifted.
+**The current does not read the zero.** *Corrected 2026-11-13:* with
+nothing drawing current, it reads the difference stage's floor,
+0.198 + 0.104 · V mA on board 2 (0.23, 0.30 and 0.82 mA at 0.2, 1 and 6 V),
+not 0 counts as this step first expected. The channel's zero is negative,
+and its op-amp can't swing below ~4 mV plus ~2 mV per volt of node
+voltage. These holds measure that floor, and (c) measures the zero with the
+channel lifted.
 
 **Pass for every line: no periodic wave on the scope**, and the Frequency
 readout not locked on a steady value. A periodic wave is a repeating
@@ -385,7 +390,7 @@ sends you to 22e.
 | 22b | `HOLD --vds 0.2 --seconds 20 -o h4/s3_22b_hold_0v2.csv` | No periodic wave; vds_meas 0.17–0.23 V (the floor); \|i_meas\| ≤ 0.20 mA | Pk-Pk ____ mV ; ____ V, ____ mA | 22e |
 | 22c | `HOLD --vds 1 --seconds 20 -o h4/s3_22c_hold_1v.csv` | No periodic wave; vds_meas 0.96–1.02 V; \|i_meas\| ≤ 0.20 mA | Pk-Pk ____ mV ; ____ V, ____ mA | 22e |
 | 22d | `HOLD --vds 6 --seconds 20 -o h4/s3_22d_hold_6v.csv` | No periodic wave; vds_meas 5.80–6.10 V; \|i_meas\| ≤ 0.20 mA | Pk-Pk ____ mV ; ____ V, ____ mA | 22e |
-| 22e | **Only on a fail in 22a–d.** Read Frequency (f ____ MHz) and Pk-Pk. Output OFF. Swap the cap for **L1** in the same rows. Output ON; redo 22a–d once (expect 0.19 V, 0.9 mA; 0.865 V, 4.30 mA; 5.19 V, 25.8 mA). If L1 fails here too, the fixture is the difference from 2026-11-08: move L1 to J6 itself, clamped in D–S with the fixture wires, and redo once | Both pass | which stabiliser, where: ____ | Still failing: output OFF and **STOP**. Record f and Pk-Pk |
+| 22e | **Only on a fail in 22a–d.** Read Frequency (f ____ MHz) and Pk-Pk. Output OFF. Swap the cap for **L1** in the same rows. Output ON; **check CV, 2–5 mA**; redo 22a–d once (expect 0.19 V, 0.9 mA; 0.865 V, 4.30 mA; 5.19 V, 25.8 mA). If L1 fails here too, the fixture is the difference from 2026-11-08: move L1 to J6 itself, clamped in D–S with the fixture wires, and redo once | Both pass | which stabiliser, where: ____ | Still failing: output OFF and **STOP**. Record f and Pk-Pk |
 
 **If you end on L1:** it must be calibrated on the fixture before (c) and
 (d). `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100
@@ -414,8 +419,8 @@ fix g and b almost free of c; 23c moves only the voltage, which gives c.
 
 | # | Do | Expected | Pass | Record: vds_meas ; i_meas |
 |---|---|---|---|---|
-| 23a | Output OFF. Plug the **0.1% 100 Ω** into D–S beside the stabiliser. Output ON. `HOLD --vds 2 --seconds 20 -o h4/s3_23a_hold_100r_2v.csv` | Cap: 1.522 V, 15.22 mA. L1: 1.361 V, 20.36 mA total | No periodic wave | ____ V ; ____ mA |
-| 23b | Output OFF. Swap it for the **0.1% 1 kΩ**. Output ON. `HOLD --vds 2 --seconds 20 -o h4/s3_23b_hold_1k_2v.csv` | Cap: 1.939 V, 1.94 mA | No periodic wave | ____ V ; ____ mA |
+| 23a | Output OFF. Plug the **0.1% 100 Ω** into D–S beside the stabiliser. Output ON; **check CV, 2–5 mA**. `HOLD --vds 2 --seconds 20 -o h4/s3_23a_hold_100r_2v.csv` | Cap: 1.522 V, 15.22 mA. L1: 1.361 V, 20.36 mA total | No periodic wave | ____ V ; ____ mA |
+| 23b | Output OFF. Swap it for the **0.1% 1 kΩ**. Output ON; **check CV, 2–5 mA**. `HOLD --vds 2 --seconds 20 -o h4/s3_23b_hold_1k_2v.csv` | Cap: 1.939 V, 1.94 mA | No periodic wave | ____ V ; ____ mA |
 | 23c | Same 1 kΩ. `HOLD --vds 6 --seconds 20 -o h4/s3_23c_hold_1k_6v.csv` | Cap: 5.817 V, 5.82 mA | No periodic wave | ____ V ; ____ mA |
 
 **With L1, run 23a only**, against the `s3_22f` calibration: beside a
@@ -427,18 +432,30 @@ Output OFF and take the resistor out before (d).
 **At the desk:** solve 23a–c for g, b and c. **Pass: g within ±1.5% of 1**:
 the 1% shunt plus the 0.1% gain and divider resistors. Out of band is a
 measurement, not a fault: it is the shunt's calibration factor, and the
-host can carry it. b is the zero: compare it with 11-08's −0.087 mA and
-give it to (d) as `--zero`. c × 6 V compares with sim 05's 0.24 mA median.
+host can carry it. c × 6 V compares with sim 05's 0.24 mA median.
+*Since 2026-11-13* this is `python -m ct_host channel --resistor
+h4/s3_23a_hold_100r_2v.csv=100 --resistor h4/s3_23b_hold_1k_2v.csv=1000
+--resistor h4/s3_23c_hold_1k_6v.csv=1000 --floor
+h4/s3_22b_hold_0v2.csv,h4/s3_22c_hold_1v.csv,h4/s3_22d_hold_6v.csv
+[--calibration h4/s3_22f_rp.csv] -o h4/s3_channel.txt`. It also fits 22b–d's
+floor, and (d) takes the model as `--zero h4/s3_channel.txt`, not b alone.
+**Result:** g 1.0080, b −0.131 mA, c −0.0225 mA/V: pass. L1's line puts the
+zero 1 LSB higher, which a −10 mV voltage offset would explain
+(`docs/characterization.md`, session 3 (c)).
 
 ### (d) The 1N4148 on the fixture
 
 | # | Do | Pass | Record | Fail → |
 |---|---|---|---|---|
-| 24 | Output OFF. Plug the diode in: **anode in the D row, banded end in the S row**, beside the stabiliser. Output ON. `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100 --i-limit 40 --device 1N4148 -o h4/s3_24_diode.csv` (with L1, add `--r-parallel h4/s3_22f_rp.csv`). **Output OFF.** Then `python -m ct_host extract h4/s3_24_diode.csv --type diode` | `end : ok` or `ilimit`; no periodic wave during the capture; n is 1.0–2.5 | end ____ ; n ____ ; I_S ____ ; R_s ____ | n near 0 or negative: the diode is backwards. Flip it and redo once. A periodic wave: record f and Pk-Pk, keep the file |
+| 24 | Output OFF. Plug the diode in: **anode in the D row, banded end in the S row**, beside the stabiliser. Output ON; **check CV, 2–5 mA**. `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100 --i-limit 40 --device 1N4148 -o h4/s3_24_diode.csv` (with L1, add `--r-parallel h4/s3_22f_rp.csv`). **Output OFF.** Then `python -m ct_host extract h4/s3_24_diode.csv --type diode` | `end : ok` or `ilimit`; no periodic wave during the capture; n is 1.0–2.5 | end ____ ; n ____ ; I_S ____ ; R_s ____ | n near 0 or negative: the diode is backwards. Flip it and redo once. A periodic wave: record f and Pk-Pk, keep the file |
 
-The bench `extract` has no zero, so its n reads low (~1.65 on 11-08). That
-is fine for the pass band; the desk run gives the real figure with
-`--zero` (b from (c), or −0.087 if (c) was skipped).
+The bench `extract` has no zero. ~~so its n reads low (~1.65 on 11-08). That
+is fine for the pass band~~ *Corrected 2026-11-13:* with the cap alone the
+off rows read the channel's floor, not zero, and the bench `extract` fits
+them as current: n 5.3, out of band, on a good diode. Judge the step by
+`end` and the scope. The desk run uses `--zero h4/s3_channel.txt`, which
+leaves the floor rows out. `--zero auto` refuses this capture: its off rows
+are the floor.
 
 ### (f) Optional: the 2N7000 with fine gate steps
 
@@ -453,9 +470,9 @@ steps 0.02 V apart across 2.45–2.75 V put ≥ 10 in the same window.
 
 | # | Do | Pass | Record | Fail → |
 |---|---|---|---|---|
-| 25a | **Skip if (a) ended on L1** (22e): it is already in and calibrated. Otherwise output OFF, pull the cap out of D–S and plug **L1** into the same rows. Output ON. Read the scope idle for 10 s. Then calibrate it, watching the scope: `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100 --i-limit 40 --device L1_Rp -o h4/s3_22f_rp.csv` (1 min) | No periodic wave, idle or during the capture; section D's step 14 bands | Pk-Pk ____ mV ; R ____ Ω | A periodic wave: record f and Pk-Pk, output OFF, and skip (f) |
-| 25b | Output OFF. Plug the 2N7000 in **beside L1**. Flat face toward you, legs down, it is S, G, D left to right: spread the legs so each lands in its own row, **S in S, G in G, D in D**. If the rows' order won't allow it, put G in an empty row and jumper that row to the G row: the gate carries no DC, so the jumper is outside the measurement. Tug each leg | Each leg firm in its row | ☐ | Reseat |
-| 25c | Output ON. `python -m ct_host capture --port $P --vgs 2.45,2.47,2.49,2.51,2.53,2.55,2.57,2.59,2.61,2.63,2.65,2.67,2.69,2.71,2.73,2.75 --vds-max 2.5 --n 60 --i-limit 40 --device 2N7000 --r-parallel h4/s3_22f_rp.csv -o h4/s3_25_mosfet.csv` (~10 s). **Output OFF.** Then `python -m ct_host extract h4/s3_25_mosfet.csv --type mosfet --vds-slice 1.1 --vgs-range 2.44 2.76` | `end : ok` or `ilimit`; no periodic wave during the capture; under *V_th fit*, the `range :` line ending `(V_GS)` reads **≥ 10 of** … points, whatever the trip voltage | end ____ ; flagged V_GS ____ V_DS ____ ; range ____ of ____ ; V_th ____ ; KP*W/L ____ | Fewer than 10 steps in the fit: the part draws more than on 11-08. Keep the file and redo once with every step 0.04 V lower (2.41 … 2.71), `-o h4/s3_25b_mosfet.csv`. A periodic wave: record f and Pk-Pk, keep the file, go on |
+| 25a | **Skip if (a) ended on L1** (22e): it is already in and calibrated. Otherwise output OFF, pull the cap out of D–S and plug **L1** into the same rows. Output ON; **check CV, 2–5 mA**. Read the scope idle for 10 s. Then calibrate it, watching the scope: `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100 --i-limit 40 --device L1_Rp -o h4/s3_22f_rp.csv` (1 min) | No periodic wave, idle or during the capture; section D's step 14 bands | Pk-Pk ____ mV ; R ____ Ω | A periodic wave: record f and Pk-Pk, output OFF, and skip (f) |
+| 25b | Output OFF. Plug the 2N7000 in **beside L1**. Flat face toward you, legs down, it is S, G, D left to right: spread the legs so each lands in its own row, **S in S, G in G, D in D**, all on J6's side of the centre channel (on 2026-11-13 the legs first landed across it: gate undriven, family flat) If the rows' order won't allow it, put G in an empty row and jumper that row to the G row: the gate carries no DC, so the jumper is outside the measurement. Tug each leg | Each leg firm in its row | ☐ | Reseat |
+| 25c | Output ON; **check CV, 2–5 mA**. `python -m ct_host capture --port $P --vgs 2.45,2.47,2.49,2.51,2.53,2.55,2.57,2.59,2.61,2.63,2.65,2.67,2.69,2.71,2.73,2.75 --vds-max 2.5 --n 60 --i-limit 40 --device 2N7000 --r-parallel h4/s3_22f_rp.csv -o h4/s3_25_mosfet.csv` (~10 s). **Output OFF.** Then `python -m ct_host extract h4/s3_25_mosfet.csv --type mosfet --vds-slice 1.1 --vgs-range 2.44 2.76` | `end : ok` or `ilimit`; no periodic wave during the capture; under *V_th fit*, the `range :` line ending `(V_GS)` reads **≥ 10 of** … points, whatever the trip voltage | end ____ ; flagged V_GS ____ V_DS ____ ; range ____ of ____ ; V_th ____ ; KP*W/L ____ | Fewer than 10 steps in the fit: the part draws more than on 11-08. Keep the file and redo once with every step 0.04 V lower (2.41 … 2.71), `-o h4/s3_25b_mosfet.csv`. A periodic wave: record f and Pk-Pk, keep the file, go on |
 
 **A trip is a pass if ≥ 10 steps are left in the fit.** Expect
 `end : ilimit` at the top step. If its `flagged:` line shows V_DS above
@@ -529,18 +546,21 @@ The zero, the model card, the overlay and the README figure are desk work.
 **If the cap alone passes (a): what changes at the desk.** Nothing here
 needs the bench.
 - **Host.** `extract`, `model`, `plot`, `simulate` and `overlay` take
-  `--zero MA|CSV|auto` (2026-11-09), recorded in each output. With the cap alone, give
-  (c)'s b as `--zero MA`, and no `--r-parallel`. `auto` and hold CSVs refuse
-  rows on the channel's floor, so neither works with the cap alone; both
-  work with a resistor lifting the channel, as on 11-08. Without a zero,
-  (d)'s diode reads n ≈ 1.65 again, as it did on 2026-11-08 before the
-  zero came out.
+  `--zero MA|CSV|auto|MODEL`, recorded in each output. With the cap alone,
+  give (c)'s channel model as `--zero h4/s3_channel.txt`, and no
+  `--r-parallel` (since 2026-11-13; it was b as `--zero MA`). `auto` and
+  hold CSVs refuse rows on the channel's floor, so neither works with the
+  cap alone; both work with a resistor lifting the channel, as on 11-08.
 - **What it gains.** No V / R_p subtraction: its ~1–3 µA per point of noise
   and ~1.5 µA systematic go, and so does L1's drift as it warms. The device
   gets the whole 40 mA limit, where L1 took 7 mA at 1.5 V. **What it
-  doesn't:** the current LSB stays 40.3 µA on range 1, and the diode fit's
+  doesn't:** the current LSB stays 40.3 µA on range 1. ~~and the diode fit's
   floor stays 0.2 mA (5 LSB). Low-current resolution is set by the range,
-  not the stabiliser.
+  not the stabiliser.~~ **What it costs** (measured 2026-11-13): with
+  nothing lifting the channel, a device reads only once it clears the
+  channel's floor, ~0.4–0.5 mA at 0.6 V. The 1N4148's fit starts at
+  0.50 mA on the cap, against 0.2 mA on L1. For the bottom decade of a
+  diode, L1 is the better stabiliser.
 - **Not for MOSFET families.** With no resistor, the node discharges at
   low levels only through the 33.2 kΩ feedback network (τ ≈ 3 ms; the B-E
   clamp can't sink below ~0.6 V). An off gate step would start at the last

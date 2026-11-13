@@ -1,0 +1,13 @@
+# curve-tracer channel
+gain: 1.001388
+zero_ma: -0.14112
+cm_ma_per_v: -0.01591
+v_offset_v: -0.01010
+floor_ma: 0.19835
+floor_ma_per_v: 0.10414
+floor_margin_ma: 0.08059
+stderr_gain: 0.000702
+stderr_zero_ma: 0.00215
+stderr_cm_ma_per_v: 0.00113
+stderr_v_offset_v: 0.00051
+source: s3_23a_hold_100r_2v.csv=100; s3_23b_hold_1k_2v.csv=1000; s3_23c_hold_1k_6v.csv=1000; floor s3_22b_hold_0v2.csv, s3_22c_hold_1v.csv, s3_22d_hold_6v.csv, s3_22d3_hold_6v_clean.csv; delta from s3_22f_rp.csv; resistors ±0.1%

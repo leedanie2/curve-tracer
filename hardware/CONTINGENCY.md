@@ -54,7 +54,11 @@ AC coupling, 10× probe on TP3. Idle baseline B = 12.0 mV p-p, powered.
 | 9b | open | TP9 | 1.149 (~4.3 div/cycle at 200 ns/div) | > 2.05 V (clipped at 200 mV/div) | 6.192 V, 2.998 mA | `mvp_09b_hold_open.csv` |
 | 9c | open | TP9 | not cleanly periodic (trigger Auto) | ~0.56 V at 1 V/div | 6.007 V, 0.832 mA | `mvp_09c_hold_open.csv` |
 
-V and I are the 62-row means of each CSV. A1 sorts both open-load
+V and I are the 62-row means of each CSV. **Corrected 2026-11-13:** 9 and
+9c's 0.830 and 0.832 mA are the current channel's floor with nothing
+drawing current (0.198 + 0.104 · V mA, 0.824 mA at 6 V with the loop
+quiet; `docs/characterization.md`, session 3 (b)), not oscillation error.
+Only 9b's 2.998 mA sits above it. A1 sorts both open-load
 frequencies into A3 (0.3–20 MHz). Step 8's excess over B is broadband and
 did not move with the probe ground (A2), so it is not an oscillation. The
 amplitude at open load changed from run to run, and the run with the largest
