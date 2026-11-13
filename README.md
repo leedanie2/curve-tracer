@@ -135,8 +135,10 @@ What the results above do not cover, as of 2026-11-13:
   gate, than on 11-08. *Analysis:* ~0.4–0.6 Ω of breadboard links
   between the Kelvin points and the parts explains the resistive part of
   both, and of L1's fitted R. It can't explain a constant +21 mV on the
-  diode or +86 mV of gate. Temperature is the leading candidate for those;
-  neither part's temperature was measured.
+  diode or +86 mV of gate. Self-heating during the sweeps can't either: it
+  is under 0.3 K per sweep, and the 2N7000's is the wrong sign. That leaves
+  the parts' surroundings, which weren't measured. The constants are
+  unexplained.
 - **Blueprint §6's closed loop is not done.** The diode's model is checked
   against its own measurement. No circuit has been built around it and
   compared with the bench.
@@ -536,7 +538,8 @@ and absolute current is ±2.3%. `ct_host channel` fits this, and `--zero` applie
 measured threshold. This card was fitted on a fixture whose links put
 ~0.4 Ω in the source path, and the same part on 11-08 needed 86 mV less
 gate for the same current, for reasons not yet known. Both are explained
-below. MVP card §F reruns it with the fixture fixed.
+below. MVP card §F reruns it with the fixture fixed, twice back to back,
+to test self-heating as well.
 
 ![2N7000 output family measured on board 2, 16 gate steps from 2.45 to 2.75 V](media/family_2n7000_s3.png)
 
@@ -594,8 +597,14 @@ rms. Source degeneration alone doesn't fit: 32 mV rms.
   0.140 against 11-08's 0.176 A/V² is mostly 11-08's narrower window. L1's fitted R rose 0.45 Ω
   between the sessions, and the diode's series term 0.6 Ω.
 - **The 86 mV** isn't a resistance, and neither is the diode's constant
-  +21 mV. Both point to the parts sitting colder on 11-13, or warmer on
-  11-08 in J6 beside L1 and Q1. Neither part's temperature was measured.
+  +21 mV. They would need 11-08's parts ~12 K (diode) and ≥ 25 K (2N7000)
+  warmer, at the datasheets' −1.8 mV/K and −3.5 mV/K. **Self-heating
+  during the sweeps can't supply that** (analysis). At θ_JA 357 °C/W and
+  the thermal time constant the 11-13 hold shows (~100 s), a sweep warms
+  the part by under 0.3 K, and under 5 K at the most pessimistic τ. 11-13's
+  sweep also dissipated 3.4× the energy of 11-08's, so the 2N7000's sign is
+  wrong. What remains is the parts' surroundings: J6 beside L1 and Q1 on
+  11-08. That wasn't measured.
 
 The full analysis is in [`docs/characterization.md`](docs/characterization.md).
 

@@ -1372,7 +1372,8 @@ can't produce either:
 - **What temperature doesn't explain:** the two parts would need different
   temperature differences, and a colder diode has a smaller n · V_T, where
   11-13's slope is larger. So temperature is the leading candidate for the
-  constants, not an explanation.
+  constants, not an explanation. *Revised below:* self-heating during the
+  sweeps is ruled out.
 
 **Consequences, until section F runs.**
 
@@ -1391,3 +1392,83 @@ can't produce either:
 Kelvin pair and J6's force jumpers in the same 5-hole columns, then rerun
 the diode, the 2N7000 family, L1's calibration and the resistor holds.
 What R_x predicts, and what would refute it, is written there.
+
+#### Self-heating during the DC sweeps, as a candidate for the constants (analysis)
+
+Daniel's second candidate: the parts heat themselves during a DC sweep, and
+by different amounts on 11-08 and 11-13. If 11-08's parts ran hotter, they
+would read a lower threshold and a lower diode voltage, which is the
+direction of both shifts.
+
+**Datasheet figures**, read first-hand on 2026-11-13. The 1N4148's maker is
+unknown, so two makers are cited.
+
+| Part | θ_JA | Temperature coefficient |
+|---|---|---|
+| 2N7000 | **357 °C/W** max, TO-92 in free air (onsemi 2N7000/D Rev. 8, Apr. 2011, *Thermal characteristics*) | **−0.16%/K of V_GS(th), ≈ −3.5 mV/K** on a 2.15 V threshold. Read from Figure 4, *Temperature versus Gate Threshold Voltage*: normalised 1.00 at 25 °C, ~0.90 at 85 °C, ~0.84 at 125 °C, at V_DS = V_GS and I_D = 1 mA. Its axis label "1.10" between 1.0 and 1.1 is a typo for 1.05. At 5–23 mA the fixed-current coefficient is likely smaller in magnitude (mobility falls with temperature), so 3.5 mV/K is an upper bound on |dV/dT| |
+| 1N4148 | **350 K/W**, 4 mm leads at constant lead temperature (Vishay 1N4148, doc. 81857 Rev. 1.6, 07-Nov-2024); **300 °C/W** (onsemi 1N914/D Rev. 6, Sep. 2024) | **−1.8 mV/K at 1 mA, −1.5 mV/K at 10 mA**, read from Vishay's Fig. 1, *Typical Forward Voltage vs. Junction Temperature* (−40 to 150 °C) |
+
+Neither datasheet gives a transient thermal impedance.
+
+**Method.** Each row's power is V × I_D, the device's current alone. Each
+row lasts ~6 ms (`firmware/README.md`, *Timing*: transmission-bound, about
+1.2 s per 200 points); the CSVs carry no per-row time. Power is integrated
+through one thermal pole with R = θ_JA, from ambient at the start of each
+capture. τ is bracketed at 0.5–60 s.
+
+| Capture | Rows, duration | Energy | Mean / peak power | θ_JA × peak |
+|---|---|---|---|---|
+| 11-08 2N7000 (`mvp_18`) | 545, 3.3 s | 15.8 mJ | 4.8 / 51.8 mW | 18.5 K |
+| 11-13 2N7000 (`s3_25`) | 960, 5.8 s | **53.8 mJ** | 9.3 / 35.9 mW | 12.8 K |
+| 11-08 1N4148 (`mvp_17`) | 100, 0.6 s | 2.3 mJ | 3.8 / 15.3 mW | 5.4 K |
+| 11-13 1N4148 (`s3_24`) | 100, 0.6 s | 2.9 mJ | 4.8 / 18.1 mW | 6.3 K |
+
+Junction rise at the rows that were compared: the 2N7000 at V_DS 1.1 V,
+and the diode at 1, 10 and 19 mA.
+
+| τ | 11-08 2N7000, steps 2.4 / 2.5 / 2.6 / 2.7 V | 11-13 2N7000, steps 2.45 / 2.55 / 2.65 / 2.75 V | 1N4148 at 1 / 10 / 19 mA, 11-08 ; 11-13 |
+|---|---|---|---|
+| 0.5 s | 0.9 / 1.7 / 2.8 / 4.1 K | 0.3 / 2.3 / 3.4 / 4.5 K | 0.01 / 0.4 / 1.2 ; 0.02 / 0.4 / 1.2 K |
+| 2 s | 0.3 / 0.6 / 1.1 / 1.7 K | 0.1 / 1.4 / 2.6 / 3.7 K | 0.0 / 0.1 / 0.3 ; 0.0 / 0.1 / 0.4 K |
+| 10 s | 0.1 / 0.2 / 0.3 / 0.4 K | 0.0 / 0.4 / 0.9 / 1.5 K | < 0.1 K |
+| 60 s | < 0.1 K | < 0.3 K | < 0.02 K |
+
+**τ from the bench, not the datasheet.** The 11-13 hold (`s3_25h`) rose
+~0.1 mA in 20 s at 11.5 mW, steadily, not in the first seconds. At g_m
+≈ 0.057 S that is 1.9 mV of gate, or 0.55 K at −3.5 mV/K, against
+θ_JA × P = 4.1 K. A single pole of a few seconds would have reached most of
+its 4.1 K within the first rows and then gone flat. A slow rise of ~0.5 K
+in 20 s fits τ of order 100 s. 11-08's hold (`mvp_18c`, 7.1 mW, in J6's
+clamps) rose 0.12 K by the same estimate. So the τ = 60 s row is the
+realistic one. The faster rows are bounds.
+
+**Size.**
+
+- **The 2N7000** needs 11-08's part ≥ 25 K hotter at the compared rows:
+  86 mV at ≤ 3.5 mV/K. Self-heating gives under 5 K at the most
+  pessimistic τ, and under 0.3 K at the realistic one.
+- **The diode** needs ~12 K at 1 mA (21 mV / 1.8 mV/K). The 1 mA rows come
+  early in each sweep and rise ≤ 0.02 K. The gap's growth to 19 mA, after
+  R_x (~22 mV / 1.5 mV/K ≈ 15 K), would need far more than the ≤ 1.2 K
+  either sweep reaches.
+
+**Sign.**
+
+- **The 2N7000:** 11-13's sweep dissipated 3.4× the energy of 11-08's
+  (16 conducting steps against 9). At the compared rows above ~8 mA it was
+  the hotter sweep at every τ: by up to 2 K at τ = 2 s, and by 0.05–0.2 K
+  at τ = 60 s. At the lowest compared step it was at most 0.6 K cooler. So
+  self-heating would make 11-13 read the *lower* threshold, if anything.
+  That is the wrong sign.
+- **The diode:** the two sweeps dissipated nearly the same (2.3 against
+  2.9 mJ), so self-heating can't separate them.
+
+**Verdict (analysis): self-heating during the sweeps explains neither size
+nor, for the 2N7000, sign.** It also can't explain the diode's slope
+change, since both sweeps heat alike. What remains for the constants is the
+parts' surroundings: J6 on the board beside L1 and Q1 on 11-08, a
+breadboard off the board on 11-13, and the room. That is unmeasured, and
+it would need the two parts to differ by different amounts (~12 K and
+≥ 25 K). **The constants are unexplained.** Section F's back-to-back runs
+test the self-heating estimate directly, and its ambient readings record
+the room.
