@@ -10,9 +10,9 @@ oscillated), and **L1 is the R_p** from then on. Results are in
 `docs/characterization.md`. **Section E ran on 2026-11-13** (session 3):
 the 100 nF alone kept the loop quiet for two-terminal parts, and the
 2N7000 got a model card. Its results and corrections are in the same file.
-**Section F** (≤ 20 min) repeats the session-3 runs with the Kelvin pair
-sensing at the device. It tests two hypotheses: a fixture resistance, and
-self-heating.
+**Section F** (≤ 25 min) repeats the session-3 runs with the Kelvin pair
+sensing at the device. It tests a fixture resistance and self-heating, and
+takes two DMM readings: the gate drive at the part, and the node voltage.
 
 | Board | Date | Ambient °C | Diode part no. | Port (`P=`) |
 |---|---|---|---|---|
@@ -575,7 +575,7 @@ needs the bench.
   numbers from (d), with the zero bracket redone; the accuracy rows and the
   *Limitations* entry from (c).
 
-## F. Session 4: sensing at the device, and back-to-back runs (≤ 20 min)
+## F. Session 4: sensing at the device, back-to-back runs, two DMM checks (≤ 25 min)
 
 **What it's for.** Session 3's fixture put the Kelvin jumpers in the
 breadboard's upper half and the parts in the lower half, linked across the
@@ -588,11 +588,17 @@ removes R_x and reruns everything it touched. It runs the diode and the
 2N7000 twice, back to back, to test the second candidate for those
 constants, self-heating during the sweeps. The analysis puts that under
 0.3 K per sweep, too small and of the wrong sign (same file, *Self-heating
-during the DC sweeps*).
+during the DC sweeps*). Two DMM readings then measure what has so far
+only been commanded or assumed:
+
+- **the gate voltage at the part** (32), never measured;
+- **the node voltage** (29b, and optionally 26b), which tests the 10 mV
+  voltage-offset question.
 
 **Parts.** The breadboard; the same 1N4148 and 2N7000 (the 11-08 ones);
 the 0.1% 100 Ω and 1 kΩ; the 100 nF stabiliser; L1 as a separate 200 Ω 1 W
-and 100 nF. No DMM. Board 2, C1 empty, no soldering. The rules at the top
+and 100 nF. **The DMM** (BK 2704A), DC volts, 2 V and 20 V ranges, with a
+grabber clip if there is one. Board 2, C1 empty, no soldering. The rules at the top
 apply, including the supply check after every swap.
 
 | Date | Ambient °C, before 26 | Ambient °C, after 31 | Thermometer | Columns used (D, S, G) | Port (`P=`) |
@@ -612,18 +618,29 @@ resistor leg and L1's capacitor leg. Count the holes before plugging.
 gate is referenced to board ground. A link left in the source's force path
 would still degenerate it, with the Kelvin pair at the device.
 
-**Time plan.** 26: 4 min · 27: 2 · 28: 2.5 · 29: 3 · 30: 2 · 31: 6 (2 of
-them waiting). About 20 min. The two repeats and the wait added ~5 min to
-the 15.
+**Time plan.** 26: 4 min · 26b: 1.5 (optional) · 27: 2 · 28: 2.5 · 29: 3 ·
+29b: 1.5 · 30: 2 · 31: 6 (2 of them waiting) · 32: 2.5. About 25 min, or
+23.5 without 26b.
+
+**DMM readings (26b, 29b, 32).** Each one is taken during a 60–90 s hold,
+so there is no rush. Set the range first. With the probes in place, read
+the DMM any time between t = 20 and 50 s, and write down that `t`. The
+terminal's line at the same `t` gives the instrument's own reading to
+compare against. The meter's 10 MΩ draws under 0.3 µA: negligible on
+both nodes, and 0.26 mV across the 1 kΩ gate resistor at 2.6 V.
 
 | # | Do | Expected | Pass | Record | Fail → |
 |---|---|---|---|---|---|
 | 26 | Board unpowered. Rewire as above, the 100 nF in D–S. Output ON; **check CV, 2–5 mA**. Read the scope idle for 10 s | — | No periodic wave | Pk-Pk ____ mV | Output OFF, recheck every leg's column, redo once; then **STOP** |
+| 26b | *Optional.* Same setup, cap only. DMM on **DC V, 2 V range**: red probe in a free hole of the D column, black in a free hole of the S column (each has two). `HOLD --vds 0.2 --seconds 60 -o h4/s4_26b_hold_dmm_0v2.csv` | vds_meas ~0.236 V, i on the floor (~0.22 mA) | No periodic wave with the probes in; DMM 0.20–0.27 V | t ____ s ; DMM ____ V ; vds_meas at t ____ V | DMM reads ~0 or negative: a probe isn't in the column |
 | 27 | Output OFF. **0.1% 100 Ω** into D–S beside the cap. Output ON; **check CV, 2–5 mA**. `HOLD --vds 0.5 --seconds 20 -o h4/s4_27a_hold_100r_0v5.csv`, then `HOLD --vds 2 --seconds 20 -o h4/s4_27b_hold_100r_2v.csv` | 0.381 V, 3.70 mA; 1.522 V, 15.18 mA | No periodic wave; V and I each within ±3% of expected | ____ V ; ____ mA / ____ V ; ____ mA | Out of band: supply, part or column. Fix, redo once |
 | 28 | Output OFF. Swap for the **0.1% 1 kΩ**. Output ON; **check CV, 2–5 mA**. Three holds, 20 s each: `--vds 0.5` → `h4/s4_28a_hold_1k_0v5.csv`, `--vds 1` → `s4_28b_hold_1k_1v.csv`, `--vds 2` → `s4_28c_hold_1k_2v.csv` | 0.485 V, 0.35 mA; 0.970 V, 0.82 mA; 1.939 V, 1.78 mA | No wave; V within ±3%, I within ±3% + 0.03 mA | ____ / ____ / ____ | As 27 |
 | 29 | Output OFF. Resistor out; **1N4148** in, anode in D, band in S; the cap stays. Output ON; **check CV, 2–5 mA**. Twice, back to back: `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100 --i-limit 40 --device 1N4148 -o h4/s4_29_diode_run1.csv`, then the same with `-o h4/s4_29_diode_run2.csv` as soon as it ends. **Output OFF.** Extract each: `python -m ct_host extract h4/s4_29_diode_run1.csv --type diode --zero h4/s3_channel_nodelta.txt` (and run2) | ~39 rows on the floor; the runs' n within 0.01 | `end : ok` or `ilimit`, both runs; no wave; n 1.0–2.5 | end ____ / ____ ; n ____ / ____ ; R_s ____ / ____ ; **seconds between the runs' starts ____** | n near 0: diode backwards. Flip it and redo both runs |
+| 29b | The diode and the cap still in, output still ON. DMM on **DC V, 2 V range**: red in the D column's free hole, black in the S column's (one each). `HOLD --vds 1.06 --seconds 60 -o h4/s4_29b_hold_diode_10ma.csv`. Then **output OFF** and probes out | vds_meas ~0.74 V, i_meas ~10 mA | No periodic wave; i_meas 8–12 mA; DMM 0.70–0.80 V | t ____ s ; DMM ____ V ; vds_meas at t ____ V ; i_meas ____ mA | i_meas off band: wrong part or column; DMM ~0: a probe isn't in the column |
 | 30 | Diode and cap out; **L1** in (both parts). Output ON; **check CV, 2–5 mA**. Idle scope 10 s. `python -m ct_host capture --port $P --vgs 0 --vds-max 1.5 --n 100 --i-limit 40 --device L1_Rp -o h4/s4_30_rp.csv` | R 201.2–201.8 Ω | No wave; section D step 14's bands | R ____ Ω ; offset ____ mA | A periodic wave: record f and Pk-Pk, skip 31 |
 | 31 | Output OFF. **2N7000** in, S, G and D each in its column, beside L1. **Leave the output OFF for 2 minutes** (`t` from the clock), hands off the part: handling warms a TO-92, and L1 has just carried 30's sweep. Output ON; **check CV, 2–5 mA**. Twice, back to back: 25c's command (same 16 gate steps, `--vds-max 2.5`) with `--r-parallel h4/s4_30_rp.csv -o h4/s4_31_mosfet_run1.csv`, then the same with `-o h4/s4_31_mosfet_run2.csv` as soon as it ends. **Output OFF.** Extract each: `python -m ct_host extract h4/s4_31_mosfet_run1.csv --type mosfet --vds-slice 1.1 --vgs-range 2.44 2.76` (and run2) | No trip: on 11-13 the top step drew 22.9 mA at 1.1 V, and without R_x it should draw ~3% more (~23.7 mA). The runs' V_th within ~2 mV | `end : ok` or `ilimit`, both runs; ≥ 10 of 16 steps in each fit | end ____ / ____ ; range ____ / ____ of 16 ; V_th ____ / ____ ; **seconds between the runs' starts ____** | A flat family: the gate isn't in its column |
+
+| 32 | After 31's run 2, the 2N7000 and L1 still in, output ON. DMM on **DC V, 20 V range** (2.6 V over-ranges 2 V). Red probe in a free hole of the **G** column. Black on the **2N7000's S leg**, where it enters the breadboard: the S column is full, so use a grabber if there is one. If not, use J6's S screw, which adds < 1 mV, the jumper's drop at ~17 mA. `HOLD --vgs 2.6 --vds 1.5 --seconds 90 -o h4/s4_32_hold_2n7000.csv`. Watch the scope as the probe touches G. **Only if the DMM reads 2.55 V or less:** while the hold runs, move red to **TP16** (GATE_AMP) and black to **TP9**, and record that too. Then output OFF | As 25h: ~0.99 V, ~16.4–16.8 mA total | No periodic wave; V 0.95–1.03 V, I 16.0–17.2 mA; DMM 2.40–2.80 V | t ____ s ; DMM G–S ____ V ; TP16 ____ V (only if ≤ 2.55) ; vgs_set_v from the CSV ____ ; scope with the probe on G ____ | DMM ~0: red isn't in the G column. A periodic wave only with the probe on G: record f and Pk-Pk; the gate path is a suspect for the waves |
 
 The CSV headers' `date` lines also record each run's start to the second.
 Write the gap down anyway: it is the number the desk needs.
@@ -676,6 +693,24 @@ the heating caused it after all, and the analysis is wrong. If both stay
 and run 2 matches run 1, neither hypothesis explains them. What is left is
 the parts' surroundings: on 11-08 they sat in J6 beside L1 and Q1. The
 ambient readings above are the first record of that; F doesn't test it.
+
+**The DMM checks.** These are the first measurements of the gate at the
+part and of the node by a second instrument since 11-08, and both are
+limited by the DMM. Its accuracy is the 2704C's published
+±(0.8% + 1 digit), standing in for the 2704A's (not found): **±31 mV** at
+2.6 V on the 20 V range, **±7 mV** at 0.74 V and **±3 mV** at 0.24 V on
+the 2 V range.
+
+| Check | Computed | As commanded / no δ | Explains the 86 mV / supports δ = −10 mV | Inconclusive | Otherwise |
+|---|---|---|---|---|---|
+| **32, gate at the part** | ΔG = DMM (G–S) − vgs_set_v (2.601 V) | **within ±31 mV.** The part gets the commanded gate, so F's gate drive isn't the 86 mV (if 31 still shows it) | **−55 to −117 mV**: the part sees ~86 mV less than commanded, so the DMM reads ~2.48–2.55 V. That accounts for the 86 mV only if 11-08's gate was as commanded, and TP16 says why. **TP16 as commanded:** the drop is across the 1 kΩ gate resistor, ~86 µA leaking from the gate node on the breadboard. J6 on 11-08 lacked that, so it explains the difference. **TP16 low too:** the DAC and ×3.32 chain, the same board on both days. It can't explain a difference unless that chain drifted | −31 to −55 mV | above +31 mV: the gate reads high; record it |
+| **29b, node with the diode at ~10 mA** | ΔV = DMM (D–S) − vds_meas at the same t | **≤ +2 mV**: against δ | **≥ +8 mV**: supports δ. 11-08's DMM comparison read the same way, −6 to −7 mV | +3 to +7 mV | below −7 or above +17 mV: a probe or Kelvin fault; recheck |
+| **26b, node at no load, 0.24 V** (optional) | as 29b | **≤ +3 mV**: against δ | **≥ +7 mV**: supports δ | +4 to +6 mV | below −3 or above +13 mV: recheck |
+
+**δ is settled** when these agree with the hold-intercept test below. 26b
+is the sharper of the two DMM readings, because the DMM's 0.8% scales with
+the voltage and δ doesn't. That is why it is offered, though it wasn't
+asked for.
 
 **δ, from the same holds.** The 100 Ω line (27a–b) and the 1 kΩ line
 (28b–c) each give an intercept. A voltage offset of −10 mV puts the 100 Ω's
